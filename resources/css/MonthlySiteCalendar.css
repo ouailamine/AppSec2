@@ -1,0 +1,177 @@
+/* MonthlySiteCalendar.css */
+.calendar-container {
+  margin: 10px;
+  font-family: Arial, sans-serif;
+}
+
+.calendar-form,
+.event-form {
+  margin-bottom: 10px;
+}
+
+.calendar-form label,
+.event-form label {
+  margin: 10px;
+}
+
+.calendar-table {
+  width: 90%;
+  border-collapse: collapse;
+  margin: 10px;
+}
+
+.event-cell {
+  padding: 1px;
+}
+
+.event-info {
+  padding: 0px;
+  margin: 0px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+hr {
+  margin: 0px;
+  font-weight: bold;
+}
+
+/* App.css */
+.selected {
+  background-color: #007bff;
+  /* Exemple : bleu Bootstrap */
+  color: white;
+  /* Texte en blanc */
+}
+
+.selected .bg-success {
+  background-color: white;
+  /* Cercle en blanc */
+}
+
+.edit-button {
+  padding: 2px 1px;
+  margin: 0px;
+}
+
+.delete-button {
+  padding: 2px 1px;
+  margin: 0px;
+}
+
+.weekend {
+  background-color: #7a7e85;
+  /* Fond gris pour les week-ends */
+}
+
+.calendar-agent {
+  font-weight: bold;
+  /* Optionnel: pour mieux distinguer les agents */
+}
+
+.holiday {
+  background-color: rgb(76, 79, 243);
+  /* Ou toute autre couleur pour les jours fériés */
+  color: white;
+  /* Facultatif, pour le contraste */
+}
+
+.total-agent {
+  font-weight: bold;
+  font-size: 13px;
+  /* Optionnel: pour mieux distinguer les totaux */
+}
+
+.total-day {
+  font-weight: bold;
+  font-size: 13px;
+  /* Optionnel: pour mieux distinguer les totaux */
+}
+
+.total {
+  background-color: rgb(54, 54, 240);
+  color: #ddd;
+  font-weight: bold;
+  font-size: 14px;
+  /* Optionnel: pour mieux distinguer les totaux */
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  /* Augmente le padding pour agrandir les cellules */
+  text-align: center;
+  /* Centre le texte */
+}
+
+.table td {
+  vertical-align: middle;
+  /* Centrer verticalement les contenus */
+}
+
+.calendar-table th {
+  border: 1px solid #dddddd;
+  font-size: 12px;
+  text-align: center;
+}
+
+.calendar-table .weekend {
+  background-color: #83b2f0;
+  color: rgb(172, 14, 14);
+  /* Couleur de fond pour les week-ends */
+}
+
+#agents {
+  font-size: 12px;
+}
+
+.calendar-table td {
+  border: 1px solid #ddd;
+  padding: 1px;
+  text-align: center;
+}
+
+.calendar-table th {
+  background-color: #f2f2f2;
+}
+
+.calendar-table td {
+  height: auto;
+  width: auto;
+}
+
+.tbody {
+  width: 10px;
+}
+
+.calendar-table td:nth-child(even) {
+  background-color: #fff;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.calendar-table td:nth-child(odd) {
+  background-color: #fff;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.calendar-table tr:hover {
+  background-color: #ddd;
+}
+
+.calendar-site {
+  font-weight: bold;
+  background-color: #4caf50;
+  color: rgb(17, 16, 16);
+}
+
+.event-form {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.event-form label {
+  margin-right: 5px;
+}

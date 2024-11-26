@@ -1,0 +1,84 @@
+.calendar-day.selected {
+  background-color: rgb(6, 22, 240);
+  /* Changez ceci pour la couleur souhaitée */
+  color: white;
+  /* Optionnel, pour le texte des dates sélectionnées */
+}
+
+.calendar-day.holiday {
+  background-color: rgb(230, 20, 212);
+}
+
+.legend {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.legend-item {
+  display: block;
+  align-items: center;
+}
+
+.legend-item span {
+  margin-left: 2px;
+  font-size: 12px;
+}
+
+.selected-date {
+  margin: 1px;
+  padding-left: 3px;
+  padding-right: 3px;
+  border: 2px solid #171718;
+}
+
+.square {
+  width: 20px;
+  height: 20px;
+
+  /* Couleur rouge pour l'exemple */
+}
+
+.pausePaye {
+  background-color: rgb(0, 17, 255);
+  font-size: 9px;
+  color: white;
+}
+
+.pauseNonPaye {
+  background-color: rgb(235, 11, 11);
+  font-size: 9px;
+  color: white;
+}
+
+.react-calendar {
+  width: 400px;
+  max-width: 100%;
+  background-color: #fff;
+  color: #222;
+  font-size: 15px;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 2.125em;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: #f8f8fa;
+}
+
+.react-calendar__navigation button[disabled] {
+  background-color: #f0f0f0;
+}
+
+abbr[title] {
+  text-decoration: none;
+}
+
+.react-calendar__tile--hasActive:enabled:hover,
+.react-calendar__tile--hasActive:enabled:focus {
+  background: #f8f8fa;
+}
+
+.react-calendar--selectRange .react-calendar__tile--hover {
+  background-color: #f8f8fa;
+}
