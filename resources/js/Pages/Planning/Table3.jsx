@@ -26,8 +26,7 @@ const TableComponent = ({
   typePosts,
   siteUsers,
 }) => {
-
-  console.log('events',events)
+  console.log("events", events);
   const getUserFullName = (userId) => {
     const user = siteUsers.find((user) => user.id === userId);
     return user ? user.fullname : "agent inconnu";
@@ -159,24 +158,25 @@ const TableComponent = ({
                     className="flex items-center justify-center mt-2"
                     onClick={(e) => e.stopPropagation()}
                   >
-                     {isMultiSelect && (
-          <>
-                    <input
-                      type="checkbox"
-                      checked={selectedEvents.includes(event.id)}
-                      onChange={(e) => {
-                        toggleSelectEvent(event.id);
-                      }}
-                      className="form-checkbox mb-1 text-yellow-600 h-3 w-3 rounded focus:ring-2 focus:ring-yellow-300 transition-all duration-150 ease-in-out border-2 border-red-600"
-                    />
-                    </>)}
+                    {isMultiSelect && (
+                      <>
+                        <input
+                          type="checkbox"
+                          checked={selectedEvents.includes(event.id)}
+                          onChange={(e) => {
+                            toggleSelectEvent(event.id);
+                          }}
+                          className="form-checkbox mb-1 text-yellow-600 h-3 w-3 rounded focus:ring-2 focus:ring-yellow-300 transition-all duration-150 ease-in-out border-2 border-red-600"
+                        />
+                      </>
+                    )}
                   </div>
 
                   {/* Separator */}
                   <hr className="border-gray-600" />
                 </>
               </div>
-              <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border rounded-md bg-green-200">
+              <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border rounded-md ">
                 <input
                   type="checkbox"
                   onChange={(e) =>
@@ -211,9 +211,9 @@ const TableComponent = ({
 
       let headerClass = "";
       if (isHoliday) {
-        headerClass = "bg-red-200 text-black";
+        headerClass = "bg-green-200 text-black";
       } else if (isWeekend) {
-        headerClass = "bg-yellow-100";
+        headerClass = "bg-red-200";
       } else {
         headerClass = "bg-gray-150";
       }
@@ -254,7 +254,7 @@ const TableComponent = ({
                 eventsForDay
               ) : (
                 <div>
-                  <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border rounded-md bg-green-200">
+                  <div className="flex flex-col items-center justify-center  shadow-xs border rounded-md">
                     <input
                       type="checkbox"
                       onChange={(e) =>
@@ -279,7 +279,6 @@ const TableComponent = ({
     ];
     dayTotalsRow.push(minutesToHoursMinutes(totalMonthlyDuration));
 
-   
     table.push(dayTotalsRow);
 
     return { table, holidaysSet };
@@ -312,7 +311,6 @@ const TableComponent = ({
       if (isChecked) {
         // Add the {user_id, selected_days} to the state
         updatedCheckboxes = [...prevState, { user_id, selected_days }];
-
       } else {
         // Remove the {user_id, selected_days} from the state
         updatedCheckboxes = prevState.filter(
@@ -322,16 +320,13 @@ const TableComponent = ({
               checkbox.selected_days === selected_days
             )
         );
-
       }
-
-
 
       return updatedCheckboxes; // Return the new state
     });
   };
 
-  console.log(selectedCheckboxes)
+  console.log(selectedCheckboxes);
 
   // Handle supprimer  une vacation par souris
   const handleDeleteEvent = (event) => {
@@ -390,8 +385,6 @@ const TableComponent = ({
       selectedEvents.includes(event.id)
     );
 
-
-
     // Vérifier si tous les champs spécifiés correspondent dans les événements sélectionnés
     const allFieldsMatch = eventsToCompare.every((event) => {
       return fieldsToCompare.every((field) => {
@@ -440,8 +433,6 @@ const TableComponent = ({
         alert("✅ Les vacations sélectionnés n'ont pas de différences.");
       }
     }
-
-   
   };
   // Handle modifier une vacation par souris
   const handleEditEvent = (event) => {
@@ -519,9 +510,9 @@ const TableComponent = ({
                     <td
                       key={`cell-${rowIndex}-${cellIndex}`}
                       className={`px-1 py-1  border-r border-gray-600 text-center text-xs font-medium ${
-                        isWeekend ? "bg-yellow-100" : ""
+                        isWeekend ? "bg-red-200" : ""
                       } ${
-                        isHoliday ? "bg-red-200 text-gray" : "text-gray-900"
+                        isHoliday ? "bg-green-200 text-gray" : "text-gray-900"
                       }`}
                     >
                       {cell || "-"}
@@ -536,11 +527,11 @@ const TableComponent = ({
 
       <div className="m-4 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 bg-yellow-200 border border-gray-600 rounded-full"></div>
+          <div className="w-4 h-4 bg-red-200 border border-gray-600 rounded-full"></div>
           <span className="text-gray-800">Week-end</span>
         </div>
         <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 bg-red-200 border border-gray-600 rounded-full"></div>
+          <div className="w-4 h-4 bg-green-200 border border-gray-600 rounded-full"></div>
           <span className="text-gray-800">Jour férié</span>
         </div>
         <div className="flex items-center space-x-1">

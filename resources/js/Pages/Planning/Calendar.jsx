@@ -1,192 +1,165 @@
-import React, { useState, useEffect } from "react";
-import {
-  format,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isWeekend,
-  isSameMonth,
-  isSameDay,
-} from "date-fns";
-import { fr } from "date-fns/locale"; // Import French locale
+import React, { useState } from "react";
 
-const convertHolidays = (holidays) => {
-  return holidays.map((holiday) => new Date(holiday.date));
-};
-
-const sortDates = (dates) => {
-  return dates
-    .map((dateStr) => new Date(dateStr))
-    .sort((a, b) => a - b)
-    .map((date) => format(date, "dd/MM/yyyy"));
-};
-
-const Calendrier = ({ holidays, onDaysSelected, monthYear, resetCalendar }) => {
-
-
-
-  const holidaysDates = convertHolidays(holidays);
-  const [currentDate, setCurrentDate] = useState(new Date());
+const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
   const [selectedDays, setSelectedDays] = useState([]);
 
+  // Function to format date as YYYY-MM-DD
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
+  // Normalize API dates to local timezone
+  const normalizeToLocal = (dateStr) => {
+    const date = new Date(dateStr);
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
 
-  useEffect(() => {
-    if (monthYear) {
-      const { month, year } = monthYear;
-      const newDate = new Date(year, month);
-      setCurrentDate(newDate);
-    }
-  }, [monthYear]);
+  // Normalized holidays array
+  const holidaysNormalized = holidays.map((holiday) => ({
+    ...holiday,
+    normalizedDate: normalizeToLocal(holiday.date),
+  }));
 
-  useEffect(() => {
-    if (resetCalendar) {
-      setSelectedDays([]);
-    }
-  }, [resetCalendar]);
-
-  const startOfMonthDate = startOfMonth(currentDate);
-  const endOfMonthDate = endOfMonth(currentDate);
-  const startOfView = startOfWeek(startOfMonthDate, {
-    locale: fr,
-    weekStartsOn: 1,
-  });
-  const endOfView = endOfWeek(endOfMonthDate, { locale: fr, weekStartsOn: 1 });
-  const days = eachDayOfInterval({ start: startOfView, end: endOfView });
-
-  const toggleSelection = (date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    setSelectedDays((prev) =>
-      prev.includes(dateStr)
-        ? prev.filter((d) => d !== dateStr)
-        : [...prev, dateStr]
+  // Check if the date is a holiday
+  const isHoliday = (date) => {
+    const formattedDate = formatDate(date);
+    return holidaysNormalized.some(
+      (holiday) => formatDate(holiday.normalizedDate) === formattedDate
     );
   };
 
-  const deselectAll = () => {
+  // Check if the date is a weekend
+  const isWeekend = (date) => date.getDay() === 6 || date.getDay() === 0;
+
+  // Get all days in the current month
+  const getDaysInMonth = (year, month) => {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return Array.from(
+      { length: daysInMonth },
+      (_, index) => new Date(year, month, index + 1)
+    );
+  };
+
+  // Handle day selection change
+  const handleDayChange = (date) => {
+    const dateStr = formatDate(date);
+    setSelectedDays((prevSelected) => {
+      const updatedSelectedDays = prevSelected.includes(dateStr)
+        ? prevSelected.filter((day) => day !== dateStr)
+        : [...prevSelected, dateStr];
+
+      // Notify the parent component of the new selection
+      onDaysSelected(updatedSelectedDays);
+      return updatedSelectedDays;
+    });
+  };
+
+  // Deselect all days
+  const deselectAllDays = () => {
     setSelectedDays([]);
+    // Notify the parent component of the deselection
+    onDaysSelected([]);
   };
-
-  const isHoliday = (date) => {
-    return holidaysDates.some((holiday) => isSameDay(date, holiday));
-  };
-
-  useEffect(() => {
-    if (onDaysSelected) {
-      onDaysSelected(selectedDays);
-    }
-  }, [selectedDays, onDaysSelected]);
-
-  // Filtrer les jours sélectionnés pour inclure uniquement ceux du mois courant
-  const sortedSelectedDays = sortDates(
-    selectedDays.filter((day) => {
-      const dayDate = new Date(day);
-      return isSameMonth(dayDate, currentDate);
-    })
-  );
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Calendar Section */}
-      <div className="flex-grow p-1 bg-white shadow-sm rounded-lg mb-1 lg:mb-0 lg:mr-1">
-        {/* Legend */}
-        <div className="mt-2 p-1 bg-gray-100 border-t border-gray-300">
-          <h2 className="text-xs font-semibold text-gray-800 mb-1">Légende</h2>
-          <div className="flex flex-wrap text-xs">
-            <div className="flex items-center mr-2 mb-1">
-              <span className="inline-block w-2 h-2 bg-blue-700 mr-1"></span>
-              <span>Jour sélectionné</span>
-            </div>
-            <div className="flex items-center mr-2 mb-1">
-              <span className="inline-block w-2 h-2 bg-red-600 mr-1"></span>
-              <span>Jour férié</span>
-            </div>
-            <div className="flex items-center mr-2 mb-1">
-              <span className="inline-block w-2 h-2 bg-yellow-100 mr-1"></span>
-              <span>Week-end</span>
-            </div>
+    <div className="calendar-container">
+      {/* Legend Section */}
+      <div className="mt-2 p-2">
+        <div className="flex gap-4">
+          <div className="flex items-center">
+            <span className="text-xs font-bold text-gray-700">Légende :</span>
           </div>
-        </div>
-        <div className="overflow-x-auto flex space-x-2 bg-white border border-gray-300 rounded-md shadow-md p-2">
-          <div className="flex">
-            {days.map((day, dayIndex) => {
-              const dateStr = format(day, "yyyy-MM-dd");
-              const isSelected = selectedDays.includes(dateStr);
-              const isWeekendDay = isWeekend(day);
-              const isCurrentMonthDay = isSameMonth(day, currentDate);
-              const isHolidayDay = isHoliday(day);
-              return (
-                <div
-                  key={dayIndex}
-                  onClick={() => isCurrentMonthDay && toggleSelection(day)}
-                  className={`w-7 h-8 flex items-center justify-center text-xs cursor-pointer transition ${
-                    !isCurrentMonthDay
-                      ? "text-gray-400 cursor-default"
-                      : isSelected
-                      ? isHolidayDay
-                        ? "bg-red-600 text-white font-semibold"
-                        : isWeekendDay
-                        ? "bg-blue-400 text-white font-semibold"
-                        : "bg-blue-800 text-white font-semibold"
-                      : isHolidayDay
-                      ? "bg-red-500 text-gray"
-                      : isWeekendDay
-                      ? "bg-yellow-100 text-gray"
-                      : "text-gray-800 hover:bg-gray-100"
-                  }`}
-                >
-                  {format(day, "d")}
-                </div>
-              );
-            })}
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-red-300 border border-red-500 rounded-md"></div>
+            <span className="text-xs">Weekends (Samedi & Dimanche)</span>
+          </div>
+          <div className="flex items-center">
+            <div className="h-3 w-3 bg-green-300 border border-green-500 rounded-md"></div>
+            <span className="text-xs">Jours fériés</span>
           </div>
         </div>
       </div>
+      <hr className="m-2" />
 
-      {/* Selected Days Section */}
-      <div className="p-1 bg-gray-100 border-t border-gray-300 flex-shrink-0">
-        <h2 className="text-xs font-semibold text-gray-800 mb-1">
-          Jours Sélectionnés
-        </h2>
-        <div className="flex flex-wrap gap-1 overflow-y-auto mb-1">
-          {sortedSelectedDays.length > 0 ? (
-            sortedSelectedDays.map((date) => {
-              const [day, month, year] = date.split("/");
-              const dateObj = new Date(`${month}/${day}/${year}`);
-              const isHolidayDay = isHoliday(dateObj);
-              const isWeekendDay = isWeekend(dateObj);
-              return (
-                <div
-                  key={date}
-                  className={`p-1 text-xs flex items-center rounded ${
-                    isHolidayDay
-                      ? "bg-red-600 text-white"
-                      : isWeekendDay
-                      ? "bg-blue-500 text-white"
-                      : "bg-blue-700 text-white"
-                  }`}
-                >
-                  {format(dateObj, "dd MMM", { locale: fr })}
-                </div>
-              );
-            })
+      {/* Days Selection */}
+      <label className="block text-sm font-bold text-center text-black mb-1 bg-gray-300">
+        Sélectionner des jours
+      </label>
+      <div className="flex flex-col gap-2">
+        {/* Render days dynamically */}
+        <div className="flex flex-wrap justify-center">
+          {getDaysInMonth(year, month - 1).map((date) => (
+            <div
+              key={date.getTime()}
+              className="flex flex-col items-center w-7"
+            >
+              <label
+                htmlFor={`day-${date.getTime()}`}
+                className={`text-xs text-gray-700 ${
+                  isWeekend(date) ? "text-red-500" : ""
+                } ${isHoliday(date) ? "text-green-500" : ""}`}
+              >
+                {String(date.getDate()).padStart(2, "0")}
+              </label>
+              <input
+                type="checkbox"
+                id={`day-${date.getTime()}`}
+                checked={selectedDays.includes(formatDate(date))}
+                onChange={() => handleDayChange(date)}
+                className={`h-4 w-4 text-blue-600 border-gray-300 rounded ${
+                  isWeekend(date) ? "bg-red-300" : ""
+                } ${isHoliday(date) ? "bg-green-200" : ""}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <hr className="m-2" />
+
+      {/* Display selected days */}
+      <div className="mb-2">
+        <h3 className="text-xs font-bold text-gray-700">Jours sélectionnés</h3>
+        <div className="flex flex-wrap gap-2">
+          {selectedDays.length === 0 ? (
+            <div className="text-xs text-gray-600">Aucun jour sélectionné</div>
           ) : (
-            <div className="text-gray-800 text-xs">Aucun jour sélectionné</div>
+            selectedDays
+              .sort((a, b) => new Date(a) - new Date(b))
+              .map((date, index) => {
+                const formattedDate = new Date(date).toLocaleDateString(
+                  "fr-FR",
+                  {
+                    day: "2-digit",
+                    month: "2-digit",
+                  }
+                );
+                return (
+                  <div
+                    key={index}
+                    className="text-[11px] text-white border bg-blue-500 rounded-md p-1"
+                  >
+                    {formattedDate}
+                  </div>
+                );
+              })
           )}
         </div>
+      </div>
+      <hr className="m-2" />
+      {/* Deselect All Button */}
+      <div className="mb-2">
         <button
-          onClick={deselectAll}
-          className="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-200 mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          aria-label="Désélectionner tous les éléments"
+          onClick={deselectAllDays}
+          className="px-2 py-1 bg-red-600 text-[11px] text-white rounded-md hover:bg-red-600"
         >
-          <span className="mr-2">❌</span> Désélectionner tout
+          Désélectionner tout
         </button>
       </div>
     </div>
   );
 };
 
-
-export default Calendrier;
+export default CalendarComponent;

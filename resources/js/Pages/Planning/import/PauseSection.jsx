@@ -10,70 +10,79 @@ const PauseSection = ({
   pause_payment,
   setPausePayment,
   pause_start,
+  setPauseStart,
   pause_end,
-  setPauseStart
-  ,setPauseEnd
+  setPauseEnd,
+  errors,
 }) => {
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="text-center font-semibold text-2xl text-gray-900">
-        Pause
-      </div>
-      <div className="flex flex-col md:flex-row md:space-x-4 bg-white border border-gray-300 rounded-lg shadow-md p-4">
-        {/* Sélection de la pause */}
-        <div className="flex-1">
-          <label
-            htmlFor="pause_payment"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Payable:
+    <div className="flex flex-col">
+      <div className="flex flex-col md:flex-row md:space-x-4 bg-white border border-gray-300 rounded-lg shadow-md p-2">
+        {/* Payable Selection */}
+        <div className="flex-1 border">
+          <label className="block text-sm font-bold text-black text-center bg-gray-300">
+            Pause
           </label>
-          <select
-            id="pause_payment"
-            value={pause_payment}
-            onChange={(e) => setPausePayment(e.target.value)}
-            className="block w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            {BREAK_OPTIONS.map((option, index) => (
-              <option key={index} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-xs font-bold text-black">
+                Payable:
+              </label>
+              <select
+                id="pause_payment"
+                value={pause_payment}
+                onChange={(e) => setPausePayment(e.target.value)}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
+              >
+                {BREAK_OPTIONS.map((option, index) => (
+                  <option key={index} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors?.pause_payment && (
+                <div className="text-red-500 text-sm font-bold">
+                  {errors.pause_payment}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Champs "Début" et "Fin" affichés dynamiquement */}
+        {/* Start and End Time Inputs (conditionally displayed) */}
         {pause_payment !== "noBreak" && (
           <>
             <div className="flex-1">
-              <label
-                htmlFor="pause_start"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Début:
-              </label>
+              <label className="block text-sm text-black">Début:</label>
               <input
                 type="time"
                 id="pause_start"
                 value={pause_start}
                 onChange={(e) => setPauseStart(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
               />
+              {errors?.pause_start && (
+                <div className="text-red-500 text-sm font-bold">
+                  {errors.pause_start}
+                </div>
+              )}
             </div>
+
             <div className="flex-1">
-              <label
-                htmlFor="pause_end"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Fin:
-              </label>
+              <label className="block text-sm text-black">Fin:</label>
               <input
                 type="time"
                 id="pause_end"
                 value={pause_end}
                 onChange={(e) => setPauseEnd(e.target.value)}
-                className="block w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
               />
+              {errors?.pause_end && (
+                <div className="text-red-500 text-sm font-bold">
+                  {errors.pause_end}
+                </div>
+              )}
             </div>
           </>
         )}

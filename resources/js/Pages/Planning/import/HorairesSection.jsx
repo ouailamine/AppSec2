@@ -5,42 +5,48 @@ const HorairesSection = ({
   setVacationStart,
   vacation_end,
   setVacationEnd,
+  errors,
 }) => {
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="text-center font-semibold text-2xl text-gray-900">
+    <div className="flex-1 border p-2">
+      {/* Title Label */}
+      <label className="block text-sm font-bold text-black text-center bg-gray-300">
         Horaires
-      </div>
-      <div className="flex flex-col md:flex-row md:space-x-4 bg-white border border-gray-300 rounded-lg shadow-md p-4">
+      </label>
+
+      <div className="flex gap-4">
+        {/* Vacation Start Time */}
         <div className="flex-1">
-          <label
-            htmlFor="vacation_start"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Début:
-          </label>
+          <label className="block text-xs font-bold text-black">Début:</label>
           <input
             type="time"
             id="vacation_start"
             value={vacation_start}
             onChange={(e) => setVacationStart(e.target.value)}
-            className="block w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
           />
+          {errors?.vacation_start && (
+            <div className="text-red-500 text-xs font-bold font-bold">
+              {errors.vacation_start}
+            </div>
+          )}
         </div>
+
+        {/* Vacation End Time */}
         <div className="flex-1">
-          <label
-            htmlFor="vacation_end"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Fin:
-          </label>
+          <label className="block text-xs font-bold text-black">Fin:</label>
           <input
             type="time"
             id="vacation_end"
             value={vacation_end}
             onChange={(e) => setVacationEnd(e.target.value)}
-            className="block w-full p-2 border border-gray-300 rounded-md text-sm bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
           />
+          {errors?.vacation_end && (
+            <div className="text-red-500 text-sm font-bold">
+              {errors.vacation_end}
+            </div>
+          )}
         </div>
       </div>
     </div>

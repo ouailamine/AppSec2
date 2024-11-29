@@ -13,15 +13,16 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
   //console.log('selectedTypePost',selectedTypePost)
   const validateForm = () => {
     const newErrors = {};
-  
+
     // Ensure that the post name and abbreviation are provided
     if (!postName.trim()) newErrors.postName = "Le nom du poste est requis.";
     if (!postAbbreviation.trim())
       newErrors.postAbbreviation = "L'abréviation est requise.";
-  
+
     // Ensure that a type post is selected
-    if (!selectedTypePost) newErrors.selectedTypePost = "Sélectionnez un type de poste.";
-  
+    if (!selectedTypePost)
+      newErrors.selectedTypePost = "Sélectionnez un type de poste.";
+
     // Check if duration validation is necessary based on default_duration value
     if (selectedTypePost && selectedTypePost.default_duration !== 0) {
       // Validate duration fields only if default_duration is not 0 (false)
@@ -31,31 +32,28 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
         Number(defaultDurationHours) < 0
       )
         newErrors.defaultDurationHours = "Entrez une durée valide en heures.";
-  
+
       if (
         !defaultDurationMinutes ||
         isNaN(Number(defaultDurationMinutes)) ||
         Number(defaultDurationMinutes) < 0
       )
-        newErrors.defaultDurationMinutes = "Entrez une durée valide en minutes.";
+        newErrors.defaultDurationMinutes =
+          "Entrez une durée valide en minutes.";
     }
-  
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
-  
 
   const handleAdd = () => {
     if (validateForm()) {
-
-
       onAddPost({
         name: postName,
         abbreviation: postAbbreviation,
         type_post_id: Number(selectedTypePost),
-        default_duration_hours:defaultDurationHours,
-        default_duration_minutes:defaultDurationMinutes
+        default_duration_hours: defaultDurationHours,
+        default_duration_minutes: defaultDurationMinutes,
       });
       handleClose();
     }
@@ -77,7 +75,10 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-50">
       <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 relative space-y-6 transform transition-transform duration-300"
-        style={{ opacity: open ? 1 : 0, transform: open ? "translateY(0)" : "translateY(-20px)" }}
+        style={{
+          opacity: open ? 1 : 0,
+          transform: open ? "translateY(0)" : "translateY(-20px)",
+        }}
       >
         <h2 className="text-2xl font-bold text-gray-900">
           Ajouter un type de poste
@@ -181,7 +182,9 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
                 onChange={(e) => setDefaultDurationHours(e.target.value)}
                 placeholder="Heures"
                 className={`w-full px-4 py-2 border ${
-                  errors.defaultDurationHours ? "border-red-500" : "border-gray-300"
+                  errors.defaultDurationHours
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200`}
               />
               {errors.defaultDurationHours && (
@@ -205,7 +208,9 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
                 onChange={(e) => setDefaultDurationMinutes(e.target.value)}
                 placeholder="Minutes"
                 className={`w-full px-4 py-2 border ${
-                  errors.defaultDurationMinutes ? "border-red-500" : "border-gray-300"
+                  errors.defaultDurationMinutes
+                    ? "border-red-500"
+                    : "border-gray-300"
                 } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200`}
               />
               {errors.defaultDurationMinutes && (

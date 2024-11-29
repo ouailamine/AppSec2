@@ -1,25 +1,18 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { format } from "date-fns";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
-import Calendar from "./Calendar";
-import Calendarr from "./Calendar2";
 import Table from "./Table3";
 import Alert from "./Alert";
-import { fr } from "date-fns/locale";
-import PostTypeModal from "./AddTypePostModal2";
-import HolidayModal from "./AddHolidayModal2";
-import AddUserModal from "./AddUserToSiteModal2";
+
 import { Inertia } from "@inertiajs/inertia";
 import { Head } from "@inertiajs/react";
 import NavBar from "./import/NavBar";
 import SelectSite from "./import/SelectSite";
 import SelectMonth from "./import/SelectMonth";
 import SelectYear from "./import/SelectYear";
-import PosteSection from "./import/PosteSection";
-import HorairesSection from "./import/HorairesSection";
-import PauseSection from "./import/PauseSection";
 import PlanningHeader from "./import/PlanningHeader";
-import UserSelect from "./import/UserSelect";
+import DaysPostsVacationSelect from "./DaysPostsVacationSelect";
+import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
+
 import {
   createVacationEvents,
   getSundays,
@@ -27,6 +20,7 @@ import {
   validateSelections,
   compareEvents,
 } from "./CreatFunction2"; // Importer les utilitaires
+
 const CreatePlanning = ({
   typePosts = [],
   posts = [],
@@ -37,19 +31,9 @@ const CreatePlanning = ({
   selectedPlanning = [],
   isShow,
 }) => {
-  console.log(holidays)
+  console.log(holidays);
   const [isDisabled, setIsDisabled] = useState(false);
   const [selectedSite, setSelectedSite] = useState("");
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [vacation_start, setVacationStart] = useState("");
-  const [vacation_end, setVacationEnd] = useState("");
-  const [lunchAllowance, setLunchAllowance] = useState("");
-  const [pause_start, setPauseStart] = useState("");
-  const [pause_end, setPauseEnd] = useState("");
-  const [pause_payment, setPausePayment] = useState("noBreak");
-  const [selectedPost, setSelectedPost] = useState("");
-  const [selectedTypePost, setSelectedTypePost] = useState("");
-  const [selected_days, setSelectedDays] = useState([]);
   const [currentMonth, setCurrentMonth] = useState();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -59,14 +43,36 @@ const CreatePlanning = ({
   const [successMessage, setSuccessMessage] = useState("");
   const [events, setEvents] = useState(selectedPlanning?.[0]?.events || []);
   const [eventsNextMonth, setEventsNextMonth] = useState([]);
-  const [resetCalendar, setResetCalendar] = useState(false);
-  const [showAddPostModal, setShowAddPostModal] = useState(false);
-  const [showAddHolidayModal, setShowAddHolidayModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [localPosts, setLocalPosts] = useState(posts);
-  const [listPosts, setListPosts] = useState();
-  const [isCollapsed, setIsCollapsed] = useState(true);
   const [siteUsers, setSiteUsers] = useState([]);
+  const [localSiteUsers, setLocalSiteUsers] = useState([]);
+
+  //const [isCollapsed, setIsCollapsed] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  console.log(selectedSite);
+
+  // Fonction pour ouvrir le modal
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // Fonction pour fermer le modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (selectedSite) {
+      const updateSiteUsers =
+        sites.find((site) => site.id == selectedSite).users || [];
+      setSiteUsers(updateSiteUsers);
+      setLocalSiteUsers(updateSiteUsers);
+    }
+  }, [selectedSite, users]);
+
+  console.log(siteUsers);
+  console.log(localSiteUsers);
 
   useEffect(() => {
     if (selectedPlanning && selectedPlanning[0]) {
@@ -87,46 +93,9 @@ const CreatePlanning = ({
   );
 
   useEffect(() => {
-    if (selectedTypePost) {
-      const filteredPosts = localPosts.filter(
-        (post) => post.type_post_id == parseInt(selectedTypePost)
-      );
-      // Met à jour localPosts avec les postes filtrés
-      setListPosts(filteredPosts);
-    } else {
-      // Réinitialise localPosts lorsque aucun type n'est sélectionné
-      setListPosts(localPosts);
-    }
-  }, [selectedTypePost, posts]); // Ajoute 'posts' à la liste des dépendances si nécessaire
-
-  useEffect(() => {
-    if (selectedSite) {
-      setSiteUsers(sites.find((site) => site.id == selectedSite).users || []);
-    }
-  }, [selectedSite, users]);
-
-  useEffect(() => {
     if (selectedSite !== undefined) {
     }
   }, [selectedSite]);
-
-  // Add users for site
-  const handleAddSiteUsers = (updatedUsers) => {
-    setSiteUsers(updatedUsers);
-  };
-
-  // Add post type
-  const handleAddPost = (post) => {
-    console.log(post);
-    // console.log(post);
-    //setLocalPosts((prev) => [...prev, { id: Date.now(), ...post }]);
-    //console.log(localPosts);
-  };
-
-  // Add holiday
-  const handleAddHoliday = (holiday) => {
-    holidays.push(holiday); // Local addition, ideally you'd also update your server
-  };
 
   const resetForm = () => {
     setSelectedUsers([]);
@@ -145,19 +114,12 @@ const CreatePlanning = ({
 
   const handleSiteChange = (selectedOption) => {
     setSelectedSite(selectedOption);
-    setSiteUsers(selectedOption ? selectedOption.users : []);
+    //setSiteUsers(selectedOption ? selectedOption.users : []);
   };
   const handleUserChange = (selectedOptions) => {
     // Log the selected options
     setSelectedUsers(selectedOptions || []); // Set the state to the selected options, or an empty array if none
   };
-
-  const handlePostChange = (e) => setSelectedPost(e.target.value);
-  const handleTypePostChange = (event) => {
-    setSelectedTypePost(event.target.value);
-  };
-
- 
 
   const handleMonthChange = (selectedMonth) => {
     setCurrentMonth(selectedMonth);
@@ -214,24 +176,23 @@ const CreatePlanning = ({
             planning.site_id == selectedSite
         );
 
-          if (planningExists) {
-            const userChoice = window.confirm(
-              "Un planning a déjà été créé pour le site, le mois et l'année sélectionnés. Voulez-vous le voir maintenant ?"
-            );
+        if (planningExists) {
+          const userChoice = window.confirm(
+            "Un planning a déjà été créé pour le site, le mois et l'année sélectionnés. Voulez-vous le voir maintenant ?"
+          );
 
-            if (userChoice) {
-              // Rediriger vers la route du planning existant si l'utilisateur choisit de le voir
-              const planningIds = [planningExists.id];
-              console.log(planningExists.id)
-              Inertia.visit(route("plannings.show", planningIds), {
-                method: "get",
-                data: { planningIds },
-              });
-            } else {
-              // Afficher le formulaire pour créer un nouveau planning
-              setIsFormVisible(false);
-            }
-          
+          if (userChoice) {
+            // Rediriger vers la route du planning existant si l'utilisateur choisit de le voir
+            const planningIds = [planningExists.id];
+            console.log(planningExists.id);
+            Inertia.visit(route("plannings.show", planningIds), {
+              method: "get",
+              data: { planningIds },
+            });
+          } else {
+            // Afficher le formulaire pour créer un nouveau planning
+            setIsFormVisible(false);
+          }
         } else {
           // Aucun planning existant, afficher le formulaire
           setIsFormVisible(true);
@@ -267,7 +228,6 @@ const CreatePlanning = ({
     // Créer de nouveaux événements pour chaque utilisateur et chaque jour sélectionné
     selectedUsers.forEach((user) => {
       selected_days.forEach((date) => {
-
         const vacationAllEvents = createVacationEvents(
           vacation_start,
           vacation_end,
@@ -283,13 +243,9 @@ const CreatePlanning = ({
         const vacationEvents = vacationAllEvents.events;
         const vacationEventsNextMonth = vacationAllEvents.eventsNextMonth;
 
-   
-
         // Process vacationEvents
         vacationEvents.forEach((vacationEvent) => {
           const currentId = ++lastId;
-
-         
 
           vacationEventsProcessed.push({
             id: currentId,
@@ -305,7 +261,7 @@ const CreatePlanning = ({
             selected_days: vacationEvent.selectedDays, // Specific date for this event
             work_duration: vacationEvent.work_duration, // Adjusted work duration
             night_hours: vacationEvent.night_hours, // Calculated night hours
-            holiday_hours:  vacationEvent.holiday_hours, // Holiday hours
+            holiday_hours: vacationEvent.holiday_hours, // Holiday hours
             sunday_hours: vacationEvent.sunday_hours, // Sunday hours
             isSubEvent: vacationEvent.isSubEvent,
             relatedEvent: vacationEvent.relatedEvent,
@@ -315,8 +271,6 @@ const CreatePlanning = ({
         // Process vacationEventsNextMonth
         vacationEventsNextMonth.forEach((vacationEvent) => {
           const currentId = ++lastId;
-
-          
 
           vacationEventsNextMonthProcessed.push({
             id: currentId,
@@ -332,7 +286,7 @@ const CreatePlanning = ({
             selected_days: vacationEvent.selectedDays, // Specific date for this event
             work_duration: vacationEvent.work_duration, // Adjusted work duration
             night_hours: vacationEvent.night_hours, // Calculated night hours
-            holiday_hours:  vacationEvent.holiday_hours, // Holiday hours
+            holiday_hours: vacationEvent.holiday_hours, // Holiday hours
             sunday_hours: vacationEvent.sunday_hours, // Sunday hours
             isSubEvent: vacationEvent.isSubEvent,
             relatedEvent: vacationEvent.relatedEvent,
@@ -349,7 +303,6 @@ const CreatePlanning = ({
       currentYear,
       users
     );
-
 
     if (checkWeeklyHoursVerif.isError === true) {
       setAlertMessage(checkWeeklyHoursVerif.alerts);
@@ -373,8 +326,7 @@ const CreatePlanning = ({
 
   // Fonction principale pour créer des événements pour les utilisateurs PAR SOURIS
   const createEventsFromAddEvent = (addEvent) => {
-
-    console.log
+    console.log;
     // Dernier ID utilisé
     const maxExistingId =
       events.length > 0 ? Math.max(...events.map((event) => event.id)) : 0;
@@ -382,7 +334,6 @@ const CreatePlanning = ({
 
     // Créer un ensemble des dates de jours fériés pour des recherches rapides
     const holidayDates = new Set(holidays.map((holiday) => holiday.date));
-
 
     let vacationEventsProcessed = [];
     let vacationEventsNextMonthProcessed = [];
@@ -392,7 +343,6 @@ const CreatePlanning = ({
         return (
           Array.isArray(selected_days) ? selected_days : [selected_days]
         ).flatMap((date) => {
-
           const vacationAllEvents = createVacationEvents(
             addEvent.vacation_start,
             addEvent.vacation_end,
@@ -405,17 +355,14 @@ const CreatePlanning = ({
             holidayDates
           );
 
-          
-
           const vacationEvents = vacationAllEvents.events;
           const vacationEventsNextMonth = vacationAllEvents.eventsNextMonth;
-  console.log(vacationEvents)
-      
-  
-           // Process vacationEvents
+          console.log(vacationEvents);
+
+          // Process vacationEvents
           vacationEvents.forEach((vacationEvent) => {
             const currentId = ++lastId;
-  
+
             vacationEventsProcessed.push({
               id: currentId,
               user_id: user_id, // User ID for this event
@@ -430,18 +377,17 @@ const CreatePlanning = ({
               selected_days: vacationEvent.selectedDays, // Specific date for this event
               work_duration: vacationEvent.work_duration, // Adjusted work duration
               night_hours: vacationEvent.night_hours, // Calculated night hours
-              holiday_hours:  vacationEvent.holiday_hours, // Holiday hours
-            sunday_hours: vacationEvent.sunday_hours, // Sunday hours
+              holiday_hours: vacationEvent.holiday_hours, // Holiday hours
+              sunday_hours: vacationEvent.sunday_hours, // Sunday hours
               isSubEvent: vacationEvent.isSubEvent,
               relatedEvent: vacationEvent.relatedEvent,
             });
           });
-  
+
           // Process vacationEventsNextMonth
           vacationEventsNextMonth.forEach((vacationEvent) => {
             const currentId = ++lastId;
-  
-  
+
             vacationEventsNextMonthProcessed.push({
               id: currentId,
               user_id: user_id, // User ID for this event
@@ -456,18 +402,17 @@ const CreatePlanning = ({
               selected_days: vacationEvent.selectedDays, // Specific date for this event
               work_duration: vacationEvent.work_duration, // Adjusted work duration
               night_hours: vacationEvent.night_hours, // Calculated night hours
-              holiday_hours:  vacationEvent.holiday_hours, // Holiday hours
-            sunday_hours: vacationEvent.sunday_hours, // Sunday hours
+              holiday_hours: vacationEvent.holiday_hours, // Holiday hours
+              sunday_hours: vacationEvent.sunday_hours, // Sunday hours
               isSubEvent: vacationEvent.isSubEvent,
               relatedEvent: vacationEvent.relatedEvent,
             });
           });
-  
-          });
-        })
-        .flat();
-  
-     /* const checkWeeklyHoursVerif = checkVacationsAndWeeklyHours(
+        });
+      })
+      .flat();
+
+    /* const checkWeeklyHoursVerif = checkVacationsAndWeeklyHours(
         events,
         newEvents,
         currentMonth,
@@ -485,20 +430,19 @@ const CreatePlanning = ({
           ...prevEvents,
           ...vacationEventsNextMonthProcessed,
         ]);*/
-  
-        setEvents((prevEvents) => [...prevEvents, ...vacationEventsProcessed]);
-        setEventsNextMonth((prevEvents) => [
-          ...prevEvents,
-          ...vacationEventsNextMonthProcessed,
-        ]);
-        // Réinitialiser le formulaire après la création des événements
-        resetForm();
-  
-        // Afficher un message de succès
-        let msg = "Vacation(s) créé(s) avec succès !";
-        setSuccessMessage([msg]);
-      
-    };
+
+    setEvents((prevEvents) => [...prevEvents, ...vacationEventsProcessed]);
+    setEventsNextMonth((prevEvents) => [
+      ...prevEvents,
+      ...vacationEventsNextMonthProcessed,
+    ]);
+    // Réinitialiser le formulaire après la création des événements
+    resetForm();
+
+    // Afficher un message de succès
+    let msg = "Vacation(s) créé(s) avec succès !";
+    setSuccessMessage([msg]);
+  };
 
   //modification vacation
   const handleEditEvent = (updatedEvent) => {
@@ -681,7 +625,7 @@ const CreatePlanning = ({
           />
         )}
 
-        {isShow ? (
+        {isShow || !isButtonVisible ? (
           // Conteneur principal pour aligner les éléments en colonne
           <PlanningHeader
             selectedSite={selectedSite}
@@ -722,106 +666,45 @@ const CreatePlanning = ({
         {isFormVisible && (
           <>
             <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out text-sm"
+              onClick={() => setShowAddUserModal(true)}
+              className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+              aria-label="Ajouter des agents"
             >
-              {isCollapsed ? "Ajouter des vacations" : "Masquer"}
+              <span className="mr-2">👥</span> Gestion des agents
+            </button>
+            <button
+              onClick={openModal}
+              className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              Ajouter une /des vacation(s)
             </button>
 
-            {!isCollapsed && (
-              <>
-                <div className="bg-white border border-gray-300 rounded-md shadow-md p-4 space-y-4 mt-4">
-                  <div className="flex items-center justify-center">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setShowAddUserModal(true)}
-                        className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        aria-label="Ajouter des agents"
-                      >
-                        <span className="mr-2">👥</span> Ajouter des agents
-                      </button>
-                      {/*}
-                      <button
-                        onClick={() => setShowAddHolidayModal(true)}
-                        className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        aria-label="Ajouter un jour férié"
-                      >
-                        <span className="mr-2">📆</span> Ajouter un jour férié
-                      </button>{*/}
-                      <button
-                        onClick={() => setShowAddPostModal(true)}
-                        className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        aria-label="Ajouter un post"
-                      >
-                        <span className="mr-2">✍️</span> Ajouter un Post
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* User Select and Agent Management */}
-                  <UserSelect
-                    siteUsers={siteUsers}
-                    selectedUsers={selectedUsers}
-                    handleUserChange={handleUserChange}
-                    setShowAddUserModal={setShowAddUserModal}
+            {isModalOpen && (
+              <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-lg p-1 w-[1000px] relative">
+                  <DaysPostsVacationSelect
+                    onClose={closeModal}
+                    selectedSite={selectedSite}
+                    sites={sites}
+                    posts={posts}
+                    typePosts={typePosts}
+                    holidays={holidays}
+                    month={currentMonth}
+                    year={currentYear}
+                    users={users}
+                    siteUsers={localSiteUsers}
+                    onAddNewUser={setSiteUsers}
                   />
 
-                  <div className="bg-white border border-gray-300 rounded-md shadow-md p-1 space-y-2">
-                    <Calendarr
-                      onDaysSelected={setSelectedDays}
-                      holidays={holidays}
-                      monthYear={{ month: currentMonth - 1, year: currentYear }}
-                      resetCalendar={resetCalendar}
-                      siteUsers={siteUsers}
-                    />
-                  </div>
-                  <div className="flex space-x-4">
-                    <div className="flex-1" style={{ flexBasis: "40%" }}>
-                      <PosteSection
-                        typePosts={typePosts}
-                        selectedTypePost={selectedTypePost}
-                        handleTypePostChange={handleTypePostChange}
-                        listPosts={listPosts}
-                        selectedPost={selectedPost}
-                        handlePostChange={handlePostChange}
-                      />
-                    </div>
-                    <div className="flex-1" style={{ flexBasis: "20%" }}>
-                      <HorairesSection
-                        vacation_start={vacation_start}
-                        setVacationStart={setVacationStart}
-                        vacation_end={vacation_end}
-                        setVacationEnd={setVacationEnd}
-                      />
-                    </div>
-                    <div className="flex-1" style={{ flexBasis: "40%" }}>
-                      <PauseSection
-                        pause_payment={pause_payment}
-                        setPausePayment={setPausePayment}
-                        setPauseStart={setPauseStart}
-                        setPauseEnd={setPauseEnd}
-                        pause_start={pause_start}
-                        pause_end={pause_end}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <button
-                      onClick={createEventsForUsers}
-                      className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors mt-4 text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-                      aria-label="Ajouter des vacations"
-                      // Désactiver si l'état de chargement est actif
-                    >
-                      <>
-                        <span className="mr-2">➕</span> Ajouter vacation(s)
-                      </>
-                    </button>
-                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+                  >
+                    ❌
+                  </button>
                 </div>
-              </>
+              </div>
             )}
-
             <div className="mt-4">
               <Table
                 month={Number(currentMonth)}
@@ -829,53 +712,44 @@ const CreatePlanning = ({
                 holidays={holidays}
                 events={events}
                 selectedSite={selectedSite}
-                selected_days={selected_days}
-                localPosts={localPosts}
+                //selected_days={selectedDays}
                 typePosts={typePosts}
                 onEditEvent={handleEditEvent}
                 onDeleteEvent={handleDeleteEvent}
                 onCreateEvent={createEventsFromAddEvent}
                 AllUsers={users}
-                siteUsers={siteUsers}
+                siteUsers={localSiteUsers}
               />
             </div>
+
+            <AddUserToSiteModal
+              isOpen={showAddUserModal}
+              onClose={() => setShowAddUserModal(false)}
+              onAddUser={setLocalSiteUsers}
+              selectedSite={selectedSite}
+              users={users}
+              siteUsers={siteUsers}
+              sites={sites}
+              localSiteUsers={localSiteUsers}
+            />
             <div className="flex justify-center">
-              <button
-                onClick={handleSavePlanning}
-                className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
-                  events.length === 0
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                } text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed`}
-                aria-label="Sauvegarder le planning"
-                // Désactiver le bouton pendant la sauvegarde
-              >
-                Sauvegarder
-              </button>
+              {events.length !== 0 && (
+                <button
+                  onClick={handleSavePlanning}
+                  className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
+                    events.length === 0
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  } text-sm font-semibold`}
+                  aria-label="Sauvegarder le planning"
+                  disabled={events.length === 0} // Disable the button when no events
+                >
+                  Sauvegarder
+                </button>
+              )}
             </div>
           </>
         )}
-
-        {/* Modals */}
-        <AddUserModal
-          isOpen={showAddUserModal}
-          onClose={() => setShowAddUserModal(false)}
-          onAddUser={handleAddSiteUsers}
-          selectedSite={selectedSite}
-          users={users}
-          siteUsers={siteUsers}
-        />
-        <PostTypeModal
-          open={showAddPostModal}
-          onClose={() => setShowAddPostModal(false)}
-          onAddPost={handleAddPost}
-          typePosts={typePosts}
-        />
-        <HolidayModal
-          open={showAddHolidayModal}
-          onClose={() => setShowAddHolidayModal(false)}
-          onAddHoliday={handleAddHoliday}
-        />
       </div>
     </AdminAuthenticatedLayout>
   );

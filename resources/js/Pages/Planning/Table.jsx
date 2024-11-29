@@ -26,12 +26,10 @@ const TableComponent = ({
   typePosts,
   siteUsers,
 }) => {
-
   console.log(events);
   console.log(month);
   console.log(year);
 
-  
   const getUserFullName = (userId) => {
     const user = siteUsers.find((user) => user.id === userId);
     return user ? user.fullname : "agent inconnu";
@@ -48,8 +46,6 @@ const TableComponent = ({
     selected_days: [],
   });
 
-
-  
   const zeroIndexedMonth = month - 1;
 
   const filteredHolidays = filterHolidaysForMonth(
@@ -101,8 +97,9 @@ const TableComponent = ({
         day <= daysInMonth
       ) {
         const colorClass =
-        pause_payment === "yes" || pause_payment === "noBreak" ? "text-blue-500" : "text-red-500";
-
+          pause_payment === "yes" || pause_payment === "noBreak"
+            ? "text-blue-500"
+            : "text-red-500";
 
         const formatTime = (timeString) => {
           if (!timeString) return "";
@@ -213,9 +210,9 @@ const TableComponent = ({
 
       let headerClass = "";
       if (isHoliday) {
-        headerClass = "bg-red-200 text-black";
+        headerClass = "bg-green-200 text-black";
       } else if (isWeekend) {
-        headerClass = "bg-yellow-100";
+        headerClass = "bg-red-300";
       } else {
         headerClass = "bg-gray-50";
       }
@@ -499,9 +496,9 @@ const TableComponent = ({
                     <td
                       key={`cell-${rowIndex}-${cellIndex}`}
                       className={`px-2 py-1 border-r border-gray-300 text-center text-xs font-medium ${
-                        isWeekend ? "bg-yellow-100" : ""
+                        isWeekend ? "bg-red-300" : ""
                       } ${
-                        isHoliday ? "bg-red-200 text-gray" : "text-gray-900"
+                        isHoliday ? "bg-green-300 text-gray" : "text-gray-900"
                       }`}
                     >
                       {cell || "-"}
@@ -516,11 +513,11 @@ const TableComponent = ({
 
       <div className="m-4 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 bg-yellow-200 border border-gray-300 rounded-full"></div>
+          <div className="w-4 h-4 bg-red-300 border border-gray-300 rounded-full"></div>
           <span className="text-gray-800">Week-end</span>
         </div>
         <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 bg-red-200 border border-gray-300 rounded-full"></div>
+          <div className="w-4 h-4 bg-green-300 border border-gray-300 rounded-full"></div>
           <span className="text-gray-800">Jour férié</span>
         </div>
         <div className="flex items-center space-x-1">
@@ -538,7 +535,6 @@ const TableComponent = ({
       </div>
 
       <div className="mb-4 flex justify-center md:justify-start gap-4">
-        
         <button
           onClick={handleDeleteSelectedEvents}
           className="bg-red-600 text-white px-3 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-red-700 transition-colors duration-150"
