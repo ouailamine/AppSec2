@@ -24,8 +24,8 @@ const PauseSection = ({
             Pause
           </label>
 
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="flex gap-2">
+            <div className="flex-2">
               <label className="block text-xs font-bold text-black">
                 Payable:
               </label>
@@ -33,7 +33,7 @@ const PauseSection = ({
                 id="pause_payment"
                 value={pause_payment}
                 onChange={(e) => setPausePayment(e.target.value)}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
+                className="m-1 block w-full border-gray-300 rounded-md shadow-sm text-sm"
               >
                 {BREAK_OPTIONS.map((option, index) => (
                   <option key={index} value={option.value}>
@@ -47,14 +47,14 @@ const PauseSection = ({
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          
+        
 
         {/* Start and End Time Inputs (conditionally displayed) */}
         {pause_payment !== "noBreak" && (
           <>
             <div className="flex-1">
-              <label className="block text-sm text-black">Début:</label>
+              <label className="block text-xs font-bold text-black">Début:</label>
               <input
                 type="time"
                 id="pause_start"
@@ -70,7 +70,7 @@ const PauseSection = ({
             </div>
 
             <div className="flex-1">
-              <label className="block text-sm text-black">Fin:</label>
+              <label className="block text-xs font-bold text-black">Fin:</label>
               <input
                 type="time"
                 id="pause_end"
@@ -86,6 +86,8 @@ const PauseSection = ({
             </div>
           </>
         )}
+        </div>
+        </div>
       </div>
     </div>
   );

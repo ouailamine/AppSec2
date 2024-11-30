@@ -12,14 +12,13 @@ const AddUserModal = ({
   sites,
   localSiteUsers,
 }) => {
-  console.log(siteUsers);
-  console.log(localSiteUsers);
+
 
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showVacancyInput, setShowVacancyInput] = useState(false);
   const [vacancyInput, setVacancyInput] = useState("");
 
-  console.log(selectedUsers);
+
 
   useEffect(() => {
     setSelectedUsers((siteUsers || []).map((user) => user.id));
@@ -48,7 +47,7 @@ const AddUserModal = ({
   };
 
   const toggleVacancyInput = (e) => {
-    console.log(e.target);
+
 
     setShowVacancyInput((prev) => !prev);
   };
@@ -57,7 +56,7 @@ const AddUserModal = ({
 
   const handleAddUnassignedUser = (unassigned) => {
     const unassignedUser = { id: currentId++, fullname: unassigned }; // Incrémente l'ID après utilisation
-    console.log(unassignedUser); // Affiche l'utilisateur avec l'ID unique
+
   };
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 transition-opacity duration-300">

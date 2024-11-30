@@ -83,7 +83,7 @@ export const checkVacationsAndWeeklyHours = (
 
   // Fusionner les événements existants et les nouveaux événements
   events = events.concat(newEvents);
-  console.log("Événements après fusion:", events);
+
 
   // Vérification si la liste des événements est vide
   if (!events || events.length === 0) {
@@ -264,10 +264,7 @@ export const checkVacationsAndWeeklyHours = (
   checkWorkDurationAlert(workDurationByUser, errors);
 
   const isError = alerts.length > 0;
-  console.log("isError:", isError);
-  console.log("alerts:", alerts);
-  console.log("errors:", errors);
-  console.log("workDurationByUser:", workDurationByUser);
+
 
   return {
     isError: alerts.length > 0 || errors.length > 0,
@@ -437,22 +434,13 @@ export const createVacationEvents = (
   holidays
 ) => {
   console.log("holidays", holidays);
-  console.log(
-    start,
-    end,
-    selectedDay,
-    pauseStart,
-    pauseEnd,
-    pausePayment,
-    currentMonth,
-    currentYear
-  );
+  console.log(selectedDay);
 
   const sundays = getSundays(currentMonth, currentYear).map(
     (date) => date.toISOString().split("T")[0] // Format each Sunday as YYYY-MM-DD
   );
 
-  
+  console.log(sundays)
 
   const isSunday = (date) => {
     return sundays.includes(date); // Check if the date exists in the Sundays array
@@ -578,7 +566,7 @@ export const createVacationEvents = (
         workDurationFirstSegment + workDurationSecondSegment >= 360 ? 1 : 0;
 
       if (nextDayFormat > lastDayOfMonth) {
-        console.log("depasse le dernier jour");
+
         // First segment event
         events.push({
           vacation_start: start,

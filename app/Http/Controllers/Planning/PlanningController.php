@@ -19,25 +19,19 @@ class PlanningController extends Controller
 {
     public function index()
     {
-        $plannings = Planning::with(['site'])->get();
-        $sites = site::All();
         return Inertia::render('Planning/Index', [
-            'plannings' => $plannings,
-            'sites' => $sites
-
+            'plannings' => Planning::with(['site'])->get(),
+            'sites' => site::All(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    // Méthode pour afficher le formulaire de création
+
     public function create()
     {
         return Inertia::render('Planning/Create3', [
             'posts' => Post::all(),
             'sites' => Site::with('users')->get(),
-            'holidays' => Holiday::all(),
+            'holidays' => Holiday::pluck('date')->toArray(),
             'users' => User::all(),
             'plannings' => Planning::all(),
             'typePosts' => TypePost::all(),
@@ -51,15 +45,10 @@ class PlanningController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug the request (remove in production)
-        dd($request);
-
-        // 1. Validate that there are events in the request
         if (empty($request->events) || !is_array($request->events)) {
             return redirect()->back()->withErrors(['error' => 'No events provided for the planning.']);
         }
 
-        // 2. Create the planning for the current month if events are present
         $planning = Planning::create([
             'site_id' => $request->site,
             'month' => $request->month,
@@ -67,7 +56,7 @@ class PlanningController extends Controller
             'isValidate' => false,
         ]);
 
-        // 3. Create the associated events for the current month
+
         foreach ($request->events as $eventData) {
             $planning->events()->create([
                 'id' => $eventData['id'],
@@ -91,12 +80,10 @@ class PlanningController extends Controller
             ]);
         }
 
-        // 4. Handle events for the next month, if provided
         if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
             $nextMonth = $request->month + 1;
             $nextYear = $request->year;
 
-            // Adjust year if the month is December (12 -> 1 of next year)
             if ($nextMonth > 12) {
                 $nextMonth = 1;
                 $nextYear += 1;
@@ -133,7 +120,6 @@ class PlanningController extends Controller
             }
         }
 
-        // 5. Redirect with a success message
         return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
     }
 
@@ -143,51 +129,29 @@ class PlanningController extends Controller
      */
     public function show(Request $request)
     {
-        // Ensure that 'planningIds' is a single value or an array; adjust accordingly
         $planningId = $request->planningIds;
-
-        // Fetch all required data in one go
-        $sites = Site::with('users')->get();
-        $posts = Post::all();
-        $holidays = Holiday::all();
-        $users = User::all();
-
-        // Find the planning instance with the associated events
         $selectedPlanning = Planning::with('events')->find($planningId);
 
-
-
-
-
-        // If planning is not found, handle the error (optional)
         if (!$selectedPlanning) {
             return redirect()->route('plannings.index')->with('error', 'Planning not found.');
         }
-
-        // Return the Inertia view with the required data
         return Inertia::render('Planning/Create3', [
             'selectedPlanning' => $selectedPlanning,
-            'posts' => $posts,
-            'sites' => $sites,
-            'holidays' => $holidays,
-            'users' => $users,
+            'posts' => Post::all(),
+            'sites' => Site::with('users')->get(),
+            'holidays' => Holiday::pluck('date')->toArray(),
+            'users' => User::all(),
             'typePosts' => TypePost::all(),
             'isShow' => true
         ]);
     }
 
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id) {}
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        // 1. Retrieve the existing Planning instance by ID
+     
         $planning = Planning::findOrFail($id);
 
         // 2. Update the Planning with the new data from the request

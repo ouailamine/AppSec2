@@ -21,7 +21,9 @@ const Modal = ({
   modalData,
   eventsToEdit,
   selectedCheckboxes,
+  posts
 }) => {
+
   const [formData, setFormData] = useState({
     id: null,
     pause_end: "",
@@ -89,9 +91,11 @@ const Modal = ({
 
         onSave(updatedFormData);
       } else {
+        
         formData.selectedUsersDays = selectedCheckboxes;
 
         onAdd(formData);
+        
         setFormData({
           pause_end: "",
           pause_payment: "noBreak",
@@ -130,6 +134,8 @@ const Modal = ({
     return true; // Si toutes les validations passent
   };
 
+
+
   // Trouver le type de poste sélectionné
   const selectedTypePost = typePosts.find(
     (type) => type.id === Number(formData.typePost)
@@ -137,10 +143,11 @@ const Modal = ({
 
   // Filtrer les posts en fonction du type de poste sélectionné
   const filteredPosts = formData.typePost
-    ? (localPosts || []).filter(
+    ? (posts || []).filter(
         (post) => post.type_post_id === Number(formData.typePost)
       )
     : [];
+
 
   if (!isOpen) return null;
 

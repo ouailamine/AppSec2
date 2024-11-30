@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import PosteSection from "./import/PosteSection";
 import HorairesSection from "./import/HorairesSection";
 import PauseSection from "./import/PauseSection";
@@ -31,13 +31,10 @@ const DaysPostsVacationSelect = ({
   const [selectedUsers, setSelectedusers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState(siteUsers);
   const [showAddPostModal, setShowAddPostModal] = useState(false);
-
   const [resetCalendar, setResetCalendar] = useState(false);
-
-  console.log(localSiteUsers);
+  const [errorMessages, setErrorMessages] = useState({});
 
   const handleAddUsers = (newLocalUsersIds) => {
-    console.log(newLocalUsersIds);
     const updateLocaleSiteUsers = users.filter((user) =>
       newLocalUsersIds.includes(user.id)
     );
@@ -50,46 +47,76 @@ const DaysPostsVacationSelect = ({
     setSelectedTypePost(event.target.value);
   };
 
-  const handleCreateEvents = () => {
-    const newEvent = {
-      user_id: selectedUsers,
-      vacationStart: vacation_start,
-      vacationEnd: vacation_end,
-      pauseStart: pause_start,
-      pauseEnd: pause_end,
-      pausePayment: pause_payment,
-      selectedPost,
-      selectedTypePost,
-      selectedDays,
-    };
-    console.log(newEvent);
+  const validateForm = () => {
+    const errors = {};
+    if (selectedUsers.length === 0) {
+      errors.users = "Veuillez sélectionner au moins un utilisateur.";
+    }
+    if (selectedDays.length === 0) {
+      errors.days = "Veuillez sélectionner au moins un jour.";
+    }
+    if (!selectedPost) {
+      errors.post = "Veuillez sélectionner un poste.";
+    }
+    if (!selectedTypePost) {
+      errors.typePost = "Veuillez sélectionner un type de poste.";
+    }
+    if (!vacation_start || !vacation_end) {
+      errors.vacation = "Veuillez définir les horaires de vacation.";
+    }
 
-    //    createEventsForUsers();
+    setErrorMessages(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  console.log(selectedUsers);
+  const handleCreateEvents = () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    const selectedUsersDays = selectedUsers.flatMap((user_id) =>
+      selectedDays.map((selectedDay) => ({
+        user_id: user_id,
+        selected_days: selectedDay,
+      }))
+    );
+
+    const newEvent = {
+      selectedUsersDays, // tableau construit
+      vacation_start: vacation_start,
+      vacation_end: vacation_end,
+      pause_start: pause_start,
+      pause_end: pause_end,
+      pause_payment: pause_payment,
+      selectedPost,
+      selectedTypePost,
+    };
+
+    console.log(newEvent);
+
+    createEventsForUsers(newEvent);
+    onClose();
+  };
 
   return (
     <div>
       <div className="bg-white border border-gray-900 rounded-md shadow-md p-2 space-y-2">
         <div className="flex items-center justify-center">
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setShowAddPostModal(true)}
-              className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-              aria-label="Ajouter un post"
-            >
-              <span className="mr-2">✍️</span> Ajouter un Post (provisoire)
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddPostModal(true)}
+            className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <span className="mr-2">✍️</span> Ajouter un Post (provisoire)
+          </button>
         </div>
 
         <UserSelect
           siteUsers={localSiteUsers}
           onUsersSelected={setSelectedusers}
-          //handleUserChange={handleUserChange}
-          //setShowAddUserModal={setShowAddUserModal}
         />
+        {errorMessages.users && (
+          <p className="text-red-600 font-bold text-sm">{errorMessages.users}</p>
+        )}
 
         <div className="bg-white border border-gray-300 rounded-md shadow-md p-1 space-y-2">
           <Calendar
@@ -100,7 +127,11 @@ const DaysPostsVacationSelect = ({
             resetCalendar={resetCalendar}
             siteUsers={siteUsers}
           />
+          {errorMessages.days && (
+            <p className="text-red-600 font-bold text-sm">{errorMessages.days}</p>
+          )}
         </div>
+
         <div className="flex space-x-4">
           <div className="flex-1" style={{ flexBasis: "40%" }}>
             <PosteSection
@@ -112,7 +143,16 @@ const DaysPostsVacationSelect = ({
               selectedPost={selectedPost}
               handlePostChange={handlePostChange}
             />
+            {errorMessages.post && (
+              <p className="text-red-600 font-bold text-sm">{errorMessages.post}</p>
+            )}
+            {errorMessages.typePost && (
+              <p className="text-red-600 font-bold text-sm">
+                {errorMessages.typePost}
+              </p>
+            )}
           </div>
+
           <div className="flex-1" style={{ flexBasis: "20%" }}>
             <HorairesSection
               vacation_start={vacation_start}
@@ -120,7 +160,13 @@ const DaysPostsVacationSelect = ({
               vacation_end={vacation_end}
               setVacationEnd={setVacationEnd}
             />
+            {errorMessages.vacation && (
+              <p className="text-red-600 font-bold text-sm">
+                {errorMessages.vacation}
+              </p>
+            )}
           </div>
+
           <div className="flex-1" style={{ flexBasis: "40%" }}>
             <PauseSection
               pause_payment={pause_payment}
@@ -137,14 +183,12 @@ const DaysPostsVacationSelect = ({
           <button
             onClick={onClose}
             className="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-sm font-semibold"
-            aria-label="Annuler l'ajout de vacations"
           >
             Annuler
           </button>
           <button
             onClick={handleCreateEvents}
             className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-            aria-label="Ajouter des vacations"
           >
             <span className="inline-flex items-center">
               <span className="mr-2">➕</span> Ajouter vacation(s)
@@ -156,7 +200,6 @@ const DaysPostsVacationSelect = ({
       <PostTypeModal
         open={showAddPostModal}
         onClose={() => setShowAddPostModal(false)}
-        //onAddPost={handleAddPost}
         typePosts={typePosts}
       />
     </div>

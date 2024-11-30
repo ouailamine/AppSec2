@@ -25,8 +25,9 @@ const TableComponent = ({
   AllUsers,
   typePosts,
   siteUsers,
+  posts
 }) => {
-  console.log("events", events);
+
   const getUserFullName = (userId) => {
     const user = siteUsers.find((user) => user.id === userId);
     return user ? user.fullname : "agent inconnu";
@@ -202,38 +203,52 @@ const TableComponent = ({
     );
 
     const table = [];
-    const headers = ["Agents"];
+    const headers = [
+      <div
+        key="header-agents"
+        className="text-center text-sm text-black font-bold"
+      >
+        Agents
+      </div>,
+    ];
+
+    // Boucle pour les jours du mois
     for (let i = 0; i < daysInMonth; i++) {
       const date = new Date(year, month, i + 1);
       const dayOfMonth = i + 1;
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       const isHoliday = holidaysSet.has(dayOfMonth);
 
-      let headerClass = "";
-      if (isHoliday) {
-        headerClass = "bg-green-200 text-black";
-      } else if (isWeekend) {
-        headerClass = "bg-red-200";
-      } else {
-        headerClass = "bg-gray-150";
-      }
+      // Classes dynamiques pour les en-têtes
+      const headerClass = isHoliday
+        ? "bg-green-200 text-black"
+        : isWeekend
+        ? "bg-red-200"
+        : "bg-gray-100";
 
       headers.push(
         <div
           key={`header-${i}`}
-          className={`text-center text-xs ${headerClass}`}
+          className={`text-center text-xs py-1 px-2 rounded-md ${headerClass}`}
         >
-          <div>{daysOfWeek[date.getDay()]}</div>
-          <div>{dayOfMonth}</div>
+          <div className="font-medium text-gray-700">
+            {daysOfWeek[date.getDay()]}
+          </div>
+          <div className="font-bold">{dayOfMonth}</div>
         </div>
       );
     }
 
+    // Ajout de la colonne "Total"
     headers.push(
-      <div className="text-center text-xs font-bold" key="total">
+      <div
+        key="header-total"
+        className="text-center text-sm font-bold text-black py-1 px-2 rounded-md"
+      >
         Total
       </div>
     );
+
     table.push(headers);
 
     siteUsers.forEach((user) => {
@@ -326,7 +341,6 @@ const TableComponent = ({
     });
   };
 
-  console.log(selectedCheckboxes);
 
   // Handle supprimer  une vacation par souris
   const handleDeleteEvent = (event) => {
@@ -463,6 +477,9 @@ const TableComponent = ({
     setCreateEditEventModal(true);
   };
   const handleAddEvent = (newEvent) => {
+
+
+    
     onCreateEvent(newEvent);
     setCreateEditEventModal(false);
     setSelectedCheckboxes([]);
@@ -620,6 +637,7 @@ const TableComponent = ({
         onSave={handleSaveEvent}
         onAdd={handleAddEvent}
         localPosts={localPosts}
+        posts={posts}
         typePosts={typePosts}
         createMode={createMode}
         isMultiEditMode={isMultiEditMode}

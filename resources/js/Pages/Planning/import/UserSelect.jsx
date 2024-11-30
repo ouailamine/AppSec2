@@ -11,7 +11,7 @@ const UserSelect = ({ siteUsers, selectedUsers = [], onUsersSelected }) => {
       : [...selected, userId];
     setSelected(updatedSelected);
 
-    console.log(updatedSelected);
+
     onUsersSelected(updatedSelected); // Notify parent component of the updated selection
   };
 
