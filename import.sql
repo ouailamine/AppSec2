@@ -88,9 +88,9 @@ VALUES (
 INSERT INTO
     type_posts (name, default_duration)
 VALUES ('Indisponible', false),
+    ('Absence', true),
     ('Sécurité Incendie', false),
     ('Sureté', false);
-    ('Absence', true),
 
 INSERT INTO
     diplomas (
@@ -506,89 +506,33 @@ VALUES (1, 01, 'Guadeloupe'),
     );
 
 INSERT INTO
-    site_user (site_id, user_id)
-SELECT site_id, user_id
-FROM (
-        SELECT site_id, user_id
-        FROM (
-                -- Générer une liste de tous les sites
-                SELECT 1 AS site_id
-                UNION ALL
-                SELECT 2
-                UNION ALL
-                SELECT 3
-                UNION ALL
-                SELECT 4
-                UNION ALL
-                SELECT 5
-                UNION ALL
-                SELECT 6
-                UNION ALL
-                SELECT 7
-                UNION ALL
-                SELECT 8
-                UNION ALL
-                SELECT 9
-                UNION ALL
-                SELECT 10
-            ) AS sites
-            CROSS JOIN (
-                -- Générer une liste de tous les gardes
-                SELECT 2 AS user_id
-                UNION ALL
-                SELECT 3
-                UNION ALL
-                SELECT 4
-                UNION ALL
-                SELECT 5
-                UNION ALL
-                SELECT 6
-                UNION ALL
-                SELECT 7
-                UNION ALL
-                SELECT 8
-                UNION ALL
-                SELECT 9
-                UNION ALL
-                SELECT 10
-                UNION ALL
-                SELECT 11
-                UNION ALL
-                SELECT 12
-                UNION ALL
-                SELECT 13
-                UNION ALL
-                SELECT 14
-                UNION ALL
-                SELECT 15
-                UNION ALL
-                SELECT 16
-                UNION ALL
-                SELECT 17
-                UNION ALL
-                SELECT 18
-                UNION ALL
-                SELECT 19
-                UNION ALL
-                SELECT 20
-                UNION ALL
-                SELECT 21
-                UNION ALL
-                SELECT 22
-                UNION ALL
-                SELECT 23
-                UNION ALL
-                SELECT 24
-                UNION ALL
-                SELECT 25
-            ) AS users
-        ORDER BY RAND()
-    ) AS random_pairs
-GROUP BY
-    site_id,
-    user_id
-HAVING
-    COUNT(*) <= 4;
+    sites (
+        name,
+        manager_name,
+        address,
+        email,
+        phone,
+        created_at,
+        updated_at
+    )
+VALUES (
+        'Univ Paul Valery',
+        'John Doe',
+        '123 University Ave, City',
+        'contact@univpaulvalery.edu',
+        '123-456-7890',
+        NOW(),
+        NOW()
+    ),
+    (
+        'Apple',
+        'Jane Smith',
+        '1 Apple Park Way, Cupertino, CA',
+        'contact@apple.com',
+        '987-654-3210',
+        NOW(),
+        NOW()
+    );
 
 -- Insérer les jours fériés pour 2024
 INSERT INTO
@@ -811,35 +755,6 @@ VALUES (
     (
         'Noël',
         '2026-12-25',
-        NOW(),
-        NOW()
-    );
-
-INSERT INTO
-    sites (
-        name,
-        manager_name,
-        address,
-        email,
-        phone,
-        created_at,
-        updated_at
-    )
-VALUES (
-        'Univ Paul Valery',
-        'John Doe',
-        '123 University Ave, City',
-        'contact@univpaulvalery.edu',
-        '123-456-7890',
-        NOW(),
-        NOW()
-    ),
-    (
-        'Apple',
-        'Jane Smith',
-        '1 Apple Park Way, Cupertino, CA',
-        'contact@apple.com',
-        '987-654-3210',
         NOW(),
         NOW()
     );

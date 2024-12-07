@@ -11,9 +11,8 @@ use App\Models\Site;
 use App\Models\Post;
 use App\Models\TypePost;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class PlanningController extends Controller
 {
@@ -28,7 +27,7 @@ class PlanningController extends Controller
 
     public function create()
     {
-        return Inertia::render('Planning/Create3', [
+        return Inertia::render('Planning/Create', [
             'posts' => Post::all(),
             'sites' => Site::with('users')->get(),
             'holidays' => Holiday::pluck('date')->toArray(),
@@ -45,64 +44,30 @@ class PlanningController extends Controller
      */
     public function store(Request $request)
     {
+        // Vérifier que les événements sont valides
         if (empty($request->events) || !is_array($request->events)) {
             return redirect()->back()->withErrors(['error' => 'No events provided for the planning.']);
         }
 
-        $planning = Planning::create([
-            'site_id' => $request->site,
-            'month' => $request->month,
-            'year' => $request->year,
-            'isValidate' => false,
-        ]);
+        DB::beginTransaction(); // Démarrer une transaction
 
-
-        foreach ($request->events as $eventData) {
-            $planning->events()->create([
-                'id' => $eventData['id'],
-                'user_id' => $eventData['user_id'],
+        try {
+            // Créer le planning principal
+            $planning = Planning::create([
                 'site_id' => $request->site,
                 'month' => $request->month,
                 'year' => $request->year,
-                'typePost' => $eventData['typePost'],
-                'post' => $eventData['post'],
-                'lunchAllowance' => $eventData['lunchAllowance'],
-                'vacation_start' => $eventData['vacation_start'],
-                'vacation_end' => $eventData['vacation_end'],
-                'pause_payment' => $eventData['pause_payment'],
-                'pause_start' => $eventData['pause_start'],
-                'pause_end' => $eventData['pause_end'],
-                'selected_days' => $eventData['selected_days'],
-                'work_duration' => $eventData['work_duration'],
-                'night_hours' => $eventData['night_hours'],
-                'sunday_hours' => $eventData['sunday_hours'],
-                'holiday_hours' => $eventData['holiday_hours'],
-            ]);
-        }
-
-        if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
-            $nextMonth = $request->month + 1;
-            $nextYear = $request->year;
-
-            if ($nextMonth > 12) {
-                $nextMonth = 1;
-                $nextYear += 1;
-            }
-
-            $nextMonthPlanning = Planning::create([
-                'site_id' => $request->site,
-                'month' => $nextMonth,
-                'year' => $nextYear,
                 'isValidate' => false,
             ]);
 
-            foreach ($request->eventsNextMonth as $eventData) {
-                $nextMonthPlanning->events()->create([
+            // Ajouter les événements pour le mois courant
+            foreach ($request->events as $eventData) {
+                $planning->events()->create([
                     'id' => $eventData['id'],
                     'user_id' => $eventData['user_id'],
                     'site_id' => $request->site,
-                    'month' => $nextMonth,
-                    'year' => $nextYear,
+                    'month' => $request->month,
+                    'year' => $request->year,
                     'typePost' => $eventData['typePost'],
                     'post' => $eventData['post'],
                     'lunchAllowance' => $eventData['lunchAllowance'],
@@ -116,12 +81,63 @@ class PlanningController extends Controller
                     'night_hours' => $eventData['night_hours'],
                     'sunday_hours' => $eventData['sunday_hours'],
                     'holiday_hours' => $eventData['holiday_hours'],
+                    'isSubEvent' => $eventData['isSubEvent'],
+                    'relatedEvent' => $eventData['relatedEvent'],
                 ]);
             }
-        }
 
-        return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
+            // Ajouter les événements pour le mois suivant, si fournis
+            if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
+                $nextMonth = $request->month + 1;
+                $nextYear = $request->year;
+
+                if ($nextMonth > 12) {
+                    $nextMonth = 1;
+                    $nextYear += 1;
+                }
+
+                $nextMonthPlanning = Planning::create([
+                    'site_id' => $request->site,
+                    'month' => $nextMonth,
+                    'year' => $nextYear,
+                    'isValidate' => false,
+                ]);
+
+                foreach ($request->eventsNextMonth as $eventData) {
+                    $nextMonthPlanning->events()->create([
+                        'id' => $eventData['id'],
+                        'user_id' => $eventData['user_id'],
+                        'site_id' => $request->site,
+                        'month' => $nextMonth,
+                        'year' => $nextYear,
+                        'typePost' => $eventData['typePost'],
+                        'post' => $eventData['post'],
+                        'lunchAllowance' => $eventData['lunchAllowance'],
+                        'vacation_start' => $eventData['vacation_start'],
+                        'vacation_end' => $eventData['vacation_end'],
+                        'pause_payment' => $eventData['pause_payment'],
+                        'pause_start' => $eventData['pause_start'],
+                        'pause_end' => $eventData['pause_end'],
+                        'selected_days' => $eventData['selected_days'],
+                        'work_duration' => $eventData['work_duration'],
+                        'night_hours' => $eventData['night_hours'],
+                        'sunday_hours' => $eventData['sunday_hours'],
+                        'holiday_hours' => $eventData['holiday_hours'],
+                        'isSubEvent' => $eventData['isSubEvent'],
+                        'relatedEvent' => $eventData['relatedEvent'],
+                    ]);
+                }
+            }
+
+            DB::commit(); // Confirmer la transaction si tout est réussi
+
+            return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
+        } catch (\Exception $e) {
+            DB::rollBack(); // Annuler toutes les opérations en cas d'erreur
+            return redirect()->back()->withErrors(['error' => 'An error occurred while creating the planning: ' . $e->getMessage()]);
+        }
     }
+
 
 
     /**
@@ -132,10 +148,13 @@ class PlanningController extends Controller
         $planningId = $request->planningIds;
         $selectedPlanning = Planning::with('events')->find($planningId);
 
+
+
+
         if (!$selectedPlanning) {
             return redirect()->route('plannings.index')->with('error', 'Planning not found.');
         }
-        return Inertia::render('Planning/Create3', [
+        return Inertia::render('Planning/Create', [
             'selectedPlanning' => $selectedPlanning,
             'posts' => Post::all(),
             'sites' => Site::with('users')->get(),
@@ -151,7 +170,7 @@ class PlanningController extends Controller
 
     public function update(Request $request, string $id)
     {
-     
+
         $planning = Planning::findOrFail($id);
 
         // 2. Update the Planning with the new data from the request

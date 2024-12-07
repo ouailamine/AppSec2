@@ -26,7 +26,6 @@ const styles = StyleSheet.create({
     border: "1px solid black",
   },
   squareNumberCarte: {
-    fontWeight: "bold",
     fontSize: 8,
     marginTop: 5,
     margin: 3,

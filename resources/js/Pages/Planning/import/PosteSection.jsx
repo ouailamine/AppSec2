@@ -9,11 +9,13 @@ const PosteSection = ({
   errors,
   posts,
 }) => {
+  console.log(typePosts, posts);
   // Filter posts based on selected type (optional based on your logic)
   const filteredPosts = posts.filter(
     (post) => post.type_post_id == selectedTypePost
   );
-
+  console.log(selectedTypePost);
+  console.log(filteredPosts);
   return (
     <div className="flex-1 border p-2">
       {/* Title Label */}

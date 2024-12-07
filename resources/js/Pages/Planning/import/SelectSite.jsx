@@ -1,32 +1,27 @@
-import React, { useState } from "react";
+import React from "react";
 
-const SelectSite = ({ siteOptions, handleSiteChange, isDisabled }) => {
-  const [selectedSite, setSelectedSite] = useState("");
-
-  const onChange = (event) => {
-    const value = event.target.value;
-    setSelectedSite(value); // Met à jour l'état local
-    if (handleSiteChange) {
-      handleSiteChange(value); // Notifie le parent si une fonction est passée
-    }
-  };
-
+const SelectSite = ({ sites = [], selectedSite, handleSiteChange, errors }) => {
   return (
-    <select
-      value={selectedSite} // L'état contrôle la valeur
-      onChange={onChange}
-      disabled={isDisabled}
-      className="w-full sm:max-w-xs p-2 border border-gray-300 rounded-lg bg-white text-gray-800 cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
-    >
-      <option value="" disabled>
-        Sélectionner un site
-      </option>
-      {siteOptions.map((option) => (
-        <option key={option.id} value={option.id}>
-          {option.name}
-        </option>
-      ))}
-    </select>
+    <div className="w-full sm:max-w-xs">
+      <select
+        id="selectedSite"
+        value={selectedSite}
+        onChange={(e) => handleSiteChange(e.target.value)}
+        className="w-60 mt-1 text-gray-700 bg-white border border-gray-300 rounded-lg  focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+      >
+        <option value="">Sélectionner un site</option>
+        {sites.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.name}
+          </option>
+        ))}
+      </select>
+      {errors?.selectedSite && (
+        <div className="mt-1 text-red-500 text-xs font-bold">
+          {errors.selectedSite}
+        </div>
+      )}
+    </div>
   );
 };
 

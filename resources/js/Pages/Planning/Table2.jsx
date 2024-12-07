@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   PencilIcon,
@@ -11,6 +11,7 @@ import {
   getDaysInMonth,
   filterHolidaysForMonth,
   minutesToHoursMinutes,
+  mergeAllEvents,
 } from "./CreatFunction";
 
 const TableComponent = ({
@@ -21,32 +22,42 @@ const TableComponent = ({
   onEditEvent,
   onDeleteEvent,
   onCreateEvent,
-  localPosts,
+  //localPosts,
   AllUsers,
   typePosts,
   siteUsers,
+  posts,
 }) => {
-  console.log(events);
-  //console.log(month);
-  //console.log(year);
-
-  const getUserFullName = (userId) => {
-    const user = siteUsers.find((user) => user.id === userId);
-    return user ? user.fullname : "agent inconnu";
-  };
-
   const [createEditEventModal, setCreateEditEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);
   const [createMode, setCreateMode] = useState(false);
   const [isMultiEditMode, setIsMultiEditMode] = useState(false);
-  const [eventsToEdit, setEventsToEdit] = useState([]);
+  const [isMultiSelect, setIsMultiSelect] = useState(false);
+  const [eventsToEditId, setEventsToEditId] = useState([]);
   const [modalData, setModalData] = useState({
     user_id: null,
     selected_days: [],
   });
-
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
+  const [tableEvents, setTableEvents] = useState(events);
+
+  useEffect(() => {
+    if (events) {
+      setTableEvents(events);
+    }
+  }, [events]);
+
+  const handleMergeEvents = () => {
+    const result = mergeAllEvents(events);
+    console.log(result);
+    setTableEvents(result);
+  };
+
+  const getUserFullName = (userId) => {
+    const user = siteUsers.find((user) => user.id === userId);
+    return user ? user.fullname : "agent inconnu";
+  };
 
   const zeroIndexedMonth = month - 1;
 
@@ -56,7 +67,7 @@ const TableComponent = ({
     year
   );
 
-  const createTable = (events, month, year, holidays) => {
+  const createTable = (tableEvents, month, year, holidays) => {
     const daysInMonth = getDaysInMonth(month, year);
     const userEventsMap = {};
     const daysOfWeek = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
@@ -73,7 +84,7 @@ const TableComponent = ({
       });
     }
 
-    events.forEach((event) => {
+    tableEvents.forEach((event) => {
       const {
         user_id,
         selected_days,
@@ -81,9 +92,7 @@ const TableComponent = ({
         vacation_end,
         pause_payment,
         post,
-        lunchAllowance,
-        pause_start,
-        pause_end,
+
         work_duration,
       } = event;
 
@@ -110,54 +119,66 @@ const TableComponent = ({
         };
 
         const cellContent = (
-          <div className="flex flex-col text-xs text-center ">
+          <div className="flex flex-col text-xs text-center">
             <div>{post}</div>
             <div>{formatTime(vacation_start)}</div>
             <div className={colorClass}>P</div>
             <div>{formatTime(vacation_end)}</div>
           </div>
         );
+
         if (userEventsMap[user_id] && userEventsMap[user_id][2]) {
           userEventsMap[user_id][day - 1].push(
-            <div>
+            <div key={event.id}>
               <div
-                className="flex flex-col py-0 px-1 mb-0 shadow-sm border rounded-md bg-white"
-                key={event.id}
+                className="flex flex-col py-0 px-1 mb-0 shadow-sm  bg-white"
                 onClick={() => handleEditEvent(event)}
               >
-                <>
-                  {cellContent}
+                {cellContent}
 
-                  {/* Edit/Delete Button Group */}
-                  <div className="flex justify-center space-x-1 mt-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditEvent(event);
-                      }}
-                      title="Éditer"
-                      className="text-blue-500 hover:text-blue-700 focus:outline-none transition duration-150 ease-in-out"
-                    >
-                      <PencilIcon className="w-4 h-4" />
-                    </button>
-                    <CogIcon />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEvent(event);
-                      }}
-                      title="Supprimer"
-                      className="text-red-500 hover:text-red-700 focus:outline-none transition duration-150 ease-in-out"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </div>
+                {/* Edit/Delete Button Group */}
+                <div className="flex justify-center space-x-1 mt-0">
+                  {!isMultiSelect && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditEvent(event);
+                        }}
+                        title="Éditer"
+                        aria-label="Edit Event"
+                        className="text-blue-500 hover:text-blue-700 focus:outline-none transition duration-150 ease-in-out"
+                      >
+                        <PencilIcon className="w-4 h-4" />
+                      </button>
 
-                  {/* Select Checkbox */}
-                  <div
-                    className="flex items-center justify-center mt-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (
+                            confirm(
+                              "Êtes-vous sûr de vouloir supprimer cet événement ?"
+                            )
+                          ) {
+                            handleDeleteEvent(event);
+                          }
+                        }}
+                        title="Supprimer"
+                        aria-label="Delete Event"
+                        className="text-red-500 hover:text-red-700 focus:outline-none transition duration-150 ease-in-out"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Select Checkbox */}
+                <div
+                  className="flex items-center justify-center mt-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {isMultiSelect && (
                     <input
                       type="checkbox"
                       checked={selectedEvents.includes(event.id)}
@@ -166,21 +187,20 @@ const TableComponent = ({
                       }}
                       className="form-checkbox mb-1 text-yellow-600 h-3 w-3 rounded focus:ring-2 focus:ring-yellow-300 transition-all duration-150 ease-in-out border-2 border-red-600"
                     />
-                  </div>
+                  )}
+                </div>
 
-                  {/* Separator */}
-                  <hr className="border-gray-600" />
-                </>
+                {/* Separator */}
+                <hr className="border-gray-600" />
               </div>
-              <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border rounded-md bg-green-200">
+              <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border border-green-600 rounded-md ">
                 <input
                   type="checkbox"
                   onChange={(e) =>
                     handleCheckboxChange(e, user_id, selected_days)
-                  } // Always pass `user_id` and `selected_days`
-                  className="form-checkbox  h-4 w-4 rounded  border-gray-600 m-1"
+                  }
+                  className="form-checkbox h-4 w-4 rounded  border-green-600 m-1"
                 />
-                {/* Optional text for context */}
               </div>
             </div>
           );
@@ -193,43 +213,57 @@ const TableComponent = ({
       }
     });
 
+    // Correcting the holiday set
     const holidaysSet = new Set(
-      holidays.map((holiday) => new Date(holiday.date).getDate())
+      holidays.map((holiday) => new Date(holiday).getDate())
     );
 
     const table = [];
-    const headers = ["Agents"];
+    const headers = [
+      <div
+        key="header-agents"
+        className="text-center text-sm text-black font-bold px-6"
+      >
+        Agents
+      </div>,
+    ];
+
+    // Boucle pour les jours du mois
     for (let i = 0; i < daysInMonth; i++) {
       const date = new Date(year, month, i + 1);
       const dayOfMonth = i + 1;
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
       const isHoliday = holidaysSet.has(dayOfMonth);
 
-      let headerClass = "";
-      if (isHoliday) {
-        headerClass = "bg-red-200 text-black";
-      } else if (isWeekend) {
-        headerClass = "bg-yellow-100";
-      } else {
-        headerClass = "bg-gray-150";
-      }
+      const headerClass = isHoliday
+        ? "bg-red-200 text-black"
+        : isWeekend
+        ? "bg-blue-200"
+        : "bg-gray-100";
 
       headers.push(
         <div
           key={`header-${i}`}
-          className={`text-center text-xs ${headerClass}`}
+          className={`text-center text-xs  px-1 rounded-md ${headerClass}`}
         >
-          <div>{daysOfWeek[date.getDay()]}</div>
-          <div>{dayOfMonth}</div>
+          <div className="font-medium text-gray-700">
+            {daysOfWeek[date.getDay()]}
+          </div>
+          <div className="font-bold">{dayOfMonth}</div>
         </div>
       );
     }
 
+    // Ajout de la colonne "Total"
     headers.push(
-      <div className="text-center text-xs font-bold" key="total">
+      <div
+        key="header-total"
+        className="text-center text-sm font-bold text-black py-1 px-2 rounded-md"
+      >
         Total
       </div>
     );
+
     table.push(headers);
 
     siteUsers.forEach((user) => {
@@ -238,11 +272,10 @@ const TableComponent = ({
       table.push([
         getUserFullName(user_id, AllUsers),
         ...days.map((eventsForDay, index) => {
-          // Create full date string in "yyyy/mm/dd" format for the current cell
-          const selected_days = `${year}/${String(month + 1).padStart(
+          const selected_days = `${year}-${String(month + 1).padStart(
             2,
             "0"
-          )}/${String(index + 1).padStart(2, "0")}`;
+          )}-${String(index + 1).padStart(2, "0")}`;
 
           return (
             <div key={`events-${index}`} className="flex flex-col items-center">
@@ -250,15 +283,14 @@ const TableComponent = ({
                 eventsForDay
               ) : (
                 <div>
-                  <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border rounded-md bg-green-200">
+                  <div className="flex flex-col items-center justify-center shadow-xs border border-green-600 rounded-md">
                     <input
                       type="checkbox"
                       onChange={(e) =>
                         handleCheckboxChange(e, user_id, selected_days)
-                      } // Always pass `user_id` and `selected_days`
-                      className="form-checkbox  h-4 w-4 rounded  border-gray-600 m-1"
+                      }
+                      className="form-checkbox h-4 w-4 rounded  border-green-700 m-1"
                     />
-                    {/* Optional text for context */}
                   </div>
                 </div>
               )}
@@ -275,83 +307,19 @@ const TableComponent = ({
     ];
     dayTotalsRow.push(minutesToHoursMinutes(totalMonthlyDuration));
 
-    //console.log('dayTotalsRow',dayTotalsRow)
     table.push(dayTotalsRow);
 
     return { table, holidaysSet };
   };
 
-  // Function to handle checkbox state changes
-
-  const handleCheckboxChange = (e, user_id, selected_days) => {
-    const isChecked = e.target.checked;
-
-    console.log(`Checkbox clicked. Checked: ${isChecked}`);
-    console.log(`user_id: ${user_id}, selected_days: ${selected_days}`);
-
-    setSelectedCheckboxes((prevState) => {
-      let updatedCheckboxes;
-
-      if (isChecked) {
-        // Add the {user_id, selected_days} to the state
-        updatedCheckboxes = [...prevState, { user_id, selected_days }];
-        console.log("Adding:", { user_id, selected_days });
-      } else {
-        // Remove the {user_id, selected_days} from the state
-        updatedCheckboxes = prevState.filter(
-          (checkbox) =>
-            !(
-              checkbox.user_id === user_id &&
-              checkbox.selected_days === selected_days
-            )
-        );
-        console.log("Removing:", { user_id, selected_days });
-      }
-
-      console.log("Updated selectedCheckboxes:", updatedCheckboxes);
-
-      return updatedCheckboxes; // Return the new state
-    });
-  };
-
   const { table, holidaysSet } = createTable(
-    events,
+    tableEvents,
     zeroIndexedMonth,
     year,
     filteredHolidays
   );
 
-  const handleEditEvent = (event) => {
-    setCreateMode(false);
-    setIsMultiEditMode(false);
-    setSelectedEvent(event);
-    setCreateEditEventModal(true);
-  };
-
-  const handleSaveEvent = (updatedEvent) => {
-    onEditEvent(updatedEvent);
-    setCreateEditEventModal(false);
-  };
-
-  const handleMultiSaveEvent = (updatedMultiEvent) => {
-    console.log(updatedMultiEvent);
-    //onMultiEditEvent(updatedMultiEvent);
-    setCreateEditEventModal(false);
-  };
-
-  const handleAddEvent = (newEvent) => {
-    console.log(newEvent);
-    onCreateEvent(newEvent);
-    setCreateEditEventModal(false);
-    setSelectedCheckboxes([]);
-  };
-
-  const handleDeleteEvent = (event) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
-      onDeleteEvent(event);
-    }
-  };
-
+  // Function pour la selection des events
   const toggleSelectEvent = (eventId) => {
     setSelectedEvents((prevSelected) => {
       if (prevSelected.includes(eventId)) {
@@ -362,6 +330,34 @@ const TableComponent = ({
     });
   };
 
+  // Function pour la selection user/date des checkbox
+  const handleCheckboxChange = (e, user_id, selected_days) => {
+    const isChecked = e.target.checked;
+    setSelectedCheckboxes((prevState) => {
+      let updatedCheckboxes;
+
+      if (isChecked) {
+        // Add the {user_id, selected_days} to the state
+        updatedCheckboxes = [...prevState, { user_id, selected_days }];
+      } else {
+        // Remove the {user_id, selected_days} from the state
+        updatedCheckboxes = prevState.filter(
+          (checkbox) =>
+            checkbox.user_id !== user_id ||
+            checkbox.selected_days !== selected_days
+        );
+      }
+
+      return updatedCheckboxes; // Return the new state
+    });
+  };
+
+  // Handle supprimer  une vacation par souris
+  const handleDeleteEvent = (event) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
+      onDeleteEvent(event);
+    }
+  };
   const handleDeleteSelectedEvents = () => {
     if (selectedEvents.length === 0) {
       alert("Aucun événement sélectionné");
@@ -374,7 +370,7 @@ const TableComponent = ({
       )
     ) {
       selectedEvents.forEach((eventId) => {
-        const event = events.find((e) => e.id === eventId);
+        const event = tableEvents.find((e) => e.id === eventId);
         if (event) {
           onDeleteEvent(event);
         }
@@ -383,28 +379,18 @@ const TableComponent = ({
     }
   };
 
-  // Handle multiple events edit
-  const handleEditSelectedEvents = (event) => {
+  // Handle modifier plusieurs vacation par souris
+  const handleEditSelectedEvents = () => {
     setCreateMode(false);
     // Vérifier si aucun événement n'est sélectionné
     if (selectedEvents.length === 0) {
       alert("Aucun événement sélectionné");
       return;
+    } else if (selectedEvents.length === 1) {
+      alert("Il faut au moins 2 vacations selectionnés");
+      return;
     }
 
-    // Filtrer la liste des événements sélectionnés en fonction des IDs
-    const selectedEventsList = events.filter((event) =>
-      selectedEvents.includes(event.id)
-    );
-
-    if(selectedEventsList.length === 1){
-      setCreateEditEventModal(true);
-      setCreateMode(false)
-      setEventsToEdit(selectedEventsList)
-      
-    }
-
-    console.log(selectedEventsList)
     // Liste des champs à comparer entre les événements sélectionnés
     const fieldsToCompare = [
       "lunchAllowance",
@@ -418,81 +404,80 @@ const TableComponent = ({
       "work_duration",
     ];
 
-    // Vérifier si tous les événements ont les mêmes valeurs pour les champs spécifiques
-    const allFieldsMatch = selectedEventsList.every((event) => {
+    // Filtrer les événements sélectionnés par leurs IDs
+    const eventsToCompare = tableEvents.filter((event) =>
+      selectedEvents.includes(event.id)
+    );
+
+    // Vérifier si tous les champs spécifiés correspondent dans les événements sélectionnés
+    const allFieldsMatch = eventsToCompare.every((event) => {
       return fieldsToCompare.every((field) => {
-        // Comparer chaque champ avec le premier événement
-        return event[field] === selectedEventsList[0][field];
+        // Comparer chaque champ avec le premier événement sélectionné
+        return event[field] === eventsToCompare[0][field];
       });
     });
 
     // Si tous les champs sont identiques, on ouvre le modal en mode édition
     if (allFieldsMatch) {
-      setIsMultiEditMode(true); // Mettre le mode édition à true
-      setCreateEditEventModal(true); // Ouvrir le modal d'édition
-
-      // Sélectionner le premier événement à éditer
-      const eventToEdit = selectedEventsList[0];
-
-      // Ajouter les champs spécifiques dans eventToEdit
-      const eventFieldsToEdit = fieldsToCompare.reduce((acc, field) => {
-        acc[field] = eventToEdit[field]; // Ajout des champs spécifiés dans l'objet
-        return acc;
-      }, {});
-
-      // Ajouter la liste complète des événements sélectionnés à eventToEdit
-      eventToEdit.selectedEvents = selectedEvents; // Ajout de la liste complète des événements
-
-      // Mettre à jour `eventsToEdit` avec les champs spécifiés et la liste complète des événements
-      setEventsToEdit({
-        ...eventFieldsToEdit, // Ajout des champs spécifiques
-        selectedEvents, // Ajout de la liste complète des événements
-      });
-
-      console.log({
-        eventFieldsToEdit, // Afficher les champs ajoutés pour débogage
-        selectedEventsList, // Afficher la liste complète des événements
-      });
+      setSelectedEvent(eventsToCompare[0]);
+      setIsMultiEditMode(true);
+      setCreateEditEventModal(true);
     } else {
       // Afficher les différences entre les événements sélectionnés
-      const differences = selectedEventsList
+      const differences = eventsToCompare
         .map((event, index) => {
           const diff = {};
           fieldsToCompare.forEach((field) => {
-            if (event[field] !== selectedEventsList[0][field]) {
+            if (event[field] !== eventsToCompare[0][field]) {
               diff[field] = {
                 [`Event ${index + 1}`]: event[field],
-                [`Event 1`]: selectedEventsList[0][field],
+                [`Event 1`]: eventsToCompare[0][field],
               };
             }
           });
-          return diff;
+          return { index: index + 1, diff }; // Inclure l'index de l'événement
         })
-        .filter((diff) => Object.keys(diff).length > 0); // Filtrer les événements sans différences
+        .filter(({ diff }) => Object.keys(diff).length > 0); // Filtrer les événements sans différences
 
       // Si des différences sont trouvées, les formater pour l'alerte
       if (differences.length > 0) {
         let differencesMessage =
-          "Les événements sélectionnés ont des différences dans les champs suivants :\n";
-        differences.forEach((diff, index) => {
+          "Les Vacations sélectionnés ont des différences dans les champs suivants :\n";
+        differences.forEach(({ index, diff }) => {
           for (let field in diff) {
-            differencesMessage += `\nChamp: ${field}\n`;
-            differencesMessage += `Event 1: ${diff[field]["Event 1"]}\n`;
-            differencesMessage += `Event ${index + 2}: ${
-              diff[field]["Event " + (index + 1)]
+            differencesMessage += `\n🔹 **Champ : ${field}**\n`;
+            differencesMessage += `   - Event 1 : ${diff[field]["Event 1"]}\n`;
+            differencesMessage += `   - Event ${index} : ${
+              diff[field]["Event " + index]
             }\n`;
           }
         });
         alert(differencesMessage);
       } else {
-        alert("Les événements sélectionnés n'ont pas de différences.");
+        alert("✅ Les vacations sélectionnés n'ont pas de différences.");
       }
     }
-
-    console.log(selectedEventsList); // Afficher les événements sélectionnés dans la console pour le débogage
+  };
+  // Handle modifier une vacation par souris
+  const handleEditEvent = (event) => {
+    setCreateMode(false);
+    setIsMultiEditMode(false);
+    setSelectedEvent(event);
+    setCreateEditEventModal(true);
   };
 
-  //cree un ou plusieurs vacation par souris
+  const handleSaveEvent = (updatedEvent) => {
+    if (isMultiEditMode) {
+      updatedEvent.id = selectedEvents;
+      onEditEvent(updatedEvent);
+      setCreateEditEventModal(false);
+    }
+
+    onEditEvent(updatedEvent);
+    setCreateEditEventModal(false);
+  };
+
+  // cree un ou plusieurs vacation par souris
   const handleCreateSelectedEvents = () => {
     if (!selectedCheckboxes || selectedCheckboxes.length === 0) {
       alert("Aucun agent/Jour sélectionné");
@@ -502,15 +487,45 @@ const TableComponent = ({
     setCreateEditEventModal(true);
   };
 
+  const handleAddEvent = (newEvent) => {
+    console.log(newEvent);
+    onCreateEvent(newEvent);
+    setCreateEditEventModal(false);
+    setSelectedCheckboxes([]);
+  };
+
   // déselectionner tout les checkbox
   const handleDeselectedEvent = () => {
     setSelectedCheckboxes([]);
     setSelectedEvents([]);
   };
 
+  const handleShowMultiSelect = () => {
+    setIsMultiSelect((prevState) => !prevState);
+  };
+
+  const handleSepareteEvents = () => {
+    setTableEvents(events);
+  };
+
   return (
     <div className="bg-white border border-gray-600 rounded-md shadow-sm p-1 space-y-1">
       <div className="overflow-x-auto">
+        <div className="flex justify-center items-center space-x-2 p-4 bg-gray-50 rounded-md shadow-sm">
+          <button
+            onClick={handleMergeEvents}
+            className="merge-button bg-blue-500 text-white text-sm px-3 py-2 rounded-md shadow hover:bg-blue-600 hover:shadow transition duration-200"
+          >
+            Fusionner les vacations
+          </button>
+          <button
+            onClick={handleSepareteEvents}
+            className="merge-button bg-red-500 text-white text-sm px-3 py-2 rounded-md shadow hover:bg-red-600 hover:shadow transition duration-200"
+          >
+            Défussionner les vacations
+          </button>
+        </div>
+
         <table className="min-w-full divide-y divide-gray-600 border-collapse border border-gray-600">
           <thead className="bg-gray-150">
             <tr>
@@ -540,7 +555,7 @@ const TableComponent = ({
                     <td
                       key={`cell-${rowIndex}-${cellIndex}`}
                       className={`px-1 py-1  border-r border-gray-600 text-center text-xs font-medium ${
-                        isWeekend ? "bg-yellow-100" : ""
+                        isWeekend ? "bg-blue-200" : ""
                       } ${
                         isHoliday ? "bg-red-200 text-gray" : "text-gray-900"
                       }`}
@@ -557,7 +572,7 @@ const TableComponent = ({
 
       <div className="m-4 flex flex-wrap gap-4 text-xs">
         <div className="flex items-center space-x-1">
-          <div className="w-4 h-4 bg-yellow-200 border border-gray-600 rounded-full"></div>
+          <div className="w-4 h-4 bg-blue-200 border border-gray-600 rounded-full"></div>
           <span className="text-gray-800">Week-end</span>
         </div>
         <div className="flex items-center space-x-1">
@@ -579,31 +594,48 @@ const TableComponent = ({
       </div>
 
       <div className="mb-4 flex justify-center md:justify-start gap-4">
-        <button
-          onClick={handleDeleteSelectedEvents}
-          className="bg-red-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-red-700 transition-colors duration-150"
-          aria-label="Supprimer les événements sélectionnés"
-        >
-          <span className="mr-2">🗑️</span> Supprimer
-        </button>
+        {events.length > 0 && (
+          <button
+            onClick={handleShowMultiSelect}
+            className="bg-gray-600 text-white px-1 py-1 text-xs font-medium rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out transform hover:scale-105"
+            aria-label="Activer la sélection multiple"
+          >
+            <span className="mr-3 text-lg" role="img" aria-label="Clipboard">
+              📋
+            </span>
+            Multi Select
+          </button>
+        )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleEditSelectedEvents(event);
-          }}
-          className="bg-yellow-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-yellow-700 transition-colors duration-150"
-          aria-label="Modifier les événements sélectionnés"
-        >
-          <span className="mr-2">✏️</span> Modifier
-        </button>
+        {isMultiSelect && (
+          <>
+            <button
+              onClick={handleDeleteSelectedEvents}
+              className="bg-red-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-red-700 transition-colors duration-150"
+              aria-label="Supprimer les événements sélectionnés"
+            >
+              <span className="mr-2">🗑️</span> Supprimer
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditSelectedEvents(event);
+              }}
+              className="bg-yellow-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-yellow-700 transition-colors duration-150"
+              aria-label="Modifier les événements sélectionnés"
+            >
+              <span className="mr-2">✏️</span> Modifier
+            </button>
+          </>
+        )}
 
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleCreateSelectedEvents(event);
           }}
-          className="bg-green-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-green-700 transition-colors duration-150"
+          className="bg-green-700 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-green-700 transition-colors duration-150"
           aria-label="Créer un nouvel événement"
         >
           <span className="mr-2">➕</span> Créer
@@ -636,12 +668,13 @@ const TableComponent = ({
         event={selectedEvent}
         onSave={handleSaveEvent}
         onAdd={handleAddEvent}
-        localPosts={localPosts}
+        //localPosts={localPosts}
+        posts={posts}
         typePosts={typePosts}
         createMode={createMode}
         isMultiEditMode={isMultiEditMode}
         modalData={modalData}
-        eventsToEdit={eventsToEdit}
+        eventsToEditId={eventsToEditId}
         selectedCheckboxes={selectedCheckboxes}
       />
     </div>
@@ -658,7 +691,7 @@ TableComponent.propTypes = {
       description: PropTypes.string,
     })
   ).isRequired,
-  events: PropTypes.arrayOf(
+  tableEvents: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       user_id: PropTypes.string.isRequired,
@@ -680,7 +713,7 @@ TableComponent.propTypes = {
       fullname: PropTypes.string.isRequired,
     })
   ).isRequired,
-  localPosts: PropTypes.array.isRequired, // Ajoutez cette ligne si localPosts est requis
+  //localPosts: PropTypes.array.isRequired, // Ajoutez cette ligne si localPosts est requis
   typePosts: PropTypes.array.isRequired, // Ajoutez cette ligne si typePosts est requis
 };
 

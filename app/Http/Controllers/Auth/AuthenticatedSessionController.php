@@ -97,8 +97,16 @@ class AuthenticatedSessionController extends Controller
     protected function redirigerSelonRole($user, $filteredUsersCount, $filteredVacationsCount): RedirectResponse
     {
         try {
+            // Chargement des rôles utilisateur
             $user->load('roles');
-            Log::info('Roles de l\'utilisateur:', ['roles' => $user->roles->pluck('name')]);
+
+            // Log pour vérifier les rôles récupérés
+            Log::info('Rôles de l\'utilisateur:', ['roles' => $user->roles->pluck('name')->toArray()]);
+
+            // Attente active si nécessaire (si vous voulez simuler un temps de traitement, pas strictement nécessaire)
+            while (!$user->relationLoaded('roles')) {
+                usleep(100); // Pause de 100 microsecondes, par exemple
+            }
 
             // Détermination de la route de redirection en fonction du rôle de l'utilisateur
             $route = match (true) {
@@ -106,17 +114,31 @@ class AuthenticatedSessionController extends Controller
                     'filteredUsersCount' => $filteredUsersCount,
                     'filteredVacationsCount' => $filteredVacationsCount
                 ]),
-                $user->hasAnyRole(['Leader', 'Manager']) => route('dashboardLeader', ['filteredUsersCount' => $filteredUsersCount, 'filteredVacationsCount' => $filteredVacationsCount]),
-                $user->hasAnyRole(['Employee', 'LeaderTeam']) => route('dashboard', ['filteredUsersCount' => $filteredUsersCount, 'filteredVacationsCount' => $filteredVacationsCount]),
-                default => route('dashboard', ['filteredUsersCount' => $filteredUsersCount, 'filteredVacationsCount' => $filteredVacationsCount]),
+                $user->hasAnyRole(['Leader', 'Manager']) => route('dashboardLeader', [
+                    'filteredUsersCount' => $filteredUsersCount,
+                    'filteredVacationsCount' => $filteredVacationsCount
+                ]),
+                $user->hasAnyRole(['Employee', 'LeaderTeam']) => route('dashboard', [
+                    'filteredUsersCount' => $filteredUsersCount,
+                    'filteredVacationsCount' => $filteredVacationsCount
+                ]),
+                default => route('dashboard', [
+                    'filteredUsersCount' => $filteredUsersCount,
+                    'filteredVacationsCount' => $filteredVacationsCount
+                ]),
             };
 
             return redirect()->intended($route);
         } catch (\Exception $e) {
-            Log::error('Erreur lors de la redirection:', ['message' => $e->getMessage(), 'exception' => $e]);
+            // Gestion des erreurs
+            Log::error('Erreur lors de la redirection:', [
+                'message' => $e->getMessage(),
+                'exception' => $e
+            ]);
             return redirect()->route('login');
         }
     }
+
 
     /**
      * Détruit une session authentifiée.

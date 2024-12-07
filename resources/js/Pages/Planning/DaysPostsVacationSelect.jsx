@@ -4,11 +4,8 @@ import HorairesSection from "./import/HorairesSection";
 import PauseSection from "./import/PauseSection";
 import UserSelect from "./import/UserSelect";
 import Calendar from "./Calendar";
-import PostTypeModal from "./Modal/AddPostModal";
 
 const DaysPostsVacationSelect = ({
-  selectedSite,
-  sites = [],
   posts = [],
   typePosts = [],
   holidays = [],
@@ -20,6 +17,7 @@ const DaysPostsVacationSelect = ({
   onClose,
   onAddNewUser,
 }) => {
+  console.log(typePosts, posts);
   const [vacation_start, setVacationStart] = useState("");
   const [vacation_end, setVacationEnd] = useState("");
   const [pause_start, setPauseStart] = useState("");
@@ -30,7 +28,7 @@ const DaysPostsVacationSelect = ({
   const [selectedDays, setSelectedDays] = useState([]);
   const [selectedUsers, setSelectedusers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState(siteUsers);
-  const [showAddPostModal, setShowAddPostModal] = useState(false);
+
   const [resetCalendar, setResetCalendar] = useState(false);
   const [errorMessages, setErrorMessages] = useState({});
 
@@ -88,8 +86,8 @@ const DaysPostsVacationSelect = ({
       pause_start: pause_start,
       pause_end: pause_end,
       pause_payment: pause_payment,
-      selectedPost,
-      selectedTypePost,
+      post: selectedPost,
+      typePost: selectedTypePost,
     };
 
     console.log(newEvent);
@@ -101,21 +99,14 @@ const DaysPostsVacationSelect = ({
   return (
     <div>
       <div className="bg-white border border-gray-900 rounded-md shadow-md p-2 space-y-2">
-        <div className="flex items-center justify-center">
-          <button
-            onClick={() => setShowAddPostModal(true)}
-            className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            <span className="mr-2">✍️</span> Ajouter un Post (provisoire)
-          </button>
-        </div>
-
         <UserSelect
           siteUsers={localSiteUsers}
           onUsersSelected={setSelectedusers}
         />
         {errorMessages.users && (
-          <p className="text-red-600 font-bold text-sm">{errorMessages.users}</p>
+          <p className="text-red-600 font-bold text-sm">
+            {errorMessages.users}
+          </p>
         )}
 
         <div className="bg-white border border-gray-300 rounded-md shadow-md p-1 space-y-2">
@@ -128,7 +119,9 @@ const DaysPostsVacationSelect = ({
             siteUsers={siteUsers}
           />
           {errorMessages.days && (
-            <p className="text-red-600 font-bold text-sm">{errorMessages.days}</p>
+            <p className="text-red-600 font-bold text-sm">
+              {errorMessages.days}
+            </p>
           )}
         </div>
 
@@ -144,7 +137,9 @@ const DaysPostsVacationSelect = ({
               handlePostChange={handlePostChange}
             />
             {errorMessages.post && (
-              <p className="text-red-600 font-bold text-sm">{errorMessages.post}</p>
+              <p className="text-red-600 font-bold text-sm">
+                {errorMessages.post}
+              </p>
             )}
             {errorMessages.typePost && (
               <p className="text-red-600 font-bold text-sm">
@@ -190,18 +185,10 @@ const DaysPostsVacationSelect = ({
             onClick={handleCreateEvents}
             className="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            <span className="inline-flex items-center">
-              <span className="mr-2">➕</span> Ajouter vacation(s)
-            </span>
+            <span className="inline-flex items-center">Ajouter</span>
           </button>
         </div>
       </div>
-
-      <PostTypeModal
-        open={showAddPostModal}
-        onClose={() => setShowAddPostModal(false)}
-        typePosts={typePosts}
-      />
     </div>
   );
 };

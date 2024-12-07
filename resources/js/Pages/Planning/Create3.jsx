@@ -84,8 +84,6 @@ const CreatePlanning = ({
     []
   );
 
- 
-
   const handleSiteChange = (selectedOption) => {
     setSelectedSite(selectedOption);
     //setSiteUsers(selectedOption ? selectedOption.users : []);
@@ -272,134 +270,137 @@ const CreatePlanning = ({
 
   //modification vacation
   const handleEditEvent = (updatedEvent) => {
-    
-      console.log("Holiday dates:", holidays);
-  
-      const filteredEvents = events.filter((event) =>
-        updatedEvent.id.includes(event.id)
+    console.log("Holiday dates:", holidays);
+
+    const filteredEvents = events.filter((event) =>
+      updatedEvent.id.includes(event.id)
+    );
+    console.log("Filtered events:", filteredEvents);
+
+    const filtredId = filteredEvents.map((event) => event.id);
+    const selectedDays = filteredEvents.map((event) => event.selected_days);
+    const user = filteredEvents.map((event) => event.user_id);
+    console.log(
+      "Filtered IDs:",
+      filtredId,
+      "Selected Days:",
+      selectedDays,
+      "Users:",
+      user
+    );
+
+    // Generate vacation events
+    let vacationAllEvents;
+
+    vacationAllEvents = createVacationEvents(
+      updatedEvent.vacation_start,
+      updatedEvent.vacation_end,
+      selectedDays,
+      updatedEvent.pause_start,
+      updatedEvent.pause_end,
+      updatedEvent.pause_payment,
+      currentMonth,
+      currentYear,
+      holidays
+    );
+
+    console.log("vacationAllEvents:", vacationAllEvents);
+    const vacationEvents = vacationAllEvents.events;
+    const vacationEventsNextMonth = vacationAllEvents.eventsNextMonth;
+
+    console.log("Vacation events generated:", vacationEvents);
+
+    // Initialize updated events based on existing events
+    let updatedEvents = [...events];
+
+    if (vacationEvents.length == filteredEvents.length) {
+      console.log("Normal case: updating existing events...");
+      updatedEvents = updatedEvents.map((event) => {
+        if (filtredId.includes(event.id)) {
+          const workDurations = vacationEvents.map(
+            (vacationEvent) => vacationEvent.work_duration
+          );
+          const workDuration = workDurations[0];
+
+          return {
+            ...event,
+            pause_start: updatedEvent.pause_start,
+            pause_end: updatedEvent.pause_end,
+            pause_payment: updatedEvent.pause_payment,
+            post: updatedEvent.post,
+            typePost: updatedEvent.typePost,
+            vacation_start: updatedEvent.vacation_start,
+            vacation_end: updatedEvent.vacation_end,
+            work_duration: workDuration,
+          };
+        }
+        return event;
+      });
+      setEvents(updatedEvents);
+    } else if (vacationEvents.length > filteredEvents.length) {
+      const filteredEventsIds = filteredEvents.map((event) => event.id);
+      const post = filteredEvents.map((event) => event.post);
+      const typePost = filteredEvents.map((event) => event.typePost);
+
+      const user_ids = [
+        ...new Set(filteredEvents.map((event) => event.user_id)),
+      ];
+      const afterdeleteEvents = events.filter(
+        (event) => !filteredEventsIds.includes(event.id)
       );
-      console.log("Filtered events:", filteredEvents);
-  
-      
-  
-      const filtredId = filteredEvents.map((event) => event.id);
-      const selectedDays = filteredEvents.map((event) => event.selected_days);
-      const user = filteredEvents.map((event) => event.user_id);
-      console.log("Filtered IDs:", filtredId, "Selected Days:", selectedDays, "Users:", user);
-  
-      // Generate vacation events
-      let vacationAllEvents;
-     
-        vacationAllEvents = createVacationEvents(
-          updatedEvent.vacation_start,
-          updatedEvent.vacation_end,
-          selectedDays,
-          updatedEvent.pause_start,
-          updatedEvent.pause_end,
-          updatedEvent.pause_payment,
-          currentMonth,
-          currentYear,
-          holidays
-        );
 
-        console.log("vacationAllEvents:", vacationAllEvents);
-          const vacationEvents = vacationAllEvents.events;
-          const vacationEventsNextMonth = vacationAllEvents.eventsNextMonth;
-
-        console.log("Vacation events generated:", vacationEvents);
-      
-  
-      // Initialize updated events based on existing events
-      let updatedEvents = [...events];
-  
-      if (vacationEvents.length == filteredEvents.length) {
-        console.log("Normal case: updating existing events...");
-        updatedEvents = updatedEvents.map((event) => {
-          if (filtredId.includes(event.id)) {
-            const workDurations = vacationEvents.map(
-              (vacationEvent) => vacationEvent.work_duration
-            );
-            const workDuration = workDurations[0];
-  
-            return {
-              ...event,
-              pause_start: updatedEvent.pause_start,
-              pause_end: updatedEvent.pause_end,
-              pause_payment: updatedEvent.pause_payment,
-              post: updatedEvent.post,
-              typePost: updatedEvent.typePost,
-              vacation_start: updatedEvent.vacation_start,
-              vacation_end: updatedEvent.vacation_end,
-              work_duration: workDuration,
-            };
-          }
-          return event;
-        });
-        setEvents(updatedEvents);
-      } else if (vacationEvents.length > filteredEvents.length) {
-
-        const filteredEventsIds = filteredEvents.map((event) => event.id);
-        const post = filteredEvents.map((event) => event.post);
-        const typePost = filteredEvents.map((event) => event.typePost);
-  
-        const user_ids = [...new Set(filteredEvents.map((event) => event.user_id))];
-        const afterdeleteEvents = events.filter(
-          (event) => !filteredEventsIds.includes(event.id)
-        );
-  
-        const vacationEventsByRelatedEvent = vacationEvents.reduce((acc, vacationEvent) => {
+      const vacationEventsByRelatedEvent = vacationEvents.reduce(
+        (acc, vacationEvent) => {
           const relatedEvent = vacationEvent.relatedEvent;
           if (!acc[relatedEvent]) acc[relatedEvent] = [];
           acc[relatedEvent].push(vacationEvent);
           return acc;
-        }, {});
-  
-        let newVacationEvents = [];
-        Object.keys(vacationEventsByRelatedEvent).forEach((relatedEvent) => {
-          const vacationEventsGroup = vacationEventsByRelatedEvent[relatedEvent];
-          const maxExistingId =
-            events.length > 0 ? Math.max(...events.map((event) => event.id)) : 0;
-          let lastId = maxExistingId === 0 ? 1 : maxExistingId + 1;
-  
-          vacationEventsGroup.forEach((vacationEvent) => {
-            const selectedDaysArray = Array.isArray(vacationEvent.selectedDays)
-              ? vacationEvent.selectedDays
-              : [vacationEvent.selectedDays];
-  
-            selectedDaysArray.forEach((selectedDay) => {
-              user_ids.forEach((currentUserId) => {
-              
-  
-                newVacationEvents.push({
-                  id: lastId++,
-                  user_id: currentUserId,
-                  post: post[0],
-                  typePost: typePost[0],
-                  vacation_start: vacationEvent.vacation_start,
-                  vacation_end: vacationEvent.vacation_end,
-                  lunchAllowance: vacationEvent.lunchAllowance,
-                  pause_payment: vacationEvent.pause_payment,
-                  pause_start: vacationEvent.pause_start,
-                  pause_end: vacationEvent.pause_end,
-                  selected_days: selectedDay,
-                  work_duration: vacationEvent.work_duration,
-                  night_hours: vacationEvent.night_hours,
-                  holiday_hours: vacationEvent.holiday_hours,
-                  sunday_hours: vacationEvent.sunday_hours,
-                  isSubEvent: vacationEvent.isSubEvent,
-                  relatedEvent: relatedEvent,
-                });
+        },
+        {}
+      );
+
+      let newVacationEvents = [];
+      Object.keys(vacationEventsByRelatedEvent).forEach((relatedEvent) => {
+        const vacationEventsGroup = vacationEventsByRelatedEvent[relatedEvent];
+        const maxExistingId =
+          events.length > 0 ? Math.max(...events.map((event) => event.id)) : 0;
+        let lastId = maxExistingId === 0 ? 1 : maxExistingId + 1;
+
+        vacationEventsGroup.forEach((vacationEvent) => {
+          const selectedDaysArray = Array.isArray(vacationEvent.selectedDays)
+            ? vacationEvent.selectedDays
+            : [vacationEvent.selectedDays];
+
+          selectedDaysArray.forEach((selectedDay) => {
+            user_ids.forEach((currentUserId) => {
+              newVacationEvents.push({
+                id: lastId++,
+                user_id: currentUserId,
+                post: post[0],
+                typePost: typePost[0],
+                vacation_start: vacationEvent.vacation_start,
+                vacation_end: vacationEvent.vacation_end,
+                lunchAllowance: vacationEvent.lunchAllowance,
+                pause_payment: vacationEvent.pause_payment,
+                pause_start: vacationEvent.pause_start,
+                pause_end: vacationEvent.pause_end,
+                selected_days: selectedDay,
+                work_duration: vacationEvent.work_duration,
+                night_hours: vacationEvent.night_hours,
+                holiday_hours: vacationEvent.holiday_hours,
+                sunday_hours: vacationEvent.sunday_hours,
+                isSubEvent: vacationEvent.isSubEvent,
+                relatedEvent: relatedEvent,
               });
             });
           });
         });
-  
-        const updatedEvents = [...afterdeleteEvents, ...newVacationEvents];
-        setEvents(updatedEvents);
-      } 
-    
+      });
+
+      const updatedEvents = [...afterdeleteEvents, ...newVacationEvents];
+      setEvents(updatedEvents);
+    }
   };
-  
 
   //supprimer les vacation
   const handleDeleteEvent = (eventToDelete) => {
@@ -440,7 +441,6 @@ const CreatePlanning = ({
         )}
 
         {isShow || !isButtonVisible ? (
-         
           <PlanningHeader
             selectedSite={selectedSite}
             currentMonth={currentMonth}
@@ -511,7 +511,6 @@ const CreatePlanning = ({
                     siteUsers={localSiteUsers}
                     onAddNewUser={setSiteUsers}
                     createEventsForUsers={createEventsForUsers}
-                   
                   />
 
                   <button

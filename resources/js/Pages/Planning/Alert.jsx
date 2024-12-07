@@ -83,20 +83,18 @@ const Alert = ({
               <div className="font-medium flex items-center flex-wrap space-x-4">
                 <div className="inline-block mb-2">{msg.text}</div>
               </div>
+              <div className="mt-2 text-center">
+                <button
+                  onClick={onClose}
+                  className="px-2 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-400 focus:outline-none transition-all duration-300"
+                  aria-label="Close alerts"
+                >
+                  <span className="font-semibold">OK</span>
+                </button>
+              </div>
             </div>
           </div>
         ))}
-
-        {/* "OK" Button */}
-        <div className="mt-2 text-center">
-          <button
-            onClick={onClose}
-            className="px-2 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-400 focus:outline-none transition-all duration-300"
-            aria-label="Close alerts"
-          >
-            <span className="font-semibold">OK</span>
-          </button>
-        </div>
       </div>
     </div>
   );

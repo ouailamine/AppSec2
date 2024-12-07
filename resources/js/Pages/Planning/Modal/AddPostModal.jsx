@@ -48,6 +48,7 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
 
   const handleAdd = () => {
     if (validateForm()) {
+      console.log(defaultDurationMinutes);
       onAddPost({
         name: postName,
         abbreviation: postAbbreviation,
@@ -103,13 +104,15 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
               } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200`}
             >
               <option value="" disabled hidden>
-                Sélectionner un poste
+                Sélectionner un type de poste
               </option>
-              {typePosts.map((typePost) => (
-                <option key={typePost.id} value={typePost.id}>
-                  {typePost.name}
-                </option>
-              ))}
+              {typePosts
+                .filter((typePost) => typePost.default_duration == true)
+                .map((typePost) => (
+                  <option key={typePost.id} value={typePost.id}>
+                    {typePost.name}
+                  </option>
+                ))}
             </select>
             {errors.selectedTypePost && (
               <p id="typePostError" className="text-sm text-red-500 mt-1">

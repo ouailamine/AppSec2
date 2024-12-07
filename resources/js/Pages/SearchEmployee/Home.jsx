@@ -2,37 +2,22 @@ import React, { useState, useEffect } from "react";
 import { Inertia } from "@inertiajs/inertia";
 import { Head, usePage } from "@inertiajs/react";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
-import AddGuardModal from "./CreateEditGuardModal";
+import CreateEditGuardModal from "./CreateEditGuardModal";
+import ShowGuardModal from "./ShowGuardModal";
 
-const SearchEmployee = () => {
-  const { props } = usePage();
-  const {
-    users,
-    departements,
-    regions,
-    diplomas,
-    genres,
-    adsType,
-    roles,
-    auth,
-    nationalities,
-    typeAds,
-    cities,
-  } = props;
-
-  // Debug to check if `users` exists
-  console.log("Users:", users);
-  console.log("Departements:", departements);
-  console.log("Regions:", regions);
-  console.log("Diplomas:", diplomas);
-  console.log("Genres:", genres);
-  console.log("Ads Type:", adsType);
-  console.log("Roles:", roles);
-  console.log("Auth:", auth);
-  console.log("Nationalities:", nationalities);
-  console.log("Type Ads:", typeAds);
-  console.log("Cities:", cities);
-
+const Home = ({
+  users,
+  departements,
+  regions,
+  diplomas,
+  genres,
+  adsType,
+  roles,
+  auth,
+  nationalities,
+  typeAds,
+  cities,
+}) => {
   // États pour les champs de recherche
   const [searchType, setSearchType] = useState("fullname");
   const [searchValue, setSearchValue] = useState("");
@@ -43,7 +28,11 @@ const SearchEmployee = () => {
   const [selectedAdsType, setSelectedAdsType] = useState("");
   const [selectedDiploma, setSelectedDiploma] = useState("");
   const [searchMode, setSearchMode] = useState("simple"); // État pour basculer entre recherche simple et multiple
-  const handleOpenModal = () => setShowAddUserModal(true);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedUser, setSelectedUser] = useState();
+
+  const [showModal, setShowModal] = useState(false);
+  const [createEditModal, setCreateEditModal] = useState(false);
 
   // Fonction pour gérer la soumission du formulaire de recherche
   const handleSubmit = (e) => {
@@ -126,26 +115,32 @@ const SearchEmployee = () => {
     );
   });
 
-  const handleDelete = (id) => {
-    if (confirm("Vous allez supprimer cet agent?")) {
-      Inertia.post(
-        `/users/${id}`,
-        {
-          _method: "DELETE",
-          _token: csrfToken, // Assurez-vous que csrfToken est défini
-        },
-        {
-          onSuccess: () => {
-            Inertia.get("/users");
-          },
-          onError: (errors) => {
-            console.error(errors);
-          },
-        }
-      );
-    }
+  const handleShow = (user) => {
+    setSelectedUser(user);
+    setShowModal(true);
+    console.log(user);
   };
 
+  const handleCreate = () => {
+    setIsEditMode(false);
+    setCreateEditModal(true);
+  };
+
+  const handleEdit = (user) => {
+    setIsEditMode(true);
+    setSelectedUser(user);
+    setCreateEditModal(true);
+  };
+
+  const handleDelete = (userIds) => {
+    if (window.confirm("Voulez-vous supprimer cette Agent?")) {
+      Inertia.delete(route("users.destroy", userIds));
+    }
+  };
+  const handleCloseModal = () => {
+    setCreateEditModal(false);
+    setShowModal(false);
+  };
   return (
     <AdminAuthenticatedLayout user={auth.user}>
       <Head title="DashboardAdmin" />
@@ -155,9 +150,9 @@ const SearchEmployee = () => {
             Recherche d'utilisateurs
           </div>
           <div className="d-flex justify-content-end mb-3">
-            <a href="/users/create" className="btn btn-success">
+            <button onClick={handleCreate} className="btn btn-success">
               Ajouter un nouveau agent
-            </a>
+            </button>
           </div>
           <div className="card-body flex flex-col items-center justify-center p-6">
             <div className="flex mb-4 space-x-2">
@@ -223,13 +218,13 @@ const SearchEmployee = () => {
                     />
                   </div>
                   {/*}<div className="flex-1">
-                    <button
-                      type="submit"
-                      className="bg-blue-500 text-white w-full px-3 py-2 rounded-md shadow hover:bg-blue-600"
-                    >
-                      Rechercher
-                    </button>
-                  </div>{*/}
+                     <button
+                       type="submit"
+                       className="bg-blue-500 text-white w-full px-3 py-2 rounded-md shadow hover:bg-blue-600"
+                     >
+                       Rechercher
+                     </button>
+                   </div>{*/}
                 </div>
               </form>
             ) : (
@@ -386,29 +381,35 @@ const SearchEmployee = () => {
                     <td>{user.email}</td>
                     <td>
                       <div className="d-flex justify-content-start">
+                        {/* Show Button - Opens the ShowGuardModal */}
                         <a
-                          href={`/users/${user.id}`}
+                          href="#"
                           className="btn btn-success btn-sm me-1"
+                          onClick={() => handleShow(user)} // Trigger ShowGuardModal
                         >
                           <i className="bi bi-eye"></i> Show
                         </a>
 
+                        {/* Edit Button - Opens the CreateEditGuardModal */}
                         <a
-                          href={`/users/${user.id}/edit`}
+                          href="#"
                           className="btn btn-warning btn-sm me-1"
+                          onClick={() => handleEdit(user)} // Trigger CreateEditGuardModal
                         >
                           <i className="bi bi-pencil-square"></i> Edit
                         </a>
 
+                        {/* Delete Button - Calls handleDelete */}
                         <button
                           type="button"
                           className="btn btn-danger btn-sm me-1"
-                          onClick={() => handleDelete(user.id)}
+                          onClick={() => handleDelete(user.id)} // Trigger delete action
                         >
                           <i className="bi bi-trash"></i> Delete
                         </button>
                       </div>
                     </td>
+
                     <td>
                       <div className="d-flex justify-content-start">
                         <button
@@ -440,21 +441,47 @@ const SearchEmployee = () => {
         </div>
       </div>
 
-      {showAddUserModal && (
-        <AddGuardModal
-          roles={roles}
-          genres={genres}
-          nationalities={nationalities}
-          typeAds={typeAds}
-          diplomas={diplomas}
-          departements={departements}
-          regions={regions}
-          cities={cities}
-          onClose={() => setShowAddUserModal(false)} // Fermer le modal
-        />
+      {createEditModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:w-[600px] md:w-[1000px] w-full max-h-[90vh] overflow-y-auto relative">
+            <CreateEditGuardModal
+              isEditMode={isEditMode}
+              user={selectedUser}
+              roles={roles}
+              genres={genres}
+              nationalities={nationalities}
+              typeAds={typeAds}
+              diplomas={diplomas}
+              departements={departements}
+              regions={regions}
+              cities={cities}
+              onClose={handleCloseModal}
+            />
+            {/*}
+            <button
+              onClick={setCreateEditModal(false)}
+              className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl sm:text-3xl"
+            >
+              ❌
+            </button>{*/}
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:w-[600px] md:w-[1000px] w-full max-h-[90vh] overflow-y-auto relative">
+            <ShowGuardModal
+              user={selectedUser}
+              onClose={handleCloseModal}
+              departements={departements}
+              regions={regions}
+            />
+          </div>
+        </div>
       )}
     </AdminAuthenticatedLayout>
   );
 };
 
-export default SearchEmployee;
+export default Home;

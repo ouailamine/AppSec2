@@ -31,15 +31,17 @@ class UserController extends Controller
      */
     public function index()
     {
-        return Inertia::render('SearchEmployee/Index', [
-            'departements' => DB::table('departements')->get(),
-            'regions' => DB::table('regions')->get(),
-            'diplomas' => DB::table('diplomas')->get(),
-            'genres' => DB::table('genres')->get(),
-            'adsType' => DB::table('type_ads')->get(),
+        return Inertia::render('SearchEmployee/Home', [
+            'departements' => Departement::all(),
+            'regions' => Region::all(),
+            'diplomas' => Diploma::all(),
+            'genres' => Genre::all(),
+            'adsType' => TypeAds::all(),
             'roles' => Role::pluck('name'),
             'users' => User::all(),
-
+            'nationalities' => Nationality::all(),
+            'typeAds' => TypeAds::all(),
+            'cities' => City::all()
         ]);
     }
 

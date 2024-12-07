@@ -1,5 +1,20 @@
 import { v4 as uuidv4 } from "uuid";
 
+export const months = [
+  { value: "1", label: "Janvier" },
+  { value: "2", label: "Février" },
+  { value: "3", label: "Mars" },
+  { value: "4", label: "Avril" },
+  { value: "5", label: "Mai" },
+  { value: "6", label: "Juin" },
+  { value: "7", label: "Juillet" },
+  { value: "8", label: "Août" },
+  { value: "9", label: "Septembre" },
+  { value: "10", label: "Octobre" },
+  { value: "11", label: "Novembre" },
+  { value: "12", label: "Décembre" },
+];
+
 const getLastDayOfMonth = (currentMonth, currentYear) => {
   // Le mois dans le constructeur Date est basé sur 0 (janvier = 0, février = 1, etc.)
   // Donc, on utilise currentMonth - 1 pour obtenir le bon mois.
@@ -83,7 +98,6 @@ export const checkVacationsAndWeeklyHours = (
 
   // Fusionner les événements existants et les nouveaux événements
   events = events.concat(newEvents);
-
 
   // Vérification si la liste des événements est vide
   if (!events || events.length === 0) {
@@ -265,7 +279,6 @@ export const checkVacationsAndWeeklyHours = (
 
   const isError = alerts.length > 0;
 
-
   return {
     isError: alerts.length > 0 || errors.length > 0,
     alerts,
@@ -440,7 +453,7 @@ export const createVacationEvents = (
     (date) => date.toISOString().split("T")[0] // Format each Sunday as YYYY-MM-DD
   );
 
-  console.log(sundays)
+  console.log(sundays);
 
   const isSunday = (date) => {
     return sundays.includes(date); // Check if the date exists in the Sundays array
@@ -566,7 +579,6 @@ export const createVacationEvents = (
         workDurationFirstSegment + workDurationSecondSegment >= 360 ? 1 : 0;
 
       if (nextDayFormat > lastDayOfMonth) {
-
         // First segment event
         events.push({
           vacation_start: start,
