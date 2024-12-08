@@ -7,6 +7,7 @@ import ShowGuardModal from "./ShowGuardModal";
 
 const Home = ({
   users,
+  guards,
   departements,
   regions,
   diplomas,
@@ -30,10 +31,14 @@ const Home = ({
   const [searchMode, setSearchMode] = useState("simple"); // État pour basculer entre recherche simple et multiple
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState();
+  const [usersOrGuard, setUsersOrGuard] = useState(users);
 
   const [showModal, setShowModal] = useState(false);
   const [createEditModal, setCreateEditModal] = useState(false);
 
+  const [isSimpleOpen, setIsSimpleOpen] = useState(false);
+  const [isMultipleOpen, setIsMultipleOpen] = useState(false);
+  const [isAgentSearchOpen, setIsAgentSearchOpen] = useState(false);
   // Fonction pour gérer la soumission du formulaire de recherche
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -57,54 +62,71 @@ const Home = ({
   };
 
   // Filtrer les utilisateurs en fonction du type de recherche sélectionné
-  const filteredUsers = users.filter((user) => {
-    const value = searchValue.toLowerCase();
-
-    let matchesSearchType = true;
-    if (searchType && searchValue) {
-      switch (searchType) {
-        case "fullname":
-          matchesSearchType = user.fullname.toLowerCase().includes(value);
-          break;
-        case "firstname":
-          matchesSearchType = user.firstname.toLowerCase().includes(value);
-          break;
-        case "email":
-          matchesSearchType = user.email.toLowerCase().includes(value);
-          break;
-        case "phone":
-          matchesSearchType = user.phone
-            .toString()
-            .toLowerCase()
-            .includes(value);
-          break;
-        case "city":
-          matchesSearchType = user.city.toLowerCase().includes(value);
-          break;
-        case "ssn":
-          matchesSearchType = user.ssn.toString().toLowerCase().includes(value);
-          break;
-        default:
-          matchesSearchType = true;
-      }
+  const filteredUsers = (usersOrGuard || []).filter((user) => {
+    // Vérification des données utilisateur
+    if (!user) {
+      console.error("Utilisateur invalide ou null :", user);
+      return false;
     }
 
+    // Valeur de recherche en minuscule
+    const value = searchValue?.toLowerCase() || "";
+
+    // Vérification du critère de type de recherche
+    const matchesSearchType = (() => {
+      if (!searchType || !searchValue) return true;
+
+      switch (searchType) {
+        case "fullname":
+          return user.fullname?.toLowerCase().includes(value);
+        case "firstname":
+          return user.firstname?.toLowerCase().includes(value);
+        case "email":
+          return user.email?.toLowerCase().includes(value);
+        case "phone":
+          return user.phone?.toString().toLowerCase().includes(value);
+        case "city":
+          return user.city?.toLowerCase().includes(value);
+        case "ssn":
+          return user.ssn?.toString().toLowerCase().includes(value);
+        default:
+          return true;
+      }
+    })();
+
+    // Vérification de la région
     const matchesRegion = selectedRegion
       ? user.region === selectedRegion
       : true;
+
+    // Vérification du département
     const matchesDepartment = selectedDepartment
       ? user.departement === selectedDepartment
       : true;
+
+    // Vérification du genre
     const matchesGenre = selectedGenre ? user.genre === selectedGenre : true;
+
+    // Vérification du type d'annonces
     const matchesAdsType = selectedAdsType
       ? user.typeADS === selectedAdsType
       : true;
-    const matchesDiploma = selectedDiploma
-      ? JSON.parse(user.diplomas).some(
-          (diploma) => diploma.name === selectedDiploma
-        )
-      : true;
 
+    // Vérification des diplômes
+    const matchesDiploma = (() => {
+      if (!selectedDiploma) return true;
+
+      try {
+        // Validation et parsing des diplômes
+        const diplomas = JSON.parse(user.diplomas || "[]");
+        return diplomas.some((diploma) => diploma.name === selectedDiploma);
+      } catch (error) {
+        console.error("Erreur lors du parsing des diplômes :", error);
+        return false;
+      }
+    })();
+
+    // Retourne vrai si toutes les conditions sont remplies
     return (
       matchesSearchType &&
       matchesRegion &&
@@ -141,296 +163,279 @@ const Home = ({
     setCreateEditModal(false);
     setShowModal(false);
   };
+
+  const handleAtalixGuard = () => {
+    setUsersOrGuard(users);
+    console.log(usersOrGuard);
+  };
+
+  const handleOtherGuard = () => {
+    setUsersOrGuard(guards);
+    console.log(usersOrGuard);
+  };
   return (
     <AdminAuthenticatedLayout user={auth.user}>
       <Head title="DashboardAdmin" />
       <div className="container mt-4">
-        <div className="card border shadow-lg rounded-lg">
-          <div className="card-header bg-gray-100 text-lg font-semibold p-2">
-            Recherche d'utilisateurs
-          </div>
-          <div className="d-flex justify-content-end mb-3">
-            <button onClick={handleCreate} className="btn btn-success">
-              Ajouter un nouveau agent
-            </button>
-          </div>
-          <div className="card-body flex flex-col items-center justify-center p-6">
-            <div className="flex mb-4 space-x-2">
-              <button
-                className={`btn ${
-                  searchMode === "simple"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                } px-4 py-2 rounded`}
-                onClick={() => handleModeChange("simple")}
-              >
-                Recherche Simplxe
-              </button>
-              <button
-                className={`btn ${
-                  searchMode === "multiple"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-700"
-                } px-4 py-2 rounded`}
-                onClick={() => handleModeChange("multiple")}
-              >
-                Recherche Multiple
-              </button>
-            </div>
-            {searchMode === "simple" ? (
-              <form onSubmit={handleSubmit} className="w-full max-w-lg">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor="searchType"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Type de recherche
-                    </label>
-                    <select
-                      className="form-select w-full border rounded-md px-3 py-2"
-                      id="searchType"
-                      value={searchType}
-                      onChange={(e) => setSearchType(e.target.value)}
-                    >
-                      <option value="fullname">Nom</option>
-                      <option value="firstname">Prénom</option>
-                      <option value="email">Email</option>
-                      <option value="phone">Téléphone</option>
-                      <option value="city">Ville</option>
-                      <option value="ssn">Numéro sécurité sociale</option>
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label
-                      htmlFor="searchValue"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Valeur
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input w-full border rounded-md px-3 py-2"
-                      id="searchValue"
-                      value={searchValue}
-                      placeholder="Entrez la valeur"
-                      onChange={(e) => setSearchValue(e.target.value)}
-                    />
-                  </div>
-                  {/*}<div className="flex-1">
-                     <button
-                       type="submit"
-                       className="bg-blue-500 text-white w-full px-3 py-2 rounded-md shadow hover:bg-blue-600"
-                     >
-                       Rechercher
-                     </button>
-                   </div>{*/}
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleSubmit} className="w-full max-w-lg">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor="region"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Région
-                    </label>
-                    <select
-                      className="form-select w-full border rounded-md px-3 py-2"
-                      id="region"
-                      value={selectedRegion}
-                      onChange={(e) => setSelectedRegion(e.target.value)}
-                    >
-                      <option value="">Toutes</option>
-                      {regions.map((region) => (
-                        <option key={region.id} value={region.region_code}>
-                          {region.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedRegion && (
-                    <div className="flex-1">
-                      <label
-                        htmlFor="department"
-                        className="block text-sm font-medium mb-1"
-                      >
-                        Département
-                      </label>
-                      <select
-                        className="form-select w-full border rounded-md px-3 py-2"
-                        id="department"
-                        value={selectedDepartment}
-                        onChange={(e) => setSelectedDepartment(e.target.value)}
-                      >
-                        <option value="">Tous</option>
-                        {filteredDepartements.map((department) => (
-                          <option
-                            key={department.id}
-                            value={department.departement_code}
-                          >
-                            {department.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor="genre"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Genre
-                    </label>
-                    <select
-                      className="form-select w-full border rounded-md px-3 py-2"
-                      id="genre"
-                      value={selectedGenre}
-                      onChange={(e) => setSelectedGenre(e.target.value)}
-                    >
-                      <option value="">Tous</option>
-                      {genres.map((genre) => (
-                        <option key={genre.id} value={genre.name}>
-                          {genre.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label
-                      htmlFor="adsType"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Type d'ADS
-                    </label>
-                    <select
-                      className="form-select w-full border rounded-md px-3 py-2"
-                      id="adsType"
-                      value={selectedAdsType}
-                      onChange={(e) => setSelectedAdsType(e.target.value)}
-                    >
-                      <option value="">Tous</option>
-                      {adsType.map((type) => (
-                        <option key={type.id} value={type.name}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor="diploma"
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Diplôme
-                    </label>
-                    <select
-                      className="form-select w-full border rounded-md px-3 py-2"
-                      id="diploma"
-                      value={selectedDiploma}
-                      onChange={(e) => setSelectedDiploma(e.target.value)}
-                    >
-                      <option value="">Tous</option>
-                      {diplomas.map((diploma) => (
-                        <option key={diploma.id} value={diploma.name}>
-                          {diploma.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-center">
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-6 py-2 rounded-md shadow hover:bg-blue-600"
-                  >
-                    Rechercher
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+        <div className="flex justify-center items-center mb-4">
+          <button
+            onClick={handleCreate}
+            className="
+      bg-green-500 text-white px-6 py-3 
+      rounded-lg shadow-lg text-base font-semibold 
+      hover:bg-green-600 hover:shadow-xl 
+      focus:outline-none focus:ring-4 focus:ring-green-300 
+      active:bg-green-700 
+      transition-all duration-300 ease-in-out
+    "
+          >
+            Ajouter un nouveau agent
+          </button>
         </div>
 
-        <div className="card mt-3">
-          <div className="card-header">Résultats de la recherche</div>
-          <div className="card-body">
-            <table className="table mx-3 p-3">
+        {/* Header Section */}
+        <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+          <button
+            type="button"
+            className="w-full bg-gray-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-gray-200"
+            onClick={() => setIsAgentSearchOpen(!isAgentSearchOpen)}
+          >
+            Recherche d'agents
+            <span
+              className={`w-5 h-5 border-t-2 border-r-2 border-black transform transition-transform duration-300 ${
+                isAgentSearchOpen ? "-rotate-45" : "-rotate-90"
+              }`}
+            ></span>
+          </button>
+
+          {isAgentSearchOpen && (
+            <div className="p-4 bg-white">
+              {/* Recherche Simple */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  type="button"
+                  className="w-full bg-blue-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-blue-200"
+                  onClick={() => setIsSimpleOpen(!isSimpleOpen)}
+                >
+                  Recherche Simple
+                  <i
+                    className={`bi ${
+                      isSimpleOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    } transition-transform`}
+                  ></i>
+                </button>
+                {isSimpleOpen && (
+                  <div className="p-4 bg-gray-50">
+                    <form
+                      onSubmit={handleSubmit}
+                      className="w-full max-w-lg space-y-4"
+                    >
+                      <div>
+                        <label
+                          htmlFor="searchType"
+                          className="block text-sm font-medium mb-1"
+                        >
+                          Type de recherche
+                        </label>
+                        <select
+                          id="searchType"
+                          className="form-select w-full border rounded-md px-3 py-2"
+                          value={searchType}
+                          onChange={(e) => setSearchType(e.target.value)}
+                        >
+                          <option value="fullname">Nom</option>
+                          <option value="firstname">Prénom</option>
+                          <option value="email">Email</option>
+                          <option value="phone">Téléphone</option>
+                          <option value="city">Ville</option>
+                          <option value="ssn">Numéro sécurité sociale</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="searchValue"
+                          className="block text-sm font-medium mb-1"
+                        >
+                          Valeur
+                        </label>
+                        <input
+                          id="searchValue"
+                          type="text"
+                          className="form-input w-full border rounded-md px-3 py-2"
+                          value={searchValue}
+                          placeholder="Entrez la valeur"
+                          onChange={(e) => setSearchValue(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex justify-center">
+                        <button
+                          type="submit"
+                          className="bg-blue-500 text-white px-6 py-2 rounded-md shadow hover:bg-blue-600"
+                        >
+                          Rechercher
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
+
+              {/* Recherche Multiple */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden mt-4">
+                <button
+                  type="button"
+                  className="w-full bg-blue-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-blue-200"
+                  onClick={() => setIsMultipleOpen(!isMultipleOpen)}
+                >
+                  Recherche Multiple
+                  <i
+                    className={`bi ${
+                      isMultipleOpen ? "bi-chevron-up" : "bi-chevron-down"
+                    } transition-transform`}
+                  ></i>
+                </button>
+                {isMultipleOpen && (
+                  <div className="p-4 bg-gray-50">
+                    <form
+                      onSubmit={handleSubmit}
+                      className="w-full max-w-lg space-y-4"
+                    >
+                      <div>
+                        <label
+                          htmlFor="region"
+                          className="block text-sm font-medium mb-1"
+                        >
+                          Région
+                        </label>
+                        <select
+                          id="region"
+                          className="form-select w-full border rounded-md px-3 py-2"
+                          value={selectedRegion}
+                          onChange={(e) => setSelectedRegion(e.target.value)}
+                        >
+                          <option value="">Toutes</option>
+                          {regions.map((region) => (
+                            <option key={region.id} value={region.region_code}>
+                              {region.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* Ajoutez d'autres champs ici */}
+                    </form>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="card mt-6 bg-white shadow-lg rounded-lg">
+          <div className="card-header bg-gray-100 px-6 py-3 border-b border-gray-200 text-lg font-semibold">
+            Résultats de la recherche
+          </div>
+          <div className="card-body px-6 py-4">
+            <table className="table-auto w-full text-left text-sm">
               <thead>
-                <tr>
-                  <th scope="col">Nom</th>
-                  <th scope="col">Prénom</th>
-                  <th scope="col">Téléphone</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Actions</th>
-                  <th scope="col"></th>
+                <tr className="bg-gray-50">
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  >
+                    Nom
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  >
+                    Prénom
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  >
+                    Téléphone
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  >
+                    Email
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  >
+                    Actions
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 py-2 text-gray-600 font-medium"
+                  ></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td>{user.fullname}</td>
-                    <td>{user.firstname}</td>
-                    <td>0{user.phone}</td>
-                    <td>{user.email}</td>
-                    <td>
-                      <div className="d-flex justify-content-start">
-                        {/* Show Button - Opens the ShowGuardModal */}
-                        <a
-                          href="#"
-                          className="btn btn-success btn-sm me-1"
-                          onClick={() => handleShow(user)} // Trigger ShowGuardModal
-                        >
-                          <i className="bi bi-eye"></i> Show
-                        </a>
-
-                        {/* Edit Button - Opens the CreateEditGuardModal */}
-                        <a
-                          href="#"
-                          className="btn btn-warning btn-sm me-1"
-                          onClick={() => handleEdit(user)} // Trigger CreateEditGuardModal
-                        >
-                          <i className="bi bi-pencil-square"></i> Edit
-                        </a>
-
-                        {/* Delete Button - Calls handleDelete */}
+                  <tr key={user.id} className="border-b hover:bg-gray-50">
+                    <td className="px-2 py-2">{user.fullname}</td>
+                    <td className="px-2 py-2">{user.firstname}</td>
+                    <td className="px-2 py-2">0{user.phone}</td>
+                    <td className="px-2 py-2">{user.email}</td>
+                    <td className="px-2 py-2">
+                      <div className="flex space-x-2">
+                        {/* Show Button */}
                         <button
-                          type="button"
-                          className="btn btn-danger btn-sm me-1"
-                          onClick={() => handleDelete(user.id)} // Trigger delete action
+                          className="bg-green-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-green-600"
+                          onClick={() => handleShow(user)}
                         >
-                          <i className="bi bi-trash"></i> Delete
+                          <i className="bi bi-eye mr-1"></i> Voir
+                        </button>
+                        {/* Edit Button */}
+                        <button
+                          className="bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-yellow-600"
+                          onClick={() => handleEdit(user)}
+                        >
+                          <i className="bi bi-pencil-square mr-1"></i> Modifier
+                        </button>
+                        {/* Delete Button */}
+                        <button
+                          className="bg-red-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-red-600"
+                          onClick={() => handleDelete(user.id)}
+                        >
+                          <i className="bi bi-trash mr-1"></i> Supprimer
                         </button>
                       </div>
                     </td>
-
-                    <td>
-                      <div className="d-flex justify-content-start">
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() =>
+                    <td className="px-2 py-2">
+                      <button
+                        className="bg-blue-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-blue-600"
+                        onClick={() => {
+                          if (user.registerNumber) {
+                            // Si registerNumber existe, rediriger vers la création de carte Pro
                             Inertia.get(
                               route("procards.create", { user_id: user.id })
-                            )
+                            );
+                          } else {
+                            // Sinon, rediriger vers la création de compte
+
+                            Inertia.post(route("CreateUser", { user }));
                           }
-                        >
-                          <i className="bi bi-plus-circle"></i> Créer une Carte
-                          Pro
-                        </button>
-                      </div>
+                        }}
+                      >
+                        <i className="bi bi-plus-circle mr-1"></i>{" "}
+                        {user.registerNumber
+                          ? "Créer une Carte Pro"
+                          : "Créer un Compte"}
+                      </button>
                     </td>
                   </tr>
                 ))}
                 {filteredUsers.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="text-center">
+                    <td
+                      colSpan="6"
+                      className="px-4 py-4 text-center text-gray-500"
+                    >
                       Aucun résultat trouvé
                     </td>
                   </tr>
@@ -442,8 +447,8 @@ const Home = ({
       </div>
 
       {createEditModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:w-[600px] md:w-[1000px] w-full max-h-[90vh] overflow-y-auto relative">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center ">
+          <div className="bg-white rounded-lg shadow-lg  sm:w-[600px] md:w-[1000px] w-full max-h-[90vh] overflow-y-auto relative">
             <CreateEditGuardModal
               isEditMode={isEditMode}
               user={selectedUser}

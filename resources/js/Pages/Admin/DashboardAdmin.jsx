@@ -6,6 +6,7 @@ export default function DashboardAdmin({
   filteredUsersCount,
   filteredVacationsCount,
 }) {
+
   const buttons = [
     {
       title: "Gestion des plannings",
@@ -105,11 +106,19 @@ export default function DashboardAdmin({
                 href={route(button.route)}
                 className="group relative flex flex-col items-center bg-white shadow-md hover:shadow-lg transition-shadow duration-200 p-3 rounded-md"
               >
-                {button.badge && (
+                {button.badge && button.badgeCount > 0 && (
                   <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-red-600 rounded-full animate-blink">
                     {button.badgeCount} {/* Utilisation de badgeCount ici */}
                   </span>
                 )}
+
+                {button.badge && button.badgeCount === 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-red-600 rounded-full">
+                    {button.badgeCount}{" "}
+                    {/* Si badgeCount est 0, pas de clignotement */}
+                  </span>
+                )}
+
                 <img
                   src={button.imgSrc}
                   alt={button.title}

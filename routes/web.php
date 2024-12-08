@@ -114,7 +114,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/sites/{site}/users', [SiteController::class, 'updateUsers'])->name('sites.updateUsers');
 
     // Guard Routes
-    Route::post('/guards/{guard}/create-user', [UserController::class, 'createUser'])->name('CreateUser');
+    Route::post('/userss/{user}/create-user', [UserController::class, 'createUser'])->name('CreateUser');
 
     // User Routes
     Route::resource('users', UserController::class);

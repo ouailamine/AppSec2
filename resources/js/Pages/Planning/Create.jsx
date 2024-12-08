@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
-import Table from "./Table2";
+import Table from "./Table";
 import Alert from "./Alert";
 import { Inertia } from "@inertiajs/inertia";
 import { Head } from "@inertiajs/react";
@@ -9,12 +9,14 @@ import PlanningHeader from "./import/PlanningHeader";
 import DaysPostsVacationSelect from "./DaysPostsVacationSelect";
 import SiteMonthYeaySelect from "./SiteMonthYeaySelect";
 import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
+import SearchAvaibleGuardModal from "./Modal/SearchAvaibleGuardModal";
 import PostTypeModal from "./Modal/AddPostModal";
 
 import {
   createVacationEvents,
   checkVacationsAndWeeklyHours,
 } from "./CreatFunction"; // Importer les utilitaires
+import SelectSite from "./import/SelectSite";
 
 const CreatePlanning = ({
   typePosts = [],
@@ -24,8 +26,9 @@ const CreatePlanning = ({
   holidays = [],
   plannings = [],
   selectedPlanning = [],
-  isShow,
+  isShow,eventsForSearchGuard
 }) => {
+
   const [selectedSite, setSelectedSite] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -38,15 +41,14 @@ const CreatePlanning = ({
   const [eventsNextMonth, setEventsNextMonth] = useState([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showAddPostModal, setShowAddPostModal] = useState(false);
-
+  const [searchAvailableGuard, setSearchAvailableGuard] = useState(false);
   const [siteUsers, setSiteUsers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState([]);
   const [localPosts, setLocalPosts] = useState([]);
 
-  //const [isCollapsed, setIsCollapsed] = useState(true);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  console.log(localSiteUsers)
   // Fonction pour ouvrir le modal
   const openModal = () => {
     setIsModalOpen(true);
@@ -55,6 +57,14 @@ const CreatePlanning = ({
   // Fonction pour fermer le modal
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const openModalSearch = () => {
+    setSearchAvailableGuard(true); // Ouvre le modal
+  };
+
+  const closeModalSearch = () => {
+    setSearchAvailableGuard(false); // Ferme le modal
   };
 
   useEffect(() => {
@@ -398,6 +408,14 @@ const CreatePlanning = ({
     console.log(data);
   };
 
+  const handleASS = (user) => {
+    console.log(user);
+    // Ajout de l'utilisateur à la liste locale
+    const aa = localSiteUsers.push(user);
+    setLocalPosts(aa)
+    console.log(localSiteUsers); // Affiche la liste mise à jour
+  }
+
   console.log("events", events);
   return (
     <AdminAuthenticatedLayout>
@@ -456,6 +474,16 @@ const CreatePlanning = ({
                 aria-label="Ajouter des agents"
               >
                 <span className="mr-2">👥</span> Gestion des agents
+              </button>
+
+              <button
+                onClick={() => {
+                  console.log("Button clicked, modal opening...");
+                  setSearchAvailableGuard(true);
+                }}
+                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              >
+                <span className="mr-2">🔍</span> Agent disponible
               </button>
             </div>
 
@@ -520,22 +548,18 @@ const CreatePlanning = ({
               typePosts={typePosts}
               onAddPost={addNewPost}
             />
-            <div className="flex justify-center">
-              {events.length !== 0 && (
-                <button
-                  onClick={handleSavePlanning}
-                  className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
-                    events.length === 0
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  } text-sm font-semibold`}
-                  aria-label="Sauvegarder le planning"
-                  disabled={events.length === 0} // Disable the button when no events
-                >
-                  Sauvegarder
-                </button>
-              )}
-            </div>
+
+            <SearchAvaibleGuardModal
+              isOpen={searchAvailableGuard} // Prop pour contrôler l'ouverture du modal
+              onClose={closeModalSearch}
+              siteUsers={siteUsers}
+              localSiteUsers={localSiteUsers}
+              selectedSite={SelectSite}
+              eventsForSearchGuard ={eventsForSearchGuard}
+              currentMonth={currentMonth}
+              currentYear={currentYear}
+              onAddUserz={handleASS}
+            />
           </>
         )}
       </div>

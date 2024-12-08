@@ -27,6 +27,25 @@ class PlanningController extends Controller
 
     public function create()
     {
+
+        $currentDate = now(); // Récupère la date actuelle
+
+        // Récupérer le mois actuel
+        $currentMonth = 1;
+
+        // Récupérer le mois suivant
+        $nextMonth = 2;
+
+        // Récupérer les plannings dont la date se trouve entre le début du mois actuel et la fin du mois suivant
+        $plannings = Planning::whereBetween('month', [
+            $currentMonth,
+            $nextMonth
+        ])->get();
+
+
+        // Récupérer les événements associés aux plannings récupérés
+        $eventsForSearchGuard = Event::whereIn('planning_id', $plannings->pluck('id'))->get();
+
         return Inertia::render('Planning/Create', [
             'posts' => Post::all(),
             'sites' => Site::with('users')->get(),
@@ -34,7 +53,8 @@ class PlanningController extends Controller
             'users' => User::all(),
             'plannings' => Planning::all(),
             'typePosts' => TypePost::all(),
-            'IsShow' => false
+            'IsShow' => false,
+            'eventsForSearchGuard' => $eventsForSearchGuard
         ]);
     }
 
@@ -145,11 +165,25 @@ class PlanningController extends Controller
      */
     public function show(Request $request)
     {
+        $currentDate = now(); // Récupère la date actuelle
+
+        // Récupérer le mois actuel
+        $currentMonth = 1;
+
+        // Récupérer le mois suivant
+        $nextMonth = 2;
+
+        // Récupérer les plannings dont la date se trouve entre le début du mois actuel et la fin du mois suivant
+        $plannings = Planning::whereBetween('month', [
+            $currentMonth,
+            $nextMonth
+        ])->get();
+
+
+        // Récupérer les événements associés aux plannings récupérés
+        $eventsForSearchGuard = Event::whereIn('planning_id', $plannings->pluck('id'))->get();
         $planningId = $request->planningIds;
         $selectedPlanning = Planning::with('events')->find($planningId);
-
-
-
 
         if (!$selectedPlanning) {
             return redirect()->route('plannings.index')->with('error', 'Planning not found.');
@@ -161,7 +195,8 @@ class PlanningController extends Controller
             'holidays' => Holiday::pluck('date')->toArray(),
             'users' => User::all(),
             'typePosts' => TypePost::all(),
-            'isShow' => true
+            'isShow' => true,
+            'eventsForSearchGuard'=>$eventsForSearchGuard
         ]);
     }
 

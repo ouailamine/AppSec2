@@ -13,6 +13,7 @@ const AddUserModal = ({
   localSiteUsers,
 }) => {
 
+  
 
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showVacancyInput, setShowVacancyInput] = useState(false);
@@ -21,8 +22,11 @@ const AddUserModal = ({
 
 
   useEffect(() => {
-    setSelectedUsers((siteUsers || []).map((user) => user.id));
-  }, [siteUsers]);
+    setSelectedUsers((localSiteUsers || []).map((user) => user.id));
+  }, [localSiteUsers]);
+
+  console.log(localSiteUsers)
+console.log(selectedUsers)
 
   const siteName = sites.find((site) => site.id == selectedSite)?.name || "";
 
@@ -32,10 +36,10 @@ const AddUserModal = ({
     const filteredUsers = users.filter((user) =>
       selectedUsers.includes(user.id)
     );
-
     onAddUser(filteredUsers);
     onClose();
   };
+  
 
   const handleCancel = () => {
     onClose();

@@ -41,7 +41,8 @@ class UserController extends Controller
             'users' => User::all(),
             'nationalities' => Nationality::all(),
             'typeAds' => TypeAds::all(),
-            'cities' => City::all()
+            'cities' => City::all(),
+            'guards'=> Guard::all()
         ]);
     }
 
@@ -224,12 +225,13 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        $user->delete();
         $guard = Guard::create([
 
             'fullname' => $user->fullname,
             'firstname' => $user->firstname,
             'genre' => $user->genre,
-            'date_of_birth' => $user->dateofbirth,
+            'date_of_birth' => $user->date_of_birth,
             'nationality' => $user->nationality,
             'address' => $user->address,
             'city' => $user->city,
@@ -239,7 +241,7 @@ class UserController extends Controller
             'phone' => $user->phone,
             'social_security_number' => $user->social_security_number,
             'professional_card_number' => $user->professional_card_number,
-            'typeADS' => $user->typeAds,
+            'typeADS' => $user->typeADS,
             'diplomas' => $user->diplomas
 
         ]);
@@ -247,7 +249,7 @@ class UserController extends Controller
 
         event(new Registered($guard));
 
-        $user->delete();
+        
         return redirect()->back();
     }
 
@@ -255,9 +257,10 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function createUser(Guard $guard)
+    public function createUser(Guard $user)
     {
 
+       
         try {
 
             // Créer l'utilisateur

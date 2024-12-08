@@ -126,6 +126,8 @@ const PlanningList = ({ plannings, sites, auth }) => {
           >
             Crée un planning
           </a>
+
+          
         </div>
       </nav>
 
