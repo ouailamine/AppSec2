@@ -636,10 +636,15 @@ export const minutesToHoursMinutes = (totalMinutes) => {
 
 export const mergeAllEvents = (events) => {
   if (!events || events.length === 0) return [];
+
   const mergedEvents = [];
-  // Group events by `relatedEvent`
+
+  // Détecter quelle clé utiliser pour regrouper les événements (relatedEventId ou relatedEvent)
+  const groupingKey = events.some(event => event.relatedEventId) ? 'relatedEventId' : 'relatedEvent';
+
+  // Regrouper les événements par la clé déterminée
   const groupedByRelatedEvent = events.reduce((acc, event) => {
-    const key = event.relatedEvent || "unrelated"; // Handle events without `relatedEvent`
+    const key = event[groupingKey] || "unrelated"; // Utilise la clé de regroupement dynamique
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -647,37 +652,38 @@ export const mergeAllEvents = (events) => {
     return acc;
   }, {});
 
-  // Iterate through each group
+  // Parcourir chaque groupe
   Object.values(groupedByRelatedEvent).forEach((group) => {
-    const parentEvent = group.find((event) => !event.isSubEvent);
-    const subEvents = group.filter((event) => event.isSubEvent);
+    const parentEvent = group.find((event) => !event.isSubEvent); // Trouver l'événement parent
+    const subEvents = group.filter((event) => event.isSubEvent); // Filtrer les sous-événements
 
     if (parentEvent && subEvents.length > 0) {
       subEvents.forEach((subEvent) => {
         const mergedEvent = {
-          id: [parentEvent.id, subEvent.id],
+          id: [parentEvent.id, subEvent.id], // Fusionner les IDs
           pause_end: parentEvent.pause_end,
           pause_payment: parentEvent.pause_payment,
           pause_start: parentEvent.pause_start,
           post: parentEvent.post,
-          selected_days: parentEvent.selected_days,
+          selected_days: parentEvent.selected_days, // Utiliser selected_days du parent
           typePost: parentEvent.typePost,
           user_id: parentEvent.user_id,
           vacation_end: subEvent.vacation_end,
           vacation_start: parentEvent.vacation_start,
-          work_duration: parentEvent.work_duration + subEvent.work_duration,
+          work_duration: parentEvent.work_duration + subEvent.work_duration, // Ajouter les durées de travail
         };
 
         mergedEvents.push(mergedEvent);
       });
     } else if (parentEvent) {
-      // Add standalone parent event if no sub-events exist
+      // Ajouter l'événement parent seul si aucun sous-événement n'existe
       mergedEvents.push(parentEvent);
     } else {
-      // Add orphaned sub-events (if needed)
+      // Ajouter les sous-événements orphelins (si nécessaire)
       mergedEvents.push(...subEvents);
     }
   });
 
   return mergedEvents;
 };
+

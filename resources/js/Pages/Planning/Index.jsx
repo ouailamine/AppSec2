@@ -18,7 +18,7 @@ const monthNames = [
   "Décembre",
 ];
 
-const PlanningList = ({ plannings, sites, auth }) => {
+const PlanningList = ({ plannings, sites}) => {
   const [open, setOpen] = useState(null);
   const [search, setSearch] = useState({ site: "", year: "", month: "" });
 
@@ -53,11 +53,12 @@ const PlanningList = ({ plannings, sites, auth }) => {
         .filter(
           (planning) =>
             planning.year === year &&
+            planning.site && // Vérifie que planning.site n'est pas null
             planning.site.id === siteId &&
             planning.month === month
         )
         .map((planning) => planning.id) || [];
-
+  
     Inertia.visit(route("plannings.show", planningIds), {
       method: "get",
       data: { planningIds },
@@ -67,6 +68,7 @@ const PlanningList = ({ plannings, sites, auth }) => {
       },
     });
   };
+  
 
   const handleValidate = (planningId) => {
     console.log(`Valider le planning ${planningId}`);
@@ -221,116 +223,114 @@ const PlanningList = ({ plannings, sites, auth }) => {
 
         {/* Liste des plannings filtrés */}
         {filteredPlannings.length === 0 ? (
-          <p className="text-lg text-gray-600">
-            Aucun planning disponible pour les critères sélectionnés.
-          </p>
-        ) : (
-          sites
-            .filter(
-              (site) =>
-                filteredPlannings.some(
-                  (planning) => planning.site.id === site.id
-                ) || search.site === ""
-            )
-            .map((site) => {
-              const sitePlannings = filteredPlannings.filter(
-                (planning) => planning.site.id === site.id
-              );
+  <p className="text-lg text-gray-600">
+    Aucun planning disponible pour les critères sélectionnés.
+  </p>
+) : (
+  sites
+    .filter(
+      (site) =>
+        site && // Vérifie que site n'est pas null
+        filteredPlannings.some(
+          (planning) => planning.site?.id === site.id
+        ) || search.site === ""
+    )
+    .map((site) => {
+      const sitePlannings = filteredPlannings.filter(
+        (planning) => planning.site?.id === site.id
+      );
 
-              return (
-                <div
-                  key={site.id}
-                  className="border border-gray-200 rounded-lg shadow-lg bg-white p-3 mb-6"
-                >
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-700">
-                      {site.name}
-                    </h2>
-                    <button
-                      onClick={() => toggleOpen(site.id)}
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none transition-transform transform"
-                    >
-                      {open === site.id ? "Réduire" : "Afficher"}
-                    </button>
-                  </div>
-                  {open === site.id && (
-                    <div className="mt-4 space-y-4">
-                      {sitePlannings.length === 0 ? (
-                        <p className="text-lg text-gray-600">
-                          Aucun planning disponible pour ce site.
+      return (
+        <div
+          key={site.id}
+          className="border border-gray-200 rounded-lg shadow-lg bg-white p-3 mb-6"
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-700">
+              {site.name}
+            </h2>
+            <button
+              onClick={() => toggleOpen(site.id)}
+              className="text-gray-500 hover:text-gray-700 focus:outline-none transition-transform transform"
+            >
+              {open === site.id ? "Réduire" : "Afficher"}
+            </button>
+          </div>
+          {open === site.id && (
+            <div className="mt-4 space-y-4">
+              {sitePlannings.length === 0 ? (
+                <p className="text-lg text-gray-600">
+                  Aucun planning disponible pour ce site.
+                </p>
+              ) : (
+                sitePlannings.map((planning) => (
+                  <div
+                    key={planning.id}
+                    className="border border-gray-300 rounded-lg bg-gray-100 p-4 mb-3"
+                  >
+                    <h3 className="text-xl font-medium text-gray-800 mb-2">
+                      {monthNames[planning.month - 1]} {planning.year}
+                    </h3>
+                    <div className="flex justify-between items-center">
+                      <div className="flex space-x-6">
+                        <p className="text-sm text-gray-600">
+                          <strong>Date de Création:</strong>{" "}
+                          {new Date(
+                            planning.created_at
+                          ).toLocaleDateString()}
                         </p>
-                      ) : (
-                        sitePlannings.map((planning) => (
-                          <div
-                            key={planning.id}
-                            className="border border-gray-300 rounded-lg bg-gray-100 p-4 mb-3"
+                        <p className="text-sm text-gray-600">
+                          <strong>Validé:</strong>
+                          <span
+                            className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              planning.isValidate
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
                           >
-                            <h3 className="text-xl font-medium text-gray-800 mb-2">
-                              {monthNames[planning.month - 1]} {planning.year}
-                            </h3>
-
-                            {/* Tout aligné en une seule ligne */}
-                            <div className="flex justify-between items-center">
-                              <div className="flex space-x-6">
-                                <p className="text-sm text-gray-600">
-                                  <strong>Date de Création:</strong>{" "}
-                                  {new Date(
-                                    planning.created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  <strong>Validé:</strong>
-                                  <span
-                                    className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                      planning.isValidate
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-red-100 text-red-800"
-                                    }`}
-                                  >
-                                    {planning.isValidate ? "Oui" : "Non"}
-                                  </span>
-                                </p>
-                              </div>
-
-                              {/* Actions à droite */}
-                              <div className="flex space-x-3">
-                                <button
-                                  onClick={() =>
-                                    handleShowPlanning(
-                                      planning.year,
-                                      site.id,
-                                      planning.month
-                                    )
-                                  }
-                                  className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                >
-                                  Voir
-                                </button>
-                                {!planning.isValidate && (
-                                  <button
-                                    onClick={() => handleValidate(planning.id)}
-                                    className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-600 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                  >
-                                    Valider
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => handleDelete(planning.id)}
-                                  className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                >
-                                  Supprimer
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                            {planning.isValidate ? "Oui" : "Non"}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() =>
+                            handleShowPlanning(
+                              planning.year,
+                              site.id,
+                              planning.month
+                            )
+                          }
+                          className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          Voir
+                        </button>
+                        {!planning.isValidate && (
+                          <button
+                            onClick={() => handleValidate(planning.id)}
+                            className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-green-600 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            Valider
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(planning.id)}
+                          className="px-3 py-1 border border-transparent text-sm font-medium rounded-md text-red-600 hover:text-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })
-        )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      );
+    })
+)}
+
       </div>
     </AdminAuthenticatedLayout>
   );

@@ -848,6 +848,18 @@ const CreatePlanning = ({
               >
                 Sauvegarder
               </button>
+              <button
+                onClick={handleValidatPlanning}
+                className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
+                  events.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                } text-sm font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed`}
+                aria-label="Sauvegarder le planning"
+
+              >
+                Valider
+              </button>
             </div>
           </>
         )}

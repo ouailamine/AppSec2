@@ -17,9 +17,9 @@ class CreateSiteUserTable extends Migration
             $table->id();
             $table->unsignedBigInteger('site_id');
             $table->unsignedBigInteger('user_id');
+            $table->boolean('isFirstList');
             $table->timestamps();
 
-            // Définir les clés étrangères
             $table->foreign('site_id')->references('id')->on('sites')->onDelete('cascade');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

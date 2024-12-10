@@ -4,64 +4,85 @@ import { Inertia } from "@inertiajs/inertia";
 
 const ModalUser = ({ isOpen, onClose, onSave, sites, users }) => {
   const [selectedSite, setSelectedSite] = useState(null);
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [siteUsers, setSiteUsers] = useState([]);
+  const [selectedPrimaryUsers, setSelectedPrimaryUsers] = useState([]);
+  const [selectedSecondaryUsers, setSelectedSecondaryUsers] = useState([]);
+  const [siteUsers, setSiteUsers] = useState({ primary: [], secondary: [] });
 
   useEffect(() => {
     // Réinitialiser les valeurs lorsque le modal est ouvert
     setSelectedSite(null);
-    setSelectedUsers([]);
-    setSiteUsers([]);
+    setSelectedPrimaryUsers([]);
+    setSelectedSecondaryUsers([]);
+    setSiteUsers({ primary: [], secondary: [] });
   }, [isOpen]);
 
   useEffect(() => {
     if (selectedSite) {
       const site = sites.find((site) => site.id === selectedSite.value);
       if (site) {
-        console.log("Site trouvé:", site);
-        // Vérifiez si site.users est bien un tableau
+        console.log(site.users);
         if (Array.isArray(site.users)) {
-          setSiteUsers(site.users);
-          setSelectedUsers(
-            site.users.map((user) => ({
-              value: user.id,
-              label: user.fullname,
-            }))
+          // Trier les utilisateurs en fonction de pivot.isFirstList
+          const { primary, secondary } = site.users.reduce(
+            (acc, user) => {
+              if (user.pivot?.isFirstList) {
+                acc.primary.push(user); // Utilisateur dans la première liste
+              } else {
+                acc.secondary.push(user); // Utilisateur dans la seconde liste
+              }
+              return acc;
+            },
+            { primary: [], secondary: [] }
+          );
+
+          setSiteUsers({ primary, secondary });
+          setSelectedPrimaryUsers(
+            primary.map((user) => ({ value: user.id, label: user.fullname }))
+          );
+          setSelectedSecondaryUsers(
+            secondary.map((user) => ({ value: user.id, label: user.fullname }))
           );
         } else {
           console.warn("site.users n'est pas un tableau", site.users);
-          setSiteUsers([]);
+          setSiteUsers({ primary: [], secondary: [] });
         }
       }
     }
   }, [selectedSite, sites]);
 
   const handleSiteChange = (selectedOption) => {
-    console.log("Site selected:", selectedOption);
     setSelectedSite(selectedOption);
   };
 
-  const handleUserChange = (selectedOptions) => {
-    console.log("Users selected:", selectedOptions);
-    setSelectedUsers(selectedOptions);
+  const handlePrimaryUserChange = (selectedOptions) => {
+    setSelectedPrimaryUsers(selectedOptions);
+  };
+
+  const handleSecondaryUserChange = (selectedOptions) => {
+    setSelectedSecondaryUsers(selectedOptions);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedSite) {
-      const userIds = selectedUsers.map((user) => user.value);
+      const primaryUserIds = selectedPrimaryUsers.map((user) => user.value);
+      const secondaryUserIds = selectedSecondaryUsers.map((user) => user.value);
+
       console.log("Envoi des données:", {
         siteId: selectedSite.value,
-        users: userIds,
+        primaryUsers: primaryUserIds,
+        secondaryUsers: secondaryUserIds,
       });
+
       Inertia.put(
         `/sites/${selectedSite.value}/users`,
-        { users: userIds },
+        { primaryUsers: primaryUserIds, secondaryUsers: secondaryUserIds },
         {
           onSuccess: () => {
             onSave({
               siteId: selectedSite.value,
-              users: userIds,
+              primaryUsers: primaryUserIds,
+              secondaryUsers: secondaryUserIds,
             });
             onClose();
           },
@@ -72,6 +93,23 @@ const ModalUser = ({ isOpen, onClose, onSave, sites, users }) => {
       );
     }
   };
+
+  // Filtrer les options pour exclure les utilisateurs déjà sélectionnés dans l'autre liste
+  const primaryOptions = users
+    .filter(
+      (user) =>
+        !selectedSecondaryUsers.some((secondary) => secondary.value === user.id) &&
+        !siteUsers.primary.some((primary) => primary.id === user.id)
+    )
+    .map((user) => ({ value: user.id, label: user.fullname }));
+
+  const secondaryOptions = users
+    .filter(
+      (user) =>
+        !selectedPrimaryUsers.some((primary) => primary.value === user.id) &&
+        !siteUsers.secondary.some((secondary) => secondary.id === user.id)
+    )
+    .map((user) => ({ value: user.id, label: user.fullname }));
 
   if (!isOpen) return null;
 
@@ -98,20 +136,34 @@ const ModalUser = ({ isOpen, onClose, onSave, sites, users }) => {
             />
           </div>
 
-          {/* Users Selection */}
+          {/* Primary Users Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">
-              Ajouter des agents
+              Ajouter des agents principaux
             </label>
             <Select
               isMulti
-              value={selectedUsers}
-              onChange={handleUserChange}
-              options={users.map((user) => ({
-                value: user.id,
-                label: user.fullname,
-              }))}
-              placeholder="Sélectionnez des users"
+              value={selectedPrimaryUsers}
+              onChange={handlePrimaryUserChange}
+              options={primaryOptions}
+              placeholder="Sélectionnez des agents principaux"
+              className="basic-multi-select"
+              classNamePrefix="select"
+              isSearchable
+            />
+          </div>
+
+          {/* Secondary Users Selection */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">
+              Ajouter des agents secondaires
+            </label>
+            <Select
+              isMulti
+              value={selectedSecondaryUsers}
+              onChange={handleSecondaryUserChange}
+              options={secondaryOptions}
+              placeholder="Sélectionnez des agents secondaires"
               className="basic-multi-select"
               classNamePrefix="select"
               isSearchable

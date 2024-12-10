@@ -41,6 +41,7 @@ const TableComponent = ({
   });
   const [selectedCheckboxes, setSelectedCheckboxes] = useState([]);
   const [tableEvents, setTableEvents] = useState(events);
+  const [isMerged, setIsMerged] = useState(false);
 
   useEffect(() => {
     if (events) {
@@ -48,11 +49,7 @@ const TableComponent = ({
     }
   }, [events]);
 
-  const handleMergeEvents = () => {
-    const result = mergeAllEvents(events);
-    console.log(result);
-    setTableEvents(result);
-  };
+  
 
   const getUserFullName = (userId) => {
     const user = siteUsers.find((user) => user.id === userId);
@@ -508,23 +505,36 @@ const TableComponent = ({
     setTableEvents(events);
   };
 
+  const handleMergeEvents = () => {
+    const result = mergeAllEvents(events);
+    console.log(events);
+    console.log(result);
+    setTableEvents(result);
+  };
+  
+
+  const handleToggleEvents = () => {
+    if (isMerged) {
+      handleSepareteEvents(); // Fonction pour défusionner
+    } else {
+      handleMergeEvents(); // Fonction pour fusionner
+    }
+    setIsMerged(!isMerged); // Inverse l'état
+  };
+
   return (
     <div className="bg-white border border-gray-600 rounded-md shadow-sm p-1 space-y-1">
       <div className="overflow-x-auto">
-        <div className="flex justify-center items-center space-x-2 p-4 bg-gray-50 rounded-md shadow-sm">
-          <button
-            onClick={handleMergeEvents}
-            className="merge-button bg-blue-500 text-white text-sm px-3 py-2 rounded-md shadow hover:bg-blue-600 hover:shadow transition duration-200"
-          >
-            Fusionner les vacations
-          </button>
-          <button
-            onClick={handleSepareteEvents}
-            className="merge-button bg-red-500 text-white text-sm px-3 py-2 rounded-md shadow hover:bg-red-600 hover:shadow transition duration-200"
-          >
-            Défussionner les vacations
-          </button>
-        </div>
+      <div className="flex justify-center items-center space-x-2 p-4 bg-gray-50 rounded-md shadow-sm">
+      <button
+        onClick={handleToggleEvents}
+        className={`merge-button text-white text-sm px-3 py-2 rounded-md shadow transition duration-200 ${
+          isMerged ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+        }`}
+      >
+        {isMerged ? "Défusionner les vacations" : "Fusionner les vacations"}
+      </button>
+    </div>
 
         <table className="min-w-full divide-y divide-gray-600 border-collapse border border-gray-600">
           <thead className="bg-gray-150">

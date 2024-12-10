@@ -23,7 +23,10 @@ class Site extends Model
     }
 
     public function users()
-    {
-        return $this->belongsToMany(User::class, 'site_user', 'site_id', 'user_id');
-    }
+{
+    return $this->belongsToMany(User::class, 'site_user', 'site_id', 'user_id')
+                ->withPivot('isFirstList'); 
+               
+}
+
 }

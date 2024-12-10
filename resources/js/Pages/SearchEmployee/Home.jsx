@@ -4,6 +4,7 @@ import { Head, usePage } from "@inertiajs/react";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
 import CreateEditGuardModal from "./CreateEditGuardModal";
 import ShowGuardModal from "./ShowGuardModal";
+import SectionSearch from "./SectionSearch2";
 
 const Home = ({
   users,
@@ -12,130 +13,123 @@ const Home = ({
   regions,
   diplomas,
   genres,
-  adsType,
   roles,
   auth,
   nationalities,
   typeAds,
   cities,
 }) => {
-  // États pour les champs de recherche
-  const [searchType, setSearchType] = useState("fullname");
-  const [searchValue, setSearchValue] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
-  const [filteredDepartements, setFilteredDepartements] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("");
-  const [selectedAdsType, setSelectedAdsType] = useState("");
-  const [selectedDiploma, setSelectedDiploma] = useState("");
-  const [searchMode, setSearchMode] = useState("simple"); // État pour basculer entre recherche simple et multiple
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState();
-  const [usersOrGuard, setUsersOrGuard] = useState(users);
-
+  const [usersOrGuards, setusersOrGuards] = useState(users);
   const [showModal, setShowModal] = useState(false);
   const [createEditModal, setCreateEditModal] = useState(false);
-
-  const [isSimpleOpen, setIsSimpleOpen] = useState(false);
-  const [isMultipleOpen, setIsMultipleOpen] = useState(false);
   const [isAgentSearchOpen, setIsAgentSearchOpen] = useState(false);
-  // Fonction pour gérer la soumission du formulaire de recherche
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
+  const [isResultSearch, setIsResultSearch] = useState(false);
+  const [campanyGuard, setCampanyGuard] = useState("Atalix");
 
-  // Fonction pour basculer entre les modes de recherche
-  const handleModeChange = (mode) => {
-    setSearchMode(mode);
-    if (mode === "simple") {
-      // Réinitialiser les champs spécifiques à la recherche multiple
-      setSelectedRegion("");
-      setSelectedDepartment("");
-      setSelectedGenre("");
-      setSelectedAdsType("");
-      setSelectedDiploma("");
-    } else {
-      // Réinitialiser les champs spécifiques à la recherche simple
-      setSearchType("fullname");
-      setSearchValue("");
+  console.log(usersOrGuards);
+
+  const handleSearch = (data) => {
+
+    setIsResultSearch(true)
+    console.log(data);
+    if (data.searchType === "simple") {
+      const filteredUsers = usersOrGuards.filter((user) => {
+        // Check if the search value matches the selected attribute
+        const searchValue = data.searchValue.toLowerCase();
+        switch (data.searchAttribute) {
+          case "fullname":
+            return user.fullname.toLowerCase().includes(searchValue);
+          case "phone":
+            return user.phone.toString().includes(searchValue);
+          case "email":
+            return user.email.toLowerCase().includes(searchValue);
+          case "professional_card_number":
+            return user.professional_card_number.includes(searchValue);
+          case "social_security_number":
+            return user.social_security_number.toString().includes(searchValue);
+          default:
+            return false;
+        }
+      });
+
+      console.log(filteredUsers);
+      setusersOrGuards(filteredUsers);
+    } else if (data.searchType === "Multiple") {
+      const filteredUsers = usersOrGuards.filter((user) => {
+        // Check the selected department
+        if (
+          data.selectedDepartment &&
+          data.selectedDepartment !== "" &&
+          user.departement !== data.selectedDepartment
+        ) {
+          return false;
+        }
+
+        // Check the selected region
+        if (
+          data.selectedRegion &&
+          data.selectedRegion !== "" &&
+          user.region !== data.selectedRegion
+        ) {
+          return false;
+        }
+
+        // Check the selected gender
+        if (
+          data.selectedGender &&
+          data.selectedGender !== "" &&
+          user.genre !== data.selectedGender
+        ) {
+          return false;
+        }
+
+        // Check the selected agent type
+        if (
+          data.selectedAgentType &&
+          data.selectedAgentType !== "" &&
+          user.typeADS !== data.selectedAgentType
+        ) {
+          return false;
+        }
+
+        if (data.selectedDiplomas && data.selectedDiplomas.length > 0) {
+          let userDiplomas = [];
+          try {
+            // S'assurer que user.diplomas est un JSON valide avant de le parser
+            userDiplomas = user.diplomas ? JSON.parse(user.diplomas) : [];
+          } catch (e) {
+            console.error(
+              "Erreur lors du parsing des diplômes pour l'utilisateur :",
+              user.id,
+              e
+            );
+            userDiplomas = [];
+          }
+
+          // Vérifier si l'utilisateur a tous les diplômes sélectionnés
+          const hasAllSelectedDiplomas = data.selectedDiplomas.every(
+            (selectedDiploma) => {
+              return userDiplomas.some(
+                (diploma) => diploma.name === selectedDiploma
+              );
+            }
+          );
+
+          if (!hasAllSelectedDiplomas) {
+            return false;
+          }
+        }
+
+        return true; // Return the user if all conditions match
+      });
+
+      console.log(filteredUsers);
+      setusersOrGuards(filteredUsers);
     }
+    console.log(data);
   };
-
-  // Filtrer les utilisateurs en fonction du type de recherche sélectionné
-  const filteredUsers = (usersOrGuard || []).filter((user) => {
-    // Vérification des données utilisateur
-    if (!user) {
-      console.error("Utilisateur invalide ou null :", user);
-      return false;
-    }
-
-    // Valeur de recherche en minuscule
-    const value = searchValue?.toLowerCase() || "";
-
-    // Vérification du critère de type de recherche
-    const matchesSearchType = (() => {
-      if (!searchType || !searchValue) return true;
-
-      switch (searchType) {
-        case "fullname":
-          return user.fullname?.toLowerCase().includes(value);
-        case "firstname":
-          return user.firstname?.toLowerCase().includes(value);
-        case "email":
-          return user.email?.toLowerCase().includes(value);
-        case "phone":
-          return user.phone?.toString().toLowerCase().includes(value);
-        case "city":
-          return user.city?.toLowerCase().includes(value);
-        case "ssn":
-          return user.ssn?.toString().toLowerCase().includes(value);
-        default:
-          return true;
-      }
-    })();
-
-    // Vérification de la région
-    const matchesRegion = selectedRegion
-      ? user.region === selectedRegion
-      : true;
-
-    // Vérification du département
-    const matchesDepartment = selectedDepartment
-      ? user.departement === selectedDepartment
-      : true;
-
-    // Vérification du genre
-    const matchesGenre = selectedGenre ? user.genre === selectedGenre : true;
-
-    // Vérification du type d'annonces
-    const matchesAdsType = selectedAdsType
-      ? user.typeADS === selectedAdsType
-      : true;
-
-    // Vérification des diplômes
-    const matchesDiploma = (() => {
-      if (!selectedDiploma) return true;
-
-      try {
-        // Validation et parsing des diplômes
-        const diplomas = JSON.parse(user.diplomas || "[]");
-        return diplomas.some((diploma) => diploma.name === selectedDiploma);
-      } catch (error) {
-        console.error("Erreur lors du parsing des diplômes :", error);
-        return false;
-      }
-    })();
-
-    // Retourne vrai si toutes les conditions sont remplies
-    return (
-      matchesSearchType &&
-      matchesRegion &&
-      matchesDepartment &&
-      matchesGenre &&
-      matchesAdsType &&
-      matchesDiploma
-    );
-  });
 
   const handleShow = (user) => {
     setSelectedUser(user);
@@ -165,19 +159,27 @@ const Home = ({
   };
 
   const handleAtalixGuard = () => {
-    setUsersOrGuard(users);
-    console.log(usersOrGuard);
+    setusersOrGuards(users);
+    console.log(usersOrGuards);
   };
 
   const handleOtherGuard = () => {
-    setUsersOrGuard(guards);
-    console.log(usersOrGuard);
+    setusersOrGuards(guards);
+    setCampanyGuard("Non Atalix")
+    console.log(usersOrGuards);
+  };
+
+  const handleInitUsers = () => {
+    setusersOrGuards(users);
+    setIsResultSearch(false);
+    setCampanyGuard("Atalix")
   };
   return (
     <AdminAuthenticatedLayout user={auth.user}>
       <Head title="DashboardAdmin" />
-      <div className="container mt-4">
-        <div className="flex justify-center items-center mb-4">
+      <div className="container mt-4 h-full">
+        <div className="flex flex-col items-center space-y-6 mb-4">
+          {/* Bouton Ajouter un nouveau agent */}
           <button
             onClick={handleCreate}
             className="
@@ -191,151 +193,104 @@ const Home = ({
           >
             Ajouter un nouveau agent
           </button>
-        </div>
 
-        {/* Header Section */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
-          <button
-            type="button"
-            className="w-full bg-gray-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-gray-200"
-            onClick={() => setIsAgentSearchOpen(!isAgentSearchOpen)}
-          >
-            Recherche d'agents
-            <span
-              className={`w-5 h-5 border-t-2 border-r-2 border-black transform transition-transform duration-300 ${
-                isAgentSearchOpen ? "-rotate-45" : "-rotate-90"
-              }`}
-            ></span>
-          </button>
-
-          {isAgentSearchOpen && (
-            <div className="p-4 bg-white">
-              {/* Recherche Simple */}
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  className="w-full bg-blue-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-blue-200"
-                  onClick={() => setIsSimpleOpen(!isSimpleOpen)}
-                >
-                  Recherche Simple
-                  <i
-                    className={`bi ${
-                      isSimpleOpen ? "bi-chevron-up" : "bi-chevron-down"
-                    } transition-transform`}
-                  ></i>
-                </button>
-                {isSimpleOpen && (
-                  <div className="p-4 bg-gray-50">
-                    <form
-                      onSubmit={handleSubmit}
-                      className="w-full max-w-lg space-y-4"
-                    >
-                      <div>
-                        <label
-                          htmlFor="searchType"
-                          className="block text-sm font-medium mb-1"
-                        >
-                          Type de recherche
-                        </label>
-                        <select
-                          id="searchType"
-                          className="form-select w-full border rounded-md px-3 py-2"
-                          value={searchType}
-                          onChange={(e) => setSearchType(e.target.value)}
-                        >
-                          <option value="fullname">Nom</option>
-                          <option value="firstname">Prénom</option>
-                          <option value="email">Email</option>
-                          <option value="phone">Téléphone</option>
-                          <option value="city">Ville</option>
-                          <option value="ssn">Numéro sécurité sociale</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="searchValue"
-                          className="block text-sm font-medium mb-1"
-                        >
-                          Valeur
-                        </label>
-                        <input
-                          id="searchValue"
-                          type="text"
-                          className="form-input w-full border rounded-md px-3 py-2"
-                          value={searchValue}
-                          placeholder="Entrez la valeur"
-                          onChange={(e) => setSearchValue(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex justify-center">
-                        <button
-                          type="submit"
-                          className="bg-blue-500 text-white px-6 py-2 rounded-md shadow hover:bg-blue-600"
-                        >
-                          Rechercher
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-              </div>
-
-              {/* Recherche Multiple */}
-              <div className="border border-gray-200 rounded-lg overflow-hidden mt-4">
-                <button
-                  type="button"
-                  className="w-full bg-blue-100 flex justify-between items-center px-4 py-3 font-semibold text-gray-800 hover:bg-blue-200"
-                  onClick={() => setIsMultipleOpen(!isMultipleOpen)}
-                >
-                  Recherche Multiple
-                  <i
-                    className={`bi ${
-                      isMultipleOpen ? "bi-chevron-up" : "bi-chevron-down"
-                    } transition-transform`}
-                  ></i>
-                </button>
-                {isMultipleOpen && (
-                  <div className="p-4 bg-gray-50">
-                    <form
-                      onSubmit={handleSubmit}
-                      className="w-full max-w-lg space-y-4"
-                    >
-                      <div>
-                        <label
-                          htmlFor="region"
-                          className="block text-sm font-medium mb-1"
-                        >
-                          Région
-                        </label>
-                        <select
-                          id="region"
-                          className="form-select w-full border rounded-md px-3 py-2"
-                          value={selectedRegion}
-                          onChange={(e) => setSelectedRegion(e.target.value)}
-                        >
-                          <option value="">Toutes</option>
-                          {regions.map((region) => (
-                            <option key={region.id} value={region.region_code}>
-                              {region.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {/* Ajoutez d'autres champs ici */}
-                    </form>
-                  </div>
-                )}
-              </div>
+          {/* Section avec les autres boutons */}
+          <div className="flex space-x-4">
+            <div className="flex space-x-4">
+              <button
+                onClick={handleAtalixGuard}
+                className="
+      flex items-center bg-blue-500 text-white px-4 py-2 
+      rounded-md shadow-md text-xs font-medium 
+      hover:bg-blue-600 hover:shadow-lg 
+      focus:outline-none focus:ring-2 focus:ring-blue-300 
+      active:bg-blue-700 
+      transition-all duration-200 ease-in-out
+    "
+              >
+                <img
+                  src="assets/img/logo-atalix.png"
+                  className="w-6 h-6 mr-2 bg-white rounded-full"
+                  alt="Atalix Logo"
+                />
+                <span>Atalix Agents</span>
+              </button>
+              <button
+                onClick={handleOtherGuard}
+                className="
+      flex items-center bg-blue-500 text-white px-4 py-2 
+      rounded-md shadow-md text-xs font-medium 
+      hover:bg-blue-600 hover:shadow-lg 
+      focus:outline-none focus:ring-2 focus:ring-blue-300 
+      active:bg-blue-700 
+      transition-all duration-200 ease-in-out
+    "
+              >
+                <img
+                  src="assets/img/avatar.png"
+                  className="w-6 h-6 mr-2 bg-white rounded-full"
+                  alt="Other Logo"
+                />
+                <span>Autres agents</span>
+              </button>
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="card mt-6 bg-white shadow-lg rounded-lg">
+        <div className="mx-auto mt-6">
+          <div className="border border-gray-300 rounded-xl shadow-lg overflow-hidden">
+            <button
+              type="button"
+              className="w-full bg-blue-700 text-white flex justify-between items-center px-4 py-2 font-semibold text-lg   focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+              onClick={() => setIsAgentSearchOpen(!isAgentSearchOpen)}
+            >
+              <span>Recherche d'agents</span>
+
+              <svg
+                className={`w-8 h-8 transition-transform duration-300 ${
+                  isAgentSearchOpen ? "transform rotate-180" : ""
+                }`}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+              >
+                <path
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 9l6 6 6-6"
+                />
+              </svg>
+            </button>
+
+            <div
+              className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                isAgentSearchOpen ? "max-full" : "max-h-0"
+              }`}
+            >
+              <SectionSearch
+                regions={regions}
+                departements={departements}
+                diplomas={diplomas}
+                genres={genres}
+                typeAds={typeAds}
+                onSearch={handleSearch}
+                onInitUser={handleInitUsers}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="card mt-6 bg-white shadow-lg rounded-lg mb-10">
           <div className="card-header bg-gray-100 px-6 py-3 border-b border-gray-200 text-lg font-semibold">
-            Résultats de la recherche
+            {!isResultSearch
+              ? `Liste des agents ${campanyGuard}`
+              : `Résultats de la recherche des agents ${campanyGuard}`}
           </div>
           <div className="card-body px-6 py-4">
-            <table className="table-auto w-full text-left text-sm">
+            <table className="table-auto w-full text-left text-xs">
               <thead>
                 <tr className="bg-gray-50">
                   <th
@@ -375,7 +330,7 @@ const Home = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {usersOrGuards.map((user) => (
                   <tr key={user.id} className="border-b hover:bg-gray-50">
                     <td className="px-2 py-2">{user.fullname}</td>
                     <td className="px-2 py-2">{user.firstname}</td>
@@ -385,21 +340,21 @@ const Home = ({
                       <div className="flex space-x-2">
                         {/* Show Button */}
                         <button
-                          className="bg-green-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-green-600"
+                          className="bg-green-500 text-white px-2 py-1 rounded-md text-xs flex items-center hover:bg-green-600"
                           onClick={() => handleShow(user)}
                         >
                           <i className="bi bi-eye mr-1"></i> Voir
                         </button>
                         {/* Edit Button */}
                         <button
-                          className="bg-yellow-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-yellow-600"
+                          className="bg-yellow-500 text-white px-2 py-1 rounded-md text-xs flex items-center hover:bg-yellow-600"
                           onClick={() => handleEdit(user)}
                         >
                           <i className="bi bi-pencil-square mr-1"></i> Modifier
                         </button>
                         {/* Delete Button */}
                         <button
-                          className="bg-red-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-red-600"
+                          className="bg-red-500 text-white px-2 py-1 rounded-md text-xs flex items-center hover:bg-red-600"
                           onClick={() => handleDelete(user.id)}
                         >
                           <i className="bi bi-trash mr-1"></i> Supprimer
@@ -408,7 +363,7 @@ const Home = ({
                     </td>
                     <td className="px-2 py-2">
                       <button
-                        className="bg-blue-500 text-white px-2 py-1 rounded-md text-sm flex items-center hover:bg-blue-600"
+                        className="bg-blue-500 text-white px-2 py-1 rounded-md text-xs flex items-center hover:bg-blue-600"
                         onClick={() => {
                           if (user.registerNumber) {
                             // Si registerNumber existe, rediriger vers la création de carte Pro
@@ -430,7 +385,7 @@ const Home = ({
                     </td>
                   </tr>
                 ))}
-                {filteredUsers.length === 0 && (
+                {usersOrGuards.length === 0 && (
                   <tr>
                     <td
                       colSpan="6"

@@ -82,6 +82,8 @@ class PlanningController extends Controller
 
             // Ajouter les événements pour le mois courant
             foreach ($request->events as $eventData) {
+
+              
                 $planning->events()->create([
                     'id' => $eventData['id'],
                     'user_id' => $eventData['user_id'],
@@ -102,7 +104,7 @@ class PlanningController extends Controller
                     'sunday_hours' => $eventData['sunday_hours'],
                     'holiday_hours' => $eventData['holiday_hours'],
                     'isSubEvent' => $eventData['isSubEvent'],
-                    'relatedEvent' => $eventData['relatedEvent'],
+                    'relatedEventId' => $eventData['relatedEvent'],
                 ]);
             }
 
@@ -144,17 +146,22 @@ class PlanningController extends Controller
                         'sunday_hours' => $eventData['sunday_hours'],
                         'holiday_hours' => $eventData['holiday_hours'],
                         'isSubEvent' => $eventData['isSubEvent'],
-                        'relatedEvent' => $eventData['relatedEvent'],
+                        'relatedEventId' => $eventData['relatedEvent'],
                     ]);
                 }
             }
 
             DB::commit(); // Confirmer la transaction si tout est réussi
 
+          
+
             return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
         } catch (\Exception $e) {
+            dd("zz",$e);
             DB::rollBack(); // Annuler toutes les opérations en cas d'erreur
             return redirect()->back()->withErrors(['error' => 'An error occurred while creating the planning: ' . $e->getMessage()]);
+        dd($e->getMessage());
+        
         }
     }
 
@@ -188,6 +195,8 @@ class PlanningController extends Controller
         if (!$selectedPlanning) {
             return redirect()->route('plannings.index')->with('error', 'Planning not found.');
         }
+
+      
         return Inertia::render('Planning/Create', [
             'selectedPlanning' => $selectedPlanning,
             'posts' => Post::all(),

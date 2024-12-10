@@ -16,10 +16,8 @@ class SiteController extends Controller
      */
     public function index()
     {
-        // Charger les sites avec leurs gardes associés
-        $sites = Site::with('users')->get();
-
-        // Si vous avez besoin de la liste complète des users, récupérez-la aussi
+   
+        $sites = Site::with(['users'])->get();
         $users = User::all();
 
         return inertia('Sites/Index', [
@@ -40,7 +38,7 @@ class SiteController extends Controller
      */
     public function editUsers($siteId, $request)
     {
-        dd($request);
+
         $site = Site::with('users')->findOrFail($siteId);
         $users = User::all();
 
@@ -59,18 +57,29 @@ class SiteController extends Controller
      */
     public function updateUsers(Request $request, $siteId)
     {
-
-        $request->validate([
-            'users' => 'array',
-            'users.*' => 'exists:users,id'
-        ]);
-
+        // Trouver le site par son ID
         $site = Site::findOrFail($siteId);
-        $site->users()->sync($request->input('users')); // Met à jour la table pivot avec les users sélectionnés
-
-        // Redirige vers la liste des sites avec un message de succès
-        return redirect()->back()->with('success', 'Holiday added successfully.');
+    
+        // Récupérer les utilisateurs principaux et secondaires depuis la requête
+        $primaryUsers = $request->input('primaryUsers', []); // Utilisateurs principaux
+        $secondaryUsers = $request->input('secondaryUsers', []); // Utilisateurs secondaires
+    
+        // Fusionner les utilisateurs principaux et secondaires
+        $allUsers = collect($primaryUsers)->merge($secondaryUsers)->unique();
+    
+        // Préparer les données pour la synchronisation avec attribut `isFirstList`
+        $syncData = [];
+        foreach ($allUsers as $userId) {
+            $syncData[$userId] = ['isFirstList' => in_array($userId, $primaryUsers)];
+        }
+    
+        // Synchroniser les utilisateurs avec la table pivot
+        $site->users()->sync($syncData);
+    
+        // Retourner avec un message de succès
+        return redirect()->back()->with('success', 'Liste d\'agents modifiée.');
     }
+    
     /**
      * Show the form for creating a new resource.
      */
@@ -94,9 +103,6 @@ class SiteController extends Controller
 
         ]);
 
-        // Handle the creation of the site and assignment of users here
-        // Assuming you have a Site model and a relationship setup
-
         $site = Site::create($request->only('name', 'manager_name', 'address', 'email', 'phone'));
         $site->users()->sync($request->selectedUsers); // Attach Users to site
 
@@ -108,16 +114,7 @@ class SiteController extends Controller
         return Inertia::render('Sites/Edit', ['site' => $site]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-
-
+   
     /**
      * Update the specified resource in storage.
      */

@@ -15,6 +15,9 @@ import {
 } from "@heroicons/react/24/outline";
 
 const Index = ({ sites, users, flash = {} }) => {
+
+
+  console.log(sites)
   const [search, setSearch] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [modals, setModals] = useState({

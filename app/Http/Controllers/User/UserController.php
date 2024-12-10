@@ -257,7 +257,7 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function createUser(Guard $user)
+    public function createUser(User $user)
     {
 
        
@@ -265,24 +265,24 @@ class UserController extends Controller
 
             // Créer l'utilisateur
             $user = User::create([
-                'fullname' => $guard->fullname,
-                'firstname' => $guard->firstname,
-                'genre' => $guard->genre,
-                'nationality' => $guard->nationality,
-                'date_of_birth' => $guard->date_of_birth,
-                'address' => $guard->address,
-                'city' => $guard->city,
-                'region' => $guard->region,
-                'departement' => $guard->departement,
-                'email' => $guard->email,
-                'phone' => $guard->phone,
-                'social_security_number' => $guard->social_security_number,
-                'professional_card_number' => $guard->professional_card_number,
+                'fullname' => $user->fullname,
+                'firstname' => $user->firstname,
+                'genre' => $user->genre,
+                'nationality' => $user->nationality,
+                'date_of_birth' => $user->date_of_birth,
+                'address' => $user->address,
+                'city' => $user->city,
+                'region' => $user->region,
+                'departement' => $user->departement,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'social_security_number' => $user->social_security_number,
+                'professional_card_number' => $user->professional_card_number,
                 'password' => Hash::make('atalixsecurite'),
                 'registerNumber' => User::max('registerNumber') + 1,
-                'typeAds' => $guard->typeAds,
+                'typeAds' => $user->typeAds,
                 'note' => 10,
-                'diplomas' => $guard->diplomas,
+                'diplomas' => $user->diplomas,
             ]);
 
             // Assigner le rôle
@@ -291,7 +291,7 @@ class UserController extends Controller
             // Déclencher l'événement
             event(new Registered($user));
 
-            $guard->delete();
+            $user->delete();
 
             // Rediriger avec succès
             return redirect()->route('SearchEmployee.index')->with('success', 'User created successfully');

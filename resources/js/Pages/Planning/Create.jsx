@@ -26,9 +26,9 @@ const CreatePlanning = ({
   holidays = [],
   plannings = [],
   selectedPlanning = [],
-  isShow,eventsForSearchGuard
+  isShow,
+  eventsForSearchGuard,
 }) => {
-
   const [selectedSite, setSelectedSite] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -44,11 +44,10 @@ const CreatePlanning = ({
   const [searchAvailableGuard, setSearchAvailableGuard] = useState(false);
   const [siteUsers, setSiteUsers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState([]);
-  const [localPosts, setLocalPosts] = useState([]);
+  const [localPosts, setLocalPosts] = useState(posts);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log(localSiteUsers)
   // Fonction pour ouvrir le modal
   const openModal = () => {
     setIsModalOpen(true);
@@ -69,12 +68,18 @@ const CreatePlanning = ({
 
   useEffect(() => {
     if (selectedSite) {
-      const updateSiteUsers =
-        sites.find((site) => site.id == selectedSite).users || [];
-      setSiteUsers(updateSiteUsers);
-      setLocalSiteUsers(updateSiteUsers);
+      const allUsers =
+        sites.find((site) => site.id == selectedSite)?.users || [];
+
+      const usersFirstList = allUsers.filter((user) => user.pivot?.isFirstList);
+      const usersSecondList = allUsers.filter(
+        (user) => !user.pivot?.isFirstList
+      );
+
+      setSiteUsers({ firstList: usersFirstList, secondList: usersSecondList }); // Combine les deux listes dans un objet
+      setLocalSiteUsers(usersFirstList); // Met uniquement la première liste
     }
-  }, [selectedSite, users]);
+  }, [selectedSite, sites]);
 
   console.log(localSiteUsers);
 
@@ -406,16 +411,28 @@ const CreatePlanning = ({
 
   const addNewPost = (data) => {
     console.log(data);
+    const newPost = {
+      id: 1000,
+      abbreviation: data.abbreviation,
+      default_duration_hours: Number(data.default_duration_hours * 60),
+      default_duration_minutes: Number(data.default_duration_minutes),
+      name: data.name,
+      price: "",
+      type_post_id: data.type_post_id,
+    };
+
+    console.log(newPost);
+    setLocalPosts([...localPosts, newPost]);
   };
 
   const handleASS = (user) => {
     console.log(user);
-    // Ajout de l'utilisateur à la liste locale
     const aa = localSiteUsers.push(user);
-    setLocalPosts(aa)
-    console.log(localSiteUsers); // Affiche la liste mise à jour
-  }
+    setLocalSiteUsers(aa);
+    console.log(localSiteUsers);
+  };
 
+  const handleValidatePlanning = () => {};
   console.log("events", events);
   return (
     <AdminAuthenticatedLayout>
@@ -494,7 +511,7 @@ const CreatePlanning = ({
                     onClose={closeModal}
                     selectedSite={selectedSite}
                     sites={sites}
-                    posts={posts}
+                    posts={localPosts}
                     typePosts={typePosts}
                     holidays={holidays}
                     month={currentMonth}
@@ -527,7 +544,7 @@ const CreatePlanning = ({
                 onCreateEvent={createEventsForUsers}
                 AllUsers={users}
                 siteUsers={localSiteUsers}
-                posts={posts}
+                posts={localPosts}
               />
             </div>
 
@@ -555,11 +572,41 @@ const CreatePlanning = ({
               siteUsers={siteUsers}
               localSiteUsers={localSiteUsers}
               selectedSite={SelectSite}
-              eventsForSearchGuard ={eventsForSearchGuard}
+              eventsForSearchGuard={eventsForSearchGuard}
               currentMonth={currentMonth}
               currentYear={currentYear}
               onAddUserz={handleASS}
             />
+            <div className="flex justify-center">
+              {events.length !== 0 && (
+                <>
+                  <button
+                    onClick={handleSavePlanning}
+                    className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
+                      events.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    } text-sm font-semibold`}
+                    aria-label="Sauvegarder le planning"
+                    disabled={events.length === 0} // Disable the button when no events
+                  >
+                    Sauvegarder
+                  </button>
+                  <button
+                    onClick={handleValidatePlanning}
+                    className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
+                      events.length === 0
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    } text-sm font-semibold`}
+                    aria-label="Sauvegarder le planning"
+                    disabled={events.length === 0} // Disable the button when no events
+                  >
+                    Valider
+                  </button>
+                </>
+              )}
+            </div>
           </>
         )}
       </div>
