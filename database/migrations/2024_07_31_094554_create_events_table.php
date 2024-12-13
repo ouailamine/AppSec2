@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('events', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Ajout de la colonne user_id
+            $table->string('userName')->nullable();
             $table->foreignId('planning_id')->constrained()->onDelete('cascade'); // Ajout de la colonne planning_id
             $table->foreignId('site_id')->constrained()->onDelete('cascade'); // Ajout de la colonne site_id
             $table->string('month');
             $table->string('year');
             $table->string('post')->nullable();
+            $table->string('postName')->nullable();
             $table->string('typePost')->nullable();
             $table->time('vacation_start')->nullable();
             $table->time('vacation_end')->nullable();

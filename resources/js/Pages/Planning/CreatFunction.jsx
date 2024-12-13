@@ -177,12 +177,12 @@ export const createVacationEvents = (
 
   // Processus pour chaque jour dans selectedDay
   daysToProcess.forEach((day) => {
-    let relatedEventId = null;
+    let relatedEvent = null;
 
     if (endInMinutes < startInMinutes) {
       // Event crosses midnight, process in two segments
 
-      relatedEventId = uuidv4().slice(0, 8);
+      relatedEvent = uuidv4().slice(0, 8);
       // Calculer le jour suivant
       const nextDay = new Date(day);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -294,7 +294,7 @@ export const createVacationEvents = (
           pause_start: includeStartPauseFirstSegment,
           pause_end: includeEndPauseFirstSegment,
           lunchAllowance: lunchAllowance,
-          relatedEvent: relatedEventId, // Link to the second segment
+          relatedEvent: relatedEvent, // Link to the second segment
           isSubEvent: false,
         });
 
@@ -320,7 +320,7 @@ export const createVacationEvents = (
           pause_end: includeEndPauseSecondSegment,
           lunchAllowance: 0,
           isSubEvent: true, // Mark as sub-event
-          relatedEvent: relatedEventId, // Link to the first segment
+          relatedEvent: relatedEvent, // Link to the first segment
         });
       } else {
         events.push({
@@ -341,7 +341,7 @@ export const createVacationEvents = (
           pause_start: includeStartPauseFirstSegment,
           pause_end: includeEndPauseFirstSegment,
           lunchAllowance: lunchAllowance,
-          relatedEvent: relatedEventId, // Link to the second segment
+          relatedEvent: relatedEvent, // Link to the second segment
           isSubEvent: false,
         });
 
@@ -366,7 +366,7 @@ export const createVacationEvents = (
           pause_end: includeEndPauseSecondSegment,
           lunchAllowance: workDurationSecondSegment >= 360 ? 1 : 0, // Corrected conditional logic for lunch allowance
           isSubEvent: true, // Mark as sub-event
-          relatedEvent: relatedEventId, // Link to the first segment
+          relatedEvent: relatedEvent, // Link to the first segment
         });
       }
     } else {
@@ -414,209 +414,6 @@ export const createVacationEvents = (
   return { events, eventsNextMonth };
 };
 
-export const checkVacationsAndWeeklyHours = (
-  events,
-  newEvents,
-  currentMonth,
-  currentYear,
-  users
-) => {
-  const getUserFullName = (userId) => {
-    const user = users.find((user) => user.id == userId);
-    return user ? user.fullname : "agent inconnu";
-  };
-
-  // Fusionner les événements existants et les nouveaux événements
-  events = events.concat(newEvents);
-
-  // Vérification si la liste des événements est vide
-  if (!events || events.length === 0) {
-    console.log("Aucun événement à traiter.");
-    return {
-      isError: false,
-      alerts: [],
-      errors: [],
-      workDurationByUser: {},
-    };
-  }
-
-  // Groupement des événements par user_id
-  const userGroups = {};
-
-  events.forEach((event) => {
-    if (!userGroups[event.user_id]) {
-      userGroups[event.user_id] = [];
-    }
-    userGroups[event.user_id].push(event);
-  });
-  console.log("Groupes d'événements par user_id:", userGroups);
-
-  // Fonction pour calculer la durée du break entre deux événements
-  const calculateBreakTime = (start, end) => {
-    console.log(`Calcul du temps de repos entre ${start} et ${end}`);
-    const startTime = new Date(`1970-01-01T${start}:00`);
-    const endTime = new Date(`1970-01-01T${end}:00`);
-    let diff = (endTime - startTime) / (1000 * 60);
-    console.log(`Différence en minutes: ${diff}`);
-    return diff < 0 ? diff + 1440 : diff;
-  };
-
-  // Fonction pour vérifier les événements d'un utilisateur
-  const checkUserEvents = (userEvents, alerts, errors) => {
-    userEvents.sort(
-      (a, b) => new Date(a.selected_days) - new Date(b.selected_days)
-    );
-    console.log(
-      `Événements triés pour l'utilisateur ${userEvents[0].user_id}:`,
-      userEvents
-    );
-
-    for (let i = 0; i < userEvents.length - 1; i++) {
-      const currentEvent = userEvents[i];
-      const nextEvent = userEvents[i + 1];
-      const userFullName = getUserFullName(userEvents[0].user_id);
-
-      if (currentEvent.isSubEvent || nextEvent.isSubEvent) continue;
-
-      // Vérification des événements le même jour
-      if (currentEvent.selected_days === nextEvent.selected_days) {
-        const breakTime = calculateBreakTime(
-          currentEvent.vacation_end,
-          nextEvent.vacation_start
-        );
-        if (breakTime < 660) {
-          const alertMessage = `Alerte: Temps de repos insuffisant entre les vacations du ${currentEvent.selected_days} pour ${userFullName}`;
-          alerts.push(alertMessage);
-        }
-      }
-
-      // Vérification des événements de jours consécutifs
-      const currentDate = new Date(currentEvent.selected_days);
-      const nextDate = new Date(nextEvent.selected_days);
-      const dateDiff = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
-
-      if (dateDiff === 1) {
-        const breakTime = calculateBreakTime(
-          currentEvent.vacation_end,
-          nextEvent.vacation_start
-        );
-        if (breakTime < 660) {
-          const alertMessage = `Alerte: Temps de repos insuffisant entre les vacations du ${currentEvent.selected_days} au ${nextEvent.selected_days} pour ${userFullName}`;
-          alerts.push(alertMessage);
-        }
-      }
-    }
-  };
-
-  // Fonction pour récupérer les semaines d'un mois
-  const getWeeksInMonth = (month, year) => {
-    const weeks = [];
-    let startDate = new Date(year, month, 1);
-    let endDate = new Date(year, month + 1, 0);
-
-    while (startDate.getDay() !== 1) {
-      startDate.setDate(startDate.getDate() - 1);
-    }
-
-    while (startDate <= endDate) {
-      let weekStart = new Date(startDate);
-      let weekEnd = new Date(startDate);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-
-      if (weekEnd > endDate) {
-        weekEnd = endDate;
-      }
-
-      weeks.push({
-        start: new Date(weekStart),
-        end: new Date(weekEnd),
-      });
-
-      startDate.setDate(startDate.getDate() + 7);
-    }
-
-    return weeks;
-  };
-
-  // Fonction pour formater les dates en "yyyy-mm-dd"
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  // Calculer la durée de travail par semaine
-  const calculateWeeklyWorkDuration = (events, weeksInMonth) => {
-    const workDurationByUser = {};
-
-    weeksInMonth.forEach((week) => {
-      events.forEach((event) => {
-        const { user_id, selected_days, work_duration } = event;
-        const weekStart = formatDate(week.start);
-        const weekEnd = formatDate(week.end);
-
-        if (selected_days >= weekStart && selected_days <= weekEnd) {
-          if (!workDurationByUser[user_id]) {
-            workDurationByUser[user_id] = {};
-          }
-
-          const weekKey = `${weekStart} au ${weekEnd}`;
-          if (!workDurationByUser[user_id][weekKey]) {
-            workDurationByUser[user_id][weekKey] = 0;
-          }
-
-          workDurationByUser[user_id][weekKey] += work_duration;
-        }
-      });
-    });
-
-    console.log(
-      "Durée de travail par utilisateur par semaine:",
-      workDurationByUser
-    );
-    return workDurationByUser;
-  };
-
-  // Vérification des alertes de durée de travail
-  const checkWorkDurationAlert = (workDurationByUser, errors) => {
-    Object.keys(workDurationByUser).forEach((user_id) => {
-      const userWeeks = workDurationByUser[user_id];
-      const userFullName = getUserFullName(user_id);
-
-      Object.keys(userWeeks).forEach((weekKey) => {
-        const totalWorkDuration = userWeeks[weekKey];
-        if (totalWorkDuration > 2880) {
-          errors.push(
-            `Alerte: La durée de travail de la semaine ${weekKey} de ${userFullName} dépasse 48 heures (${
-              totalWorkDuration / 60
-            } heures).`
-          );
-        }
-      });
-    });
-  };
-
-  const alerts = [];
-  const errors = [];
-  for (const userId in userGroups) {
-    checkUserEvents(userGroups[userId], alerts, errors);
-  }
-
-  const weeksInMonth = getWeeksInMonth(currentMonth, currentYear);
-  const workDurationByUser = calculateWeeklyWorkDuration(events, weeksInMonth);
-  checkWorkDurationAlert(workDurationByUser, errors);
-
-  const isError = alerts.length > 0;
-
-  return {
-    isError: alerts.length > 0 || errors.length > 0,
-    alerts,
-    errors,
-    workDurationByUser,
-  };
-};
-
 ///// pour le tableau
 export const getDaysInMonth = (month, year) =>
   new Date(year, month + 1, 0).getDate();
@@ -635,16 +432,26 @@ export const minutesToHoursMinutes = (totalMinutes) => {
 };
 
 export const mergeAllEvents = (events) => {
-  if (!events || events.length === 0) return [];
+  if (!events || events.length === 0) return []; // Return empty array if no events are provided
+
+  // Check if relatedEvent is null or undefined in any of the events
+  const hasRelatedEvent = events.some(
+    (event) => event.relatedEvent !== null && event.relatedEvent !== undefined
+  );
+
+  // If no event has relatedEvent or it's all null/undefined, return the events unchanged
+  if (!hasRelatedEvent) return events;
 
   const mergedEvents = [];
 
-  // Détecter quelle clé utiliser pour regrouper les événements (relatedEventId ou relatedEvent)
-  const groupingKey = events.some(event => event.relatedEventId) ? 'relatedEventId' : 'relatedEvent';
+  console.log("events", events);
 
-  // Regrouper les événements par la clé déterminée
+  // Detect the key to group by ('relatedEvent' or 'relatedEventId')
+  const groupingKey = "relatedEvent";
+
+  // Group events by the determined key
   const groupedByRelatedEvent = events.reduce((acc, event) => {
-    const key = event[groupingKey] || "unrelated"; // Utilise la clé de regroupement dynamique
+    const key = event[groupingKey] || "unrelated"; // Fallback for unrelated events
     if (!acc[key]) {
       acc[key] = [];
     }
@@ -652,34 +459,37 @@ export const mergeAllEvents = (events) => {
     return acc;
   }, {});
 
-  // Parcourir chaque groupe
+  console.log(groupedByRelatedEvent);
+
+  // Process each group
   Object.values(groupedByRelatedEvent).forEach((group) => {
-    const parentEvent = group.find((event) => !event.isSubEvent); // Trouver l'événement parent
-    const subEvents = group.filter((event) => event.isSubEvent); // Filtrer les sous-événements
+    const parentEvent = group.find((event) => !event.isSubEvent); // Find parent event
+    const subEvents = group.filter((event) => event.isSubEvent); // Filter sub-events
 
     if (parentEvent && subEvents.length > 0) {
+      // Merge parent with each sub-event
       subEvents.forEach((subEvent) => {
         const mergedEvent = {
-          id: [parentEvent.id, subEvent.id], // Fusionner les IDs
+          id: [parentEvent.id, subEvent.id], // Merge IDs
           pause_end: parentEvent.pause_end,
           pause_payment: parentEvent.pause_payment,
           pause_start: parentEvent.pause_start,
           post: parentEvent.post,
-          selected_days: parentEvent.selected_days, // Utiliser selected_days du parent
+          selected_days: parentEvent.selected_days, // Use parent's selected_days
           typePost: parentEvent.typePost,
           user_id: parentEvent.user_id,
           vacation_end: subEvent.vacation_end,
           vacation_start: parentEvent.vacation_start,
-          work_duration: parentEvent.work_duration + subEvent.work_duration, // Ajouter les durées de travail
+          work_duration: parentEvent.work_duration + subEvent.work_duration, // Sum work durations
         };
 
         mergedEvents.push(mergedEvent);
       });
     } else if (parentEvent) {
-      // Ajouter l'événement parent seul si aucun sous-événement n'existe
+      // Add parent event alone if no sub-events exist
       mergedEvents.push(parentEvent);
     } else {
-      // Ajouter les sous-événements orphelins (si nécessaire)
+      // Add orphan sub-events if necessary
       mergedEvents.push(...subEvents);
     }
   });
@@ -687,3 +497,22 @@ export const mergeAllEvents = (events) => {
   return mergedEvents;
 };
 
+export function getUserName(users, user_id) {
+  const user = users.find((user) => user.id == user_id);
+  if (!user) {
+    return "Inconnu"; // If user is not found, return "Inconnu Inconnu"
+  }
+  const userFullName = user.fullname;
+  const userFirstName = user.firstname;
+  return `${userFullName} ${userFirstName}`;
+}
+
+export function getPostName(posts, abbreviation) {
+  const post = posts.find((p) => p.abbreviation === abbreviation);
+
+  if (!post) {
+    throw new Error(`Post with abbreviation '${abbreviation}' not found`);
+  }
+
+  return post.name;
+}

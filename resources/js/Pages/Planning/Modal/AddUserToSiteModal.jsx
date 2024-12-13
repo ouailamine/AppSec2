@@ -12,6 +12,7 @@ const AddUserModal = ({
   sites,
   localSiteUsers,
 }) => {
+  console.log(localSiteUsers);
   const [firstList, setFirstList] = useState([]);
   const [secondList, setSecondList] = useState([]);
   const [selectedFromSecondList, setSelectedFromSecondList] = useState([]);
@@ -87,6 +88,7 @@ const AddUserModal = ({
     setSecondList(siteUsers.secondList);
   };
 
+  // Définir le style personnalisé pour react-select
   const customStyles = {
     menu: (provided) => ({
       ...provided,
@@ -140,10 +142,15 @@ const AddUserModal = ({
           <div className="flex items-center gap-4">
             <Select
               isMulti
-              options={secondList.map((user) => ({
-                value: user.id,
-                label: `${user.fullname} (${user.firstname})`,
-              }))}
+              options={secondList
+                .filter(
+                  (user) =>
+                    !firstList.some((firstUser) => firstUser.id === user.id)
+                )
+                .map((user) => ({
+                  value: user.id,
+                  label: `${user.fullname} (${user.firstname})`,
+                }))}
               onChange={(selectedOptions) =>
                 setSelectedFromSecondList(
                   selectedOptions.map((option) => option.value)
@@ -152,6 +159,7 @@ const AddUserModal = ({
               className="flex-grow shadow-sm"
               placeholder="Sélectionnez des utilisateurs à ajouter"
             />
+
             <button
               onClick={handleAddToFirstList}
               disabled={selectedFromSecondList.length === 0}

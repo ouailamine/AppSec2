@@ -69,29 +69,23 @@ class PlanningController extends Controller
             return redirect()->back()->withErrors(['error' => 'No events provided for the planning.']);
         }
 
-        DB::beginTransaction(); // Démarrer une transaction
+        // Étape 1 : Début de la transaction
+        DB::beginTransaction();
 
         try {
-            // Créer le planning principal
-            $planning = Planning::create([
-                'site_id' => $request->site,
-                'month' => $request->month,
-                'year' => $request->year,
-                'isValidate' => false,
-            ]);
-
-            // Ajouter les événements pour le mois courant
+            // Étape 2 : Préparation des événements pour le mois courant
+            $currentMonthEvents = [];
             foreach ($request->events as $eventData) {
-
-              
-                $planning->events()->create([
+                $currentMonthEvents[] = [
                     'id' => $eventData['id'],
                     'user_id' => $eventData['user_id'],
+                    'userName' => $eventData['userName'],
                     'site_id' => $request->site,
                     'month' => $request->month,
                     'year' => $request->year,
                     'typePost' => $eventData['typePost'],
                     'post' => $eventData['post'],
+                    'postName' => $eventData['postName'],
                     'lunchAllowance' => $eventData['lunchAllowance'],
                     'vacation_start' => $eventData['vacation_start'],
                     'vacation_end' => $eventData['vacation_end'],
@@ -104,11 +98,36 @@ class PlanningController extends Controller
                     'sunday_hours' => $eventData['sunday_hours'],
                     'holiday_hours' => $eventData['holiday_hours'],
                     'isSubEvent' => $eventData['isSubEvent'],
-                    'relatedEventId' => $eventData['relatedEvent'],
-                ]);
+                    'relatedEvent' => $eventData['relatedEvent'],
+                ];
             }
 
-            // Ajouter les événements pour le mois suivant, si fournis
+            // Étape 3 : Vérification des données des événements préparés
+
+
+            // Valider les données des événements (optionnel, en fonction des besoins)
+            if (empty($currentMonthEvents)) {
+                throw new \Exception('No valid events provided for the current month.');
+            }
+
+            // Étape 4 : Création du planning principal
+            $planning = Planning::create([
+                'site_id' => $request->site,
+                'month' => $request->month,
+                'year' => $request->year,
+                'isValidate' => false,
+            ]);
+
+            // Vérification du planning créé
+
+
+            // Étape 5 : Ajout des événements au planning
+            $planning->events()->createMany($currentMonthEvents);
+
+            // Vérification des événements associés au planning
+
+
+            // Étape 6 : Gestion des événements pour le mois suivant (si fournis)
             if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
                 $nextMonth = $request->month + 1;
                 $nextYear = $request->year;
@@ -118,22 +137,18 @@ class PlanningController extends Controller
                     $nextYear += 1;
                 }
 
-                $nextMonthPlanning = Planning::create([
-                    'site_id' => $request->site,
-                    'month' => $nextMonth,
-                    'year' => $nextYear,
-                    'isValidate' => false,
-                ]);
-
+                $nextMonthEvents = [];
                 foreach ($request->eventsNextMonth as $eventData) {
-                    $nextMonthPlanning->events()->create([
+                    $nextMonthEvents[] = [
                         'id' => $eventData['id'],
                         'user_id' => $eventData['user_id'],
+                        'userName' => $eventData['userName'],
                         'site_id' => $request->site,
                         'month' => $nextMonth,
                         'year' => $nextYear,
                         'typePost' => $eventData['typePost'],
                         'post' => $eventData['post'],
+                        'postName' => $eventData['postName'],
                         'lunchAllowance' => $eventData['lunchAllowance'],
                         'vacation_start' => $eventData['vacation_start'],
                         'vacation_end' => $eventData['vacation_end'],
@@ -146,25 +161,35 @@ class PlanningController extends Controller
                         'sunday_hours' => $eventData['sunday_hours'],
                         'holiday_hours' => $eventData['holiday_hours'],
                         'isSubEvent' => $eventData['isSubEvent'],
-                        'relatedEventId' => $eventData['relatedEvent'],
+                        'relatedEvent' => $eventData['relatedEvent'],
+                    ];
+                }
+
+                if (!empty($nextMonthEvents)) {
+                    $nextMonthPlanning = Planning::create([
+                        'site_id' => $request->site,
+                        'month' => $nextMonth,
+                        'year' => $nextYear,
+                        'isValidate' => false,
                     ]);
+
+                    $nextMonthPlanning->events()->createMany($nextMonthEvents);
+
+                    // Vérification des événements du mois suivant
+                    dd('Étape 6: Événements mois suivant', $nextMonthPlanning->events);
                 }
             }
 
-            DB::commit(); // Confirmer la transaction si tout est réussi
-
-          
-
+            // Étape 7 : Confirmation de la transaction
+            DB::commit();
             return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
         } catch (\Exception $e) {
-            dd("zz",$e);
-            DB::rollBack(); // Annuler toutes les opérations en cas d'erreur
+            // Étape 8 : Gestion des erreurs
+            DB::rollBack();
+            dd('Erreur rencontrée', $e->getMessage());
             return redirect()->back()->withErrors(['error' => 'An error occurred while creating the planning: ' . $e->getMessage()]);
-        dd($e->getMessage());
-        
         }
     }
-
 
 
     /**
@@ -172,13 +197,23 @@ class PlanningController extends Controller
      */
     public function show(Request $request)
     {
+
         $currentDate = now(); // Récupère la date actuelle
 
+
+
         // Récupérer le mois actuel
-        $currentMonth = 1;
+        $currentMonth = $currentDate->month;
 
         // Récupérer le mois suivant
-        $nextMonth = 2;
+        $nextMonth = $currentDate->copy()->addMonth()->month;
+
+        // Vérification pour décembre (facultatif, car Carbon gère déjà le cas)
+        if ($currentMonth === 12) {
+            $nextMonth = 1; // Le mois suivant décembre est janvier
+        }
+
+
 
         // Récupérer les plannings dont la date se trouve entre le début du mois actuel et la fin du mois suivant
         $plannings = Planning::whereBetween('month', [
@@ -192,11 +227,12 @@ class PlanningController extends Controller
         $planningId = $request->planningIds;
         $selectedPlanning = Planning::with('events')->find($planningId);
 
+
         if (!$selectedPlanning) {
             return redirect()->route('plannings.index')->with('error', 'Planning not found.');
         }
 
-      
+
         return Inertia::render('Planning/Create', [
             'selectedPlanning' => $selectedPlanning,
             'posts' => Post::all(),
@@ -205,12 +241,9 @@ class PlanningController extends Controller
             'users' => User::all(),
             'typePosts' => TypePost::all(),
             'isShow' => true,
-            'eventsForSearchGuard'=>$eventsForSearchGuard
+            'eventsForSearchGuard' => $eventsForSearchGuard
         ]);
     }
-
-
-    public function edit(string $id) {}
 
     public function update(Request $request, string $id)
     {

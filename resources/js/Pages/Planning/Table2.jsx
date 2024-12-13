@@ -14,8 +14,6 @@ import {
   mergeAllEvents,
 } from "./CreatFunction";
 
-import ChangeUserEvents from "./Modal/ChangeUserEvent";
-
 const TableComponent = ({
   month,
   year,
@@ -45,27 +43,16 @@ const TableComponent = ({
   const [tableEvents, setTableEvents] = useState(events);
   const [isMerged, setIsMerged] = useState(false);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userEvent, setUserEvent] = useState([null]);
-
-  const openModal = (userName) => {
-    console.log(userName);
-    setSelectedUser(userName);
-    setIsModalOpen(true);
-  };
-
-  // Fonction pour fermer le modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedUser(null);
-  };
-
   useEffect(() => {
     if (events) {
       setTableEvents(events);
     }
   }, [events]);
+
+  const getUserFullName = (userId) => {
+    const user = siteUsers.find((user) => user.id === userId);
+    return user ? user.fullname : "agent inconnu";
+  };
 
   const zeroIndexedMonth = month - 1;
 
@@ -126,7 +113,7 @@ const TableComponent = ({
         };
 
         const cellContent = (
-          <div className="text-[11px] w-8 text-black font-bold text-center">
+          <div className="flex flex-col text-xs text-center">
             <div>{post}</div>
             <div>{formatTime(vacation_start)}</div>
             <div className={colorClass}>P</div>
@@ -138,7 +125,7 @@ const TableComponent = ({
           userEventsMap[user_id][day - 1].push(
             <div key={event.id}>
               <div
-                className="flex flex-col  mb-0 shadow-sm  bg-white"
+                className="flex flex-col py-0 px-1 mb-0 shadow-sm  bg-white"
                 onClick={() => handleEditEvent(event)}
               >
                 {cellContent}
@@ -200,7 +187,7 @@ const TableComponent = ({
                 {/* Separator */}
                 <hr className="border-gray-600" />
               </div>
-              <div className="flex flex-col items-center justify-center  mb-0 shadow-sm border border-green-600 rounded-md ">
+              <div className="flex flex-col items-center justify-center py-0 px-1 mb-0 shadow-sm border border-green-600 rounded-md ">
                 <input
                   type="checkbox"
                   onChange={(e) =>
@@ -265,13 +252,15 @@ const TableComponent = ({
     headers.push(
       <div
         key="header-total"
-        className="text-center text-xs font-bold text-black px-1 rounded-md"
+        className="text-center text-sm font-bold text-black py-1 px-2 rounded-md"
       >
         Total
       </div>
     );
 
     table.push(headers);
+
+    // Réinitialisez la table avant la boucle
 
     // Gardez une trace des utilisateurs ajoutés pour éviter les doublons
     const addedUsers = new Set();
@@ -280,23 +269,20 @@ const TableComponent = ({
       const user_id = event.user_id;
       const userName = event.userName;
 
-      console.log("user_id:", user_id, "userName:", userName); // Log to check the values
-
+      // Vérifiez si l'utilisateur a déjà été ajouté à `table`
       if (addedUsers.has(user_id)) {
-        return;
+        return; // Ignorez cet événement et passez au suivant
       }
 
+      // Marquez l'utilisateur comme ajouté
       addedUsers.add(user_id);
 
+      // Récupérer les jours d'événements de `userEventsMap` pour cet utilisateur
       const days = userEventsMap[user_id];
 
+      // Ajouter l'utilisateur à la table
       table.push([
-        <button
-          className="text-blue-500 hover:underline"
-          onClick={() => openModal(userName)}
-        >
-          {userName}
-        </button>,
+        userName,
         ...days.map((eventsForDay, index) => {
           const selected_days = `${year}-${String(month + 1).padStart(
             2,
@@ -315,7 +301,7 @@ const TableComponent = ({
                       onChange={(e) =>
                         handleCheckboxChange(e, user_id, selected_days)
                       }
-                      className="form-checkbox h-4 w-4 rounded border-green-700 m-1"
+                      className="form-checkbox h-4 w-4 rounded  border-green-700 m-1"
                     />
                   </div>
                 </div>
@@ -551,10 +537,10 @@ const TableComponent = ({
   return (
     <div className="bg-white border border-gray-600 rounded-md shadow-sm p-1 space-y-1">
       <div className="overflow-x-auto">
-        <div className="flex justify-center items-center space-x-2 p-3 bg-gray-50 rounded-md shadow-sm">
+        <div className="flex justify-center items-center space-x-2 p-4 bg-gray-50 rounded-md shadow-sm">
           <button
             onClick={handleToggleEvents}
-            className={`merge-button text-white text-xs px-2 py-1 rounded-md shadow transition duration-200 ${
+            className={`merge-button text-white text-sm px-3 py-2 rounded-md shadow transition duration-200 ${
               isMerged
                 ? "bg-red-500 hover:bg-red-600"
                 : "bg-blue-500 hover:bg-blue-600"
@@ -570,7 +556,7 @@ const TableComponent = ({
               {table[0].map((header, index) => (
                 <th
                   key={index}
-                  className="border-r border-gray-600 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide"
+                  className="px-0 py-1 border-r border-gray-600 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide"
                 >
                   {header}
                 </th>
@@ -592,7 +578,7 @@ const TableComponent = ({
                   return (
                     <td
                       key={`cell-${rowIndex}-${cellIndex}`}
-                      className={`border-r border-gray-600 text-center text-xs font-medium ${
+                      className={`px-1 py-1  border-r border-gray-600 text-center text-xs font-medium ${
                         isWeekend ? "bg-blue-200" : ""
                       } ${
                         isHoliday ? "bg-red-200 text-gray" : "text-gray-900"
@@ -635,10 +621,10 @@ const TableComponent = ({
         {events.length > 0 && (
           <button
             onClick={handleShowMultiSelect}
-            className="bg-gray-600 text-white px-1 text-xs font-medium rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out transform hover:scale-105"
+            className="bg-gray-600 text-white px-1 py-1 text-xs font-medium rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out transform hover:scale-105"
             aria-label="Activer la sélection multiple"
           >
-            <span className="mr-0 text-lg" role="img" aria-label="Clipboard">
+            <span className="mr-3 text-lg" role="img" aria-label="Clipboard">
               📋
             </span>
             Multi Select
@@ -649,7 +635,7 @@ const TableComponent = ({
           <>
             <button
               onClick={handleDeleteSelectedEvents}
-              className="bg-red-500 text-white px-1 py-1 text-xs font-bold rounded-md shadow-sm hover:bg-red-700 transition-colors duration-150"
+              className="bg-red-600 text-white px-2 py-1 text-xs font-medium rounded-md shadow-sm hover:bg-red-700 transition-colors duration-150"
               aria-label="Supprimer les événements sélectionnés"
             >
               <span className="mr-2">🗑️</span> Supprimer
@@ -715,13 +701,6 @@ const TableComponent = ({
         eventsToEditId={eventsToEditId}
         selectedCheckboxes={selectedCheckboxes}
       />
-      {isModalOpen && selectedUser && (
-        <ChangeUserEvents
-          selectedUser={selectedUser}
-          closeModal={closeModal}
-          AllUsers={AllUsers}
-        />
-      )}
     </div>
   );
 };

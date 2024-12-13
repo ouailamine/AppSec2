@@ -11,10 +11,11 @@ import SiteMonthYeaySelect from "./SiteMonthYeaySelect";
 import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
 import SearchAvaibleGuardModal from "./Modal/SearchAvaibleGuardModal";
 import PostTypeModal from "./Modal/AddPostModal";
-
+import { checkVacationsAndWeeklyHours } from "./CheckEventsFunction";
 import {
   createVacationEvents,
-  checkVacationsAndWeeklyHours,
+  getUserName,
+  getPostName,
 } from "./CreatFunction"; // Importer les utilitaires
 import SelectSite from "./import/SelectSite";
 
@@ -154,13 +155,13 @@ const CreatePlanning = ({
     // Créer de nouveaux événements pour chaque utilisateur et chaque jour sélectionné
     const newEvents = (addEvent.selectedUsersDays || []).flatMap(
       ({ user_id, selected_days }) => {
-        // If selectedDays is a string, convert it to an array
+        // Si selected_days est une chaîne, la convertir en tableau
         const daysArray = Array.isArray(selected_days)
           ? selected_days
           : [selected_days];
 
         return daysArray.flatMap((date) => {
-          console.log(date); // This should now print the date correctly
+          console.log(date); // Cela devrait maintenant afficher correctement la date
           const vacationAllEvents = createVacationEvents(
             addEvent.vacation_start,
             addEvent.vacation_end,
@@ -178,14 +179,16 @@ const CreatePlanning = ({
 
           console.log(vacationAllEvents);
 
-          // Process vacationEvents
+          // Traiter les vacationEvents
           vacationEvents.forEach((vacationEvent) => {
             const currentId = ++lastId;
 
             vacationEventsProcessed.push({
               id: currentId,
               user_id: user_id,
+              userName: getUserName(users, user_id),
               post: addEvent.post,
+              postName: getPostName(posts, addEvent.post),
               typePost: addEvent.typePost,
               vacation_start: vacationEvent.vacation_start,
               vacation_end: vacationEvent.vacation_end,
@@ -203,14 +206,18 @@ const CreatePlanning = ({
             });
           });
 
-          // Process vacationEventsNextMonth
+          console.log(vacationEventsProcessed);
+
+          // Traiter les vacationEventsNextMonth
           vacationEventsNextMonth.forEach((vacationEvent) => {
             const currentId = ++lastId;
 
             vacationEventsNextMonthProcessed.push({
               id: currentId,
-              user_id: user_id, // Make sure user_id is consistent
+              user_id: user_id, // S'assurer que user_id est cohérent
+              userName: getUserName(users, user_id),
               post: addEvent.post,
+              postName: getPostName(posts, addEvent.post),
               typePost: addEvent.typePost,
               vacation_start: vacationEvent.vacation_start,
               vacation_end: vacationEvent.vacation_end,
@@ -400,6 +407,7 @@ const CreatePlanning = ({
 
   //sauvgarde du planning
   const handleSavePlanning = () => {
+    console.log(events);
     Inertia.post(route("plannings.store"), {
       site: selectedSite,
       month: currentMonth, // Convert to 1-based month
@@ -425,15 +433,32 @@ const CreatePlanning = ({
     setLocalPosts([...localPosts, newPost]);
   };
 
-  const handleASS = (user) => {
+  const handleAddLocalUser = (user) => {
     console.log(user);
-    const aa = localSiteUsers.push(user);
-    setLocalSiteUsers(aa);
+    const newLocalUser = localSiteUsers.push(user);
     console.log(localSiteUsers);
   };
 
   const handleValidatePlanning = () => {};
   console.log("events", events);
+  const [userCount, setUserCount] = useState(1);
+  const handleAnonymousUser = () => {
+    // Create a new event based on the template with an incremented userName
+    const newEvent = {
+      userName: `Agent anonyme ${userCount}`, // Increment the user count
+      user_id: userCount, // Set a unique user_id
+    };
+
+    const newUser = {
+      ...localSiteUsers,
+      fullname: `Agent anonyme ${userCount}`, // Dynamically set the fullname
+    };
+    console.log(localSiteUsers);
+    // Add the new event to the events list and update the userCount
+    setEvents([...events, newEvent]);
+    setUserCount(userCount + 1); // Increment for the next user
+    setLocalSiteUsers([...localSiteUsers, newUser]);
+  };
   return (
     <AdminAuthenticatedLayout>
       <Head title="Cretion planning" />
@@ -501,6 +526,13 @@ const CreatePlanning = ({
                 className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
               >
                 <span className="mr-2">🔍</span> Agent disponible
+              </button>
+
+              <button
+                onClick={handleAnonymousUser}
+                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              >
+                <span className="mr-2"></span> Agent Anonyme
               </button>
             </div>
 
@@ -575,7 +607,7 @@ const CreatePlanning = ({
               eventsForSearchGuard={eventsForSearchGuard}
               currentMonth={currentMonth}
               currentYear={currentYear}
-              onAddUserz={handleASS}
+              onAddLocalUser={handleAddLocalUser}
             />
             <div className="flex justify-center">
               {events.length !== 0 && (

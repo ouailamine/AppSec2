@@ -13,9 +13,11 @@ class Event extends Model
         'user_id',
         'planning_id',
         'site_id',
+        'userName',
         'month',
         'year',
         'post',
+        'postName',
         'typePost',
         'vacation_start',
         'vacation_end',
@@ -28,10 +30,10 @@ class Event extends Model
         'night_hours',
         'sunday_hours',
         'holiday_hours',
-        'isSubEvent', 
-        'relatedEventId', 
+        'isSubEvent',
+        'relatedEvent',
     ];
-    
+
 
     // Define the relationship with User
     public function user()
