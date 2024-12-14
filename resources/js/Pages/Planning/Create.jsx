@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
 import Table from "./Table";
 import Alert from "./Alert";
@@ -10,6 +11,7 @@ import DaysPostsVacationSelect from "./DaysPostsVacationSelect";
 import SiteMonthYeaySelect from "./SiteMonthYeaySelect";
 import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
 import SearchAvaibleGuardModal from "./Modal/SearchAvaibleGuardModal";
+import ExportPlanningsPdf  from "./ExportPdfPlanning"
 import PostTypeModal from "./Modal/AddPostModal";
 import { checkVacationsAndWeeklyHours } from "./CheckEventsFunction";
 import {
@@ -48,6 +50,7 @@ const CreatePlanning = ({
   const [localPosts, setLocalPosts] = useState(posts);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [userCount, setUserCount] = useState(1);
 
   // Fonction pour ouvrir le modal
   const openModal = () => {
@@ -440,28 +443,85 @@ const CreatePlanning = ({
   };
 
   const handleValidatePlanning = () => {};
+
   console.log("events", events);
-  const [userCount, setUserCount] = useState(1);
+
   const handleAnonymousUser = () => {
-    // Create a new event based on the template with an incremented userName
+    let relatedEventId = null;
+    let relatedUserId = null;
+
+    relatedEventId = uuidv4().slice(0, 8);
+    relatedUserId = uuidv4().slice(0, 6);
+
     const newEvent = {
-      userName: `Agent anonyme ${userCount}`, // Increment the user count
-      user_id: userCount, // Set a unique user_id
+      id: relatedEventId,
+      user_id: relatedUserId,
+      userName: `Agent anonyme ${userCount}`,
+      created_at: null,
+      holiday_hours: 0,
+      isSubEvent: 0,
+      lunchAllowance: 0,
+      month: currentMonth,
+      night_hours: 0,
+      pause_end: null,
+      pause_payment: "noBreak",
+      pause_start: null,
+      post: "",
+      postName: "",
+      relatedEvent: null,
+      selected_days: "",
+      site_id: selectedSite,
+      sunday_hours: 0,
+      typePost: "",
+      updated_at: null,
+      vacation_end: "",
+      vacation_start: "",
+      work_duration: 0,
+      year: currentYear,
     };
+    
 
     const newUser = {
-      ...localSiteUsers,
-      fullname: `Agent anonyme ${userCount}`, // Dynamically set the fullname
+      id: relatedUserId,
+      fullname: `Agent anonyme ${userCount}`, // Set the full name dynamically
     };
-    console.log(localSiteUsers);
-    // Add the new event to the events list and update the userCount
-    setEvents([...events, newEvent]);
-    setUserCount(userCount + 1); // Increment for the next user
-    setLocalSiteUsers([...localSiteUsers, newUser]);
+
+    // Update the state with the new event and user
+    setEvents((prevEvents) => [...prevEvents, newEvent]);
+    setLocalSiteUsers((prevUsers) => [...prevUsers, newUser]);
+    setUserCount((prevCount) => prevCount + 1); // Increment user count for the next user
   };
+
+  const handleChangeEvents = (userToReplace, userReplacement) => {
+    console.log(userToReplace, userReplacement);
+  
+    // Filtrer les événements de l'utilisateur à remplacer
+    const updatedEvents = events.map(event => {
+      if (event.user_id === userToReplace.id_user) {
+        // Si l'événement concerne l'utilisateur à remplacer, on le met à jour
+        return {
+          ...event,
+          user_id: userReplacement.id_user,
+          userName: userReplacement.userName, // Si vous voulez également changer le nom de l'utilisateur
+        };
+      }
+      // Sinon, on retourne l'événement inchangé
+      return event;
+    });
+  
+    // Mettre à jour l'état avec les événements modifiés
+    setEvents(updatedEvents);
+  
+    // Optionnel : Afficher les événements mis à jour
+    console.log("Événements mis à jour:", updatedEvents);
+  };
+  console.log(selectedPlanning)
   return (
     <AdminAuthenticatedLayout>
-      <Head title="Cretion planning" />
+      <Head>
+  <title>{selectedPlanning ? "visualisation planning" : "Creation planning"}</title>
+</Head>
+
       <NavBar />
       <div className="container mx-auto p-4 space-y-4">
         {/* Alert Message */}
@@ -577,6 +637,7 @@ const CreatePlanning = ({
                 AllUsers={users}
                 siteUsers={localSiteUsers}
                 posts={localPosts}
+                onChangeEvents={handleChangeEvents}
               />
             </div>
 
@@ -638,6 +699,15 @@ const CreatePlanning = ({
                   </button>
                 </>
               )}
+            </div>
+            <div>
+              <ExportPlanningsPdf  
+              selectedSite={selectedSite}
+              currentMonth={currentMonth}
+              currentYear={currentYear}
+              holidays={holidays}
+              events={events}
+              sites={sites} />
             </div>
           </>
         )}

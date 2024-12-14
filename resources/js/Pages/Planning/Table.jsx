@@ -24,6 +24,7 @@ const TableComponent = ({
   onEditEvent,
   onDeleteEvent,
   onCreateEvent,
+  onChangeEvents,
   //localPosts,
   AllUsers,
   typePosts,
@@ -46,19 +47,20 @@ const TableComponent = ({
   const [isMerged, setIsMerged] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [userEvent, setUserEvent] = useState([null]);
+  const [selectedUserIdForChange, setSelectedUserIdForChange] = useState(null);
+  
 
-  const openModal = (userName) => {
-    console.log(userName);
-    setSelectedUser(userName);
+  const openModal = (userName,user_id) => {
+    console.log(userName,user_id);
+    setSelectedUserIdForChange(user_id);
+    console.log(selectedUserIdForChange)
     setIsModalOpen(true);
   };
 
   // Fonction pour fermer le modal
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedUser(null);
+    setSelectedUserIdForChange(null);
   };
 
   useEffect(() => {
@@ -192,7 +194,7 @@ const TableComponent = ({
                       onChange={(e) => {
                         toggleSelectEvent(event.id);
                       }}
-                      className="form-checkbox mb-1 text-yellow-600 h-3 w-3 rounded focus:ring-2 focus:ring-yellow-300 transition-all duration-150 ease-in-out border-2 border-red-600"
+                      className="form-checkbox mb-1  h-4 w-4 rounded focus:ring-2 focus:ring-red-300 transition-all duration-150 ease-in-out border-2 border-red-600"
                     />
                   )}
                 </div>
@@ -229,7 +231,7 @@ const TableComponent = ({
     const headers = [
       <div
         key="header-agents"
-        className="text-center text-sm text-black font-bold px-6"
+        className="text-center text-sm text-black font-bold"
       >
         Agents
       </div>,
@@ -280,7 +282,7 @@ const TableComponent = ({
       const user_id = event.user_id;
       const userName = event.userName;
 
-      console.log("user_id:", user_id, "userName:", userName); // Log to check the values
+      //console.log("user_id:", user_id, "userName:", userName); // Log to check the values
 
       if (addedUsers.has(user_id)) {
         return;
@@ -292,8 +294,8 @@ const TableComponent = ({
 
       table.push([
         <button
-          className="text-blue-500 hover:underline"
-          onClick={() => openModal(userName)}
+          className="text-blue-700 hover:underline text-sm font-bold"
+          onClick={() => openModal(userName,user_id)}
         >
           {userName}
         </button>,
@@ -323,14 +325,15 @@ const TableComponent = ({
             </div>
           );
         }),
-        minutesToHoursMinutes(userTotalDuration[user_id] || 0),
+        <p className="text-black text- text-bold"> {minutesToHoursMinutes(userTotalDuration[user_id] || 0)}</p>,
       ]);
     });
 
     const dayTotalsRow = [
-      "Total par jour",
+      <h2 className="text-sm py- text-bold text-black">Total par jour</h2>,
       ...dayTotalDuration.map((duration) => minutesToHoursMinutes(duration)),
     ];
+    
     dayTotalsRow.push(minutesToHoursMinutes(totalMonthlyDuration));
 
     table.push(dayTotalsRow);
@@ -548,6 +551,15 @@ const TableComponent = ({
     setIsMerged(!isMerged); // Inverse l'état
   };
 
+ const handleChangeUser = (userToReplace, userReplacement, events) => { 
+    console.log("Utilisateur à remplacer:", userToReplace);
+    console.log("Nouvel utilisateur:", userReplacement);
+
+    onChangeEvents(userToReplace,userReplacement)
+};
+
+
+
   return (
     <div className="bg-white border border-gray-600 rounded-md shadow-sm p-1 space-y-1">
       <div className="overflow-x-auto">
@@ -715,11 +727,12 @@ const TableComponent = ({
         eventsToEditId={eventsToEditId}
         selectedCheckboxes={selectedCheckboxes}
       />
-      {isModalOpen && selectedUser && (
+      {isModalOpen && selectedUserIdForChange && (
         <ChangeUserEvents
-          selectedUser={selectedUser}
+          selectedUserIdForChange={selectedUserIdForChange}
           closeModal={closeModal}
           AllUsers={AllUsers}
+          onChangeUser={handleChangeUser}
         />
       )}
     </div>

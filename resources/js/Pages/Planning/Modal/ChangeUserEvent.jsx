@@ -1,53 +1,91 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Select from "react-select";
 
-const ChangeUserEvent = ({ selectedUser, closeModal, AllUsers }) => {
-  // Set the selected user to be the initially selected one, or empty if not provided
-  const [selectedUserId, setSelectedUserId] = useState(
-    selectedUser?.id
-      ? { value: selectedUser.id, label: selectedUser.fullname }
-      : null
-  );
+const ChangeUserEvent = ({
+  selectedUserIdForChange, // Fixed typo
+  closeModal,
+  AllUsers,
+  onChangeUser,
+}) => {
 
-  // Handle change of the selected user
+  console.log(selectedUserIdForChange)
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userToReplace, setUserToReplace] = useState({ id_user: "", userName: "" });
+
+  const getUserDetails = (userId) => {
+    const user = AllUsers.find((user) => user.id == userId) || {};
+    return `${user.fullname || "Agent"} ${user.firstname || "Anonyme"}`.trim();
+  };
+
+  useEffect(() => {
+    setUserToReplace({
+      id_user:selectedUserIdForChange,
+      userName: getUserDetails(selectedUserIdForChange),
+    });
+  }, [selectedUserIdForChange, AllUsers]);
+
   const handleUserChange = (selectedOption) => {
-    setSelectedUserId(selectedOption);
+    setSelectedUser(selectedOption);
+  };
+
+  const changeUser = () => {
+    if (selectedUser) {
+      const userReplacement = {
+        id_user:selectedUser.value,
+        userName: getUserDetails(selectedUser.value),
+      };
+      onChangeUser(userToReplace, userReplacement);
+      closeModal()
+    } else {
+      alert("Aucun utilisateur sélectionné.");
+    }
   };
 
   return (
-    <div>
-      <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50">
-        <div className="bg-white p-4 rounded-lg shadow-lg w-96">
-          <div className="mt-4">
-            <div className="mb-4">
-              {/* Display the selected user or a default message */}
-              <h2>{selectedUser}</h2>
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="user-select"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Sélectionner un utilisateur
-              </label>
-              <Select
-                id="user-select"
-                value={selectedUserId}
-                onChange={handleUserChange}
-                options={AllUsers.map((user) => ({
-                  value: user.id,
-                  label: user.fullname,
-                }))}
-                placeholder="Rechercher un utilisateur"
-                isClearable={true} // Allows clearing the selection
-              />
-            </div>
-          </div>
+    <div className="fixed inset-0 flex justify-center items-center bg-gray-900 bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+          Changer l'utilisateur
+        </h2>
+
+        <div className="mb-4">
+          <p className="text-gray-600 text-sm">Utilisateur actuel:</p>
+          <p className="text-gray-800 font-medium">{userToReplace.userName}</p>
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="user-select"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Sélectionner un utilisateur
+          </label>
+          <Select
+            id="user-select"
+            value={selectedUser}
+            onChange={handleUserChange}
+            options={AllUsers.map((user) => ({
+              value: user.id,
+              label: user.fullname,
+            }))}
+            placeholder="Rechercher un utilisateur"
+            isClearable={true}
+            className="text-sm"
+          />
+        </div>
+
+        <div className="flex justify-end space-x-4">
           <button
             onClick={closeModal}
-            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
           >
             Fermer
+          </button>
+          <button
+            onClick={changeUser}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          >
+            Changer
           </button>
         </div>
       </div>

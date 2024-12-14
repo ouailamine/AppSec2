@@ -94,6 +94,7 @@ const SectionSearch = ({
 
   return (
     <div className="px-4 py-4 bg-gray-50">
+        
       <div className="flex flex-wrap gap-2 mb-2">
         <div className="relative w-auto min-w-[150px] max-w-xs">
           <label

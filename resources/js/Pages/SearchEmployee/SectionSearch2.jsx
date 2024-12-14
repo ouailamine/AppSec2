@@ -24,7 +24,8 @@ const SectionSearch = ({
 
   // Format diplomas for react-select
   const diplomaOptions = diplomas.map((diploma) => ({
-    value: diploma.name,
+    value: diploma.name
+    ,
     label: diploma.name,
   }));
 

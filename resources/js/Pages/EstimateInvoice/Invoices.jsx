@@ -5,7 +5,7 @@ import InvoicePDF from "./InvoicePDF";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import {months} from "../../importVariable"
+
 
 const Invoices = ({ plannings, selectedSite, allTypePosts, allPosts }) => {
   console.log(selectedSite);
