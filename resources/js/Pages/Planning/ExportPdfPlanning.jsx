@@ -105,14 +105,41 @@ const ExportPdf = ({
     doc.setFontSize(12);
     doc.text(titleText, pageWidth / 2, 35, { align: "center" });
 
-    const siteInfoText = `Site: ${infoSite?.name || "Unknown"} | Address: ${
-      infoSite?.address || "Unknown"
-    } | Manager: ${infoSite?.manager_name || "Unknown"} | Email: ${
-      infoSite?.email || "Unknown"
-    } | Phone: ${infoSite?.phone || "Unknown"}`;
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(siteInfoText, pageWidth / 2, 40, { align: "center" });
+
+    // Définir la position initiale pour le texte
+
+    const centerY = 40;
+
+    // Texte et styles pour chaque partie
+    const parts = [
+      { text: "Address: ", isBold: true },
+      { text: infoSite?.address || "Unknown", isBold: false },
+      { text: " | Manager: ", isBold: true },
+      { text: infoSite?.manager_name || "Unknown", isBold: false },
+      { text: " | Email: ", isBold: true },
+      { text: infoSite?.email || "Unknown", isBold: false },
+      { text: " | Phone: ", isBold: true },
+      { text: infoSite?.phone || "Unknown", isBold: false },
+    ];
+
+    // Construire le texte segment par segment
+    let fullTextWidth = 0;
+    const widths = parts.map((part) => {
+      doc.setFont("helvetica", part.isBold ? "bold" : "normal");
+      return doc.getTextWidth(part.text);
+    });
+
+    // Calculer la largeur totale du texte
+    fullTextWidth = widths.reduce((sum, w) => sum + w, 0);
+
+    // Dessiner chaque segment à sa position correcte
+    let currentX = centerX - fullTextWidth / 2; // Commence à gauche pour centrer
+    parts.forEach((part, index) => {
+      doc.setFont("helvetica", part.isBold ? "bold" : "normal");
+      doc.text(part.text, currentX, centerY);
+      currentX += widths[index]; // Avance la position pour le segment suivant
+    });
 
     // Disclaimer
     const disclaimerText =
@@ -154,7 +181,7 @@ const ExportPdf = ({
     ]);
 
     // Footer
-    const companyName = "Nom de la Société";
+    const companyName = "Atalix Sécurité .";
     const footerDetails = `
       Securité: XXXXXXXX | Adresse: 123 Rue Exemple, 75000 Paris | Téléphone: 01 23 45 67 89 | SIRET: 123 456 789 00010
     `;
@@ -165,7 +192,7 @@ const ExportPdf = ({
       startY: 50,
       margin: { top: 10, left: 3, right: 3, bottom: 40 },
       styles: {
-        fontSize: 6,
+        fontSize: 5,
         cellWidth: "equal",
         halign: "center",
         lineWidth: 0.4,
@@ -175,7 +202,7 @@ const ExportPdf = ({
         fillColor: [255, 255, 255],
         textColor: [0, 0, 0],
         fontStyle: "bold",
-        fontSize: 8,
+        fontSize: 6,
       },
       bodyStyles: {
         textColor: [0, 0, 0],
@@ -185,6 +212,15 @@ const ExportPdf = ({
       },
       didParseCell: (data) => {
         const { row, column, cell } = data;
+
+        // Identifier la première colonne (noms des agents)
+        if (column.index === 0) {
+          cell.styles.fillColor = [255, 255, 255]; // Arrière-plan blanc pour la première colonne
+          cell.styles.textColor = [0, 0, 0];
+          cell.styles.fontSize = 7;
+        }
+
+        // Gestion des week-ends et jours fériés
         const dayOfMonth = column.dataKey + 1;
         const currentDate = new Date(currentYear, currentMonth - 1, dayOfMonth);
 
@@ -193,9 +229,14 @@ const ExportPdf = ({
         const formattedDate = currentDate.toISOString().split("T")[0];
         const isHoliday = holidays.includes(formattedDate);
 
-        if (isWeekend) cell.styles.fillColor = [173, 216, 230]; // Light blue for weekends
-        if (isHoliday) cell.styles.fillColor = [255, 182, 193]; // Light pink for holidays
+        if (isWeekend && column.index !== 0) {
+          cell.styles.fillColor = [191, 219, 254]; // Bleu-200 (week-ends)
+        }
+        if (isHoliday && column.index !== 0) {
+          cell.styles.fillColor = [254, 202, 202]; // Rouge-200 (jours fériés)
+        }
       },
+
       didDrawPage: (data) => {
         const { doc } = data;
         const pageHeight = doc.internal.pageSize.height;
@@ -219,18 +260,30 @@ const ExportPdf = ({
     });
 
     // Save the PDF file
-    doc.save(`events_${currentMonth}_${currentYear}.pdf`);
+    doc.save(`Planning de ${infoSite.name} ${monthName} / ${currentYear}.pdf`);
   };
 
   return (
-    <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
-      <button
-        onClick={generatePDF}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    <button
+      onClick={generatePDF}
+      className="px-2 py-1 bg-blue-700 text-white rounded hover:bg-blue-600 flex items-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+        stroke="currentColor"
+        className="w-5 h-5 mr-2"
       >
-        Export to PDF
-      </button>
-    </div>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 16v-8m0 8l4-4m-4 4l-4-4m12 2v6H4v-6"
+        />
+      </svg>
+      Exporter en PDF
+    </button>
   );
 };
 

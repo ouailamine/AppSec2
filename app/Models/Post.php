@@ -11,7 +11,13 @@ class Post extends Model
 
     use HasFactory;
 
-    protected $fillable = ['name', 'abbreviation', 'type', 'duration_of_work', 'type_post_id'];
+    protected $fillable = [
+        'name',
+        'abbreviation',
+        'type_post_id',
+        'default_duration_hours',
+        'default_duration_minutes',
+    ];
 
     public function typePost()
     {

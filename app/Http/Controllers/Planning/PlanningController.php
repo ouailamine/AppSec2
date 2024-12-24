@@ -13,6 +13,7 @@ use App\Models\TypePost;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PlanningController extends Controller
 {
@@ -247,46 +248,69 @@ class PlanningController extends Controller
 
     public function update(Request $request, string $id)
     {
+        try {
+            // Find the planning record
+            $planning = Planning::findOrFail($id);
 
-        $planning = Planning::findOrFail($id);
+            // Clear the existing events (optional: you may want to update or keep existing ones)
+            $planning->events()->delete();
 
-        // 2. Update the Planning with the new data from the request
-        $planning->update([
-            'site_id' => $request->site,
-            'month' => $request->month,
-            'year' => $request->year,
-            'isValidate' => $request->isValidate ?? false,
-        ]);
+            // Check if events are provided in the request
+            if ($request->has('events') && is_array($request->events)) {
 
-        // 3. Update the associated events
-        // First, clear the existing events (optional: you might want to update existing records instead of deleting them)
-        $planning->events()->delete();
+                // Insert new events
+                foreach ($request->events as $eventData) {
+                    // Debug the event data to see what it looks like
 
-        // Then, create the new events from the request data
-        foreach ($request->events as $eventData) {
+                    // Create the event for the planning
+                    $planning->events()->create([
+                        'user_id' => $eventData['user_id'],
+                        'userName' => $eventData['userName'],
+                        'site_id' => $planning->site_id, // Corrected key from 'site' to 'site_id'
+                        'planning_id' => $planning->id,
+                        'month' => $planning->month,
+                        'year' => $planning->year,
+                        'post' => $eventData['post'],
+                        'postName' => $eventData['postName'],
+                        'typePost' => $eventData['typePost'],
+                        'vacation_start' => $eventData['vacation_start'],
+                        'vacation_end' => $eventData['vacation_end'],
+                        'pause_payment' => $eventData['pause_payment'],
+                        'pause_start' => $eventData['pause_start'],
+                        'pause_end' => $eventData['pause_end'],
+                        'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'], // Ensure correct format
+                        'lunchAllowance' => $eventData['lunchAllowance'],
+                        'work_duration' => $eventData['work_duration'],
+                        'night_hours' => $eventData['night_hours'],
+                        'sunday_hours' => $eventData['sunday_hours'],
+                        'holiday_hours' => $eventData['holiday_hours'],
+                        'isSubEvent' => $eventData['isSubEvent'],
+                        'relatedEvent' => $eventData['relatedEvent'],
+                        'updated_at' => \Carbon\Carbon::now() // Explicitly set updated_at to the current time using Carbon
+                    ]);
+                }
+                $planning->touch();
+                // Log success
+                Log::info('Events created successfully for planning ID: ' . $id);
 
-            $planning->events()->create([
-                'id' => $eventData['id'],
-                'user_id' => $eventData['user_id'],
-                'site_id' => $eventData['site_id'],
-                'month' => $eventData['month'],
-                'year' => $eventData['year'],
-                'post' => $eventData['post'],
-                'vacation_start' => $eventData['vacation_start'],
-                'vacation_end' => $eventData['vacation_end'],
-                'pause_payment' => $eventData['pause_payment'],
-                'pause_start' => $eventData['pause_start'],
-                'pause_end' => $eventData['pause_end'],
-                'selected_days' => $eventData['selected_days'],
-                'work_duration' => $eventData['work_duration'],
-                'night_hours' => $eventData['night_hours'],
-                'sunday_hours' => $eventData['sunday_hours'],
-                'holiday_hours' => $eventData['holiday_hours'],
-            ]);
+                // Return a success response
+                return redirect()->route('plannings.index')->with('success', 'Planning updated successfully with associated events.');
+            } else {
+                // If no events are provided, return an error
+                dd('No events data provided.');
+                return back()->withErrors(['error' => 'No events data provided.']);
+            }
+        } catch (\Exception $e) {
+            // Handle any errors that may have occurred
+            dd('Error updating planning: ' . $e->getMessage());
+
+            Log::error('Error updating planning: ' . $e->getMessage());
+
+            return back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()]);
         }
-
-        return redirect()->back()->with('success', 'planning mis a jour ');
     }
+
+
 
     /**
      * Remove the specified resource from storage.

@@ -8,6 +8,7 @@ const PosteSection = ({
   handlePostChange,
   errors,
   posts,
+  onIsDefaultHours,
 }) => {
   console.log(typePosts, posts);
   // Filter posts based on selected type (optional based on your logic)
@@ -16,6 +17,21 @@ const PosteSection = ({
   );
   console.log(selectedTypePost);
   console.log(filteredPosts);
+
+  const selectedPostType = typePosts.find((t) => t.id == selectedTypePost);
+
+  if (!selectedPostType) {
+    console.error(
+      `Aucun type de publication trouvé pour l'ID : ${selectedTypePost}`
+    );
+    onIsDefaultHours(false); // Valeur par défaut si aucun type n'est trouvé
+  } else {
+    const defaultHours = Boolean(selectedPostType.default_duration);
+    const post = posts.find((p) => p.abbreviation == selectedPost);
+
+    console.log(defaultHours, post);
+  }
+
   return (
     <div className="flex-1 border p-2">
       {/* Title Label */}
@@ -23,7 +39,7 @@ const PosteSection = ({
         Poste
       </label>
 
-      <div className="flex gap-4">
+      <div className="flex gap-1">
         {/* Type of Post Select */}
         <div className="flex-1">
           <label className="block text-xs text-black font-bold">
@@ -35,11 +51,13 @@ const PosteSection = ({
             value={selectedTypePost}
           >
             <option value="">Sélectionner</option>
-            {typePosts.map((typePost) => (
-              <option key={typePost.id} value={typePost.id}>
-                {typePost.name}
-              </option>
-            ))}
+            {typePosts
+              .sort((a, b) => a.name.localeCompare(b.name)) // Trie les éléments par ordre alphabétique
+              .map((typePost) => (
+                <option key={typePost.id} value={typePost.id}>
+                  {typePost.name}
+                </option>
+              ))}
           </select>
           {errors?.selectedTypePost && (
             <div className="text-red-500 text-xs font-bold">

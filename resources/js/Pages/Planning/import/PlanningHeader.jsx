@@ -1,16 +1,26 @@
 import React from "react";
 
-import {months} from "../../importVariable"
+import { months } from "../../importVariable";
 
-
-const PlanningHeader = ({ selectedSite, currentMonth, currentYear, sites }) => {
-  console.log(selectedSite);
+const PlanningHeader = ({
+  selectedSite,
+  currentMonth,
+  currentYear,
+  sites,
+  selectedPlanning,
+  isShowPage,
+}) => {
+  console.log(isShowPage);
 
   const getMonthName = (month) => {
     const monthObj = months.find((m) => m.value == month);
     return monthObj ? monthObj.label : ""; // Retourne le label ou une chaîne vide si le mois n'est pas trouvé
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR");
+  };
   // Récupérer le nom du mois basé sur currentMonth
   const nameMonth = getMonthName(currentMonth);
 
@@ -28,8 +38,19 @@ const PlanningHeader = ({ selectedSite, currentMonth, currentYear, sites }) => {
       <h2 className="text-2xl font-medium text-gray-700">
         {nameMonth} <span className="text-blue-600">{currentYear}</span>
       </h2>
-      <div className="mt-2 pt-1">
-        <hr className="m-2 "/>
+      {isShowPage && (
+        <div className="mt-2 pt-1">
+          <>
+            <span className="font-semibold">Créé :</span>{" "}
+            {formatDate(selectedPlanning[0].created_at)}{" "}
+            <span className="font-semibold ml-4">Dernière modification :</span>{" "}
+            {formatDate(selectedPlanning[0].updated_at)}
+          </>
+        </div>
+      )}
+
+      <div className="mt-1">
+        <hr className="m-2 " />
         <div className="text-gray-600 text-sm">
           <span className="font-semibold">Adresse:</span>{" "}
           {site ? site.address : "N/A"}
@@ -40,7 +61,6 @@ const PlanningHeader = ({ selectedSite, currentMonth, currentYear, sites }) => {
           <span className="font-semibold">Email:</span>{" "}
           {site ? site.email : "N/A"}
         </div>
-        
       </div>
       <hr className="mt-2" />
     </div>

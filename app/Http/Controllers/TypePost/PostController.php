@@ -30,15 +30,14 @@ class PostController extends Controller
     public function store(Request $request)
     {
 
-        $request->validate([
-            'name' => 'required|string|max:255',
 
+        Post::create([
+            'name' => $request->input('name'),
+            'abbreviation' => $request->input('abbreviation'),
+            'type_post_id' => $request->input('type_post_id'),
+            'default_duration_hours' => $request->input('default_duration_hours'),
+            'default_duration_minutes' => $request->input('default_duration_minutes'),
         ]);
-
-
-
-        Post::create($request->all());
-
         return redirect()->back()->with('success', 'type de poste added successfully.');
     }
 
@@ -66,15 +65,24 @@ class PostController extends Controller
     {
 
 
+        try {
+            $post->update([
+                'name' => $request->input('name'),
+                'abbreviation' => $request->input('abbreviation'),
+                'type_post_id' => $request->input('type_post_id'),
+                'default_duration_hours' => $request->input('duration_of_work_hours'),
+                'default_duration_minutes' => $request->input('duration_of_work_minutes'),
+            ]);
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-
-        ]);
-
-        $post->update($request->all());
-
-        return redirect()->back()->with('success', 'type de poste added successfully.');
+            // Redirection avec un message de succès
+            return redirect()->back()->with('success', 'Type de poste mis à jour avec succès.');
+        } catch (\Exception $e) {
+            // En cas d'erreur, retour avec un message d'erreur
+            return response()->json([
+                'error' => 'Erreur lors de la mise à jour du poste. Veuillez réessayer.',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

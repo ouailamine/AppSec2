@@ -6,7 +6,6 @@ export default function DashboardAdmin({
   filteredUsersCount,
   filteredVacationsCount,
 }) {
-
   const buttons = [
     {
       title: "Gestion des plannings",
@@ -25,11 +24,11 @@ export default function DashboardAdmin({
       imgSrc: "assets/img/employes.png",
       route: "users.index",
     },
-    {
+    /*{
       title: "Recherche des Agents",
       imgSrc: "assets/img/agents.png",
       route: "guards.index",
-    },
+    },*/
     {
       title: "Gestion des Sites",
       imgSrc: "assets/img/site.png",

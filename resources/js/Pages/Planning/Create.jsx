@@ -11,13 +11,14 @@ import DaysPostsVacationSelect from "./DaysPostsVacationSelect";
 import SiteMonthYeaySelect from "./SiteMonthYeaySelect";
 import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
 import SearchAvaibleGuardModal from "./Modal/SearchAvaibleGuardModal";
-import ExportPlanningsPdf  from "./ExportPdfPlanning"
+import ExportPlanningsPdf from "./ExportPdfPlanning";
 import PostTypeModal from "./Modal/AddPostModal";
 import { checkVacationsAndWeeklyHours } from "./CheckEventsFunction";
 import {
   createVacationEvents,
   getUserName,
   getPostName,
+  mergeAllEvents,
 } from "./CreatFunction"; // Importer les utilitaires
 import SelectSite from "./import/SelectSite";
 
@@ -48,9 +49,11 @@ const CreatePlanning = ({
   const [siteUsers, setSiteUsers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState([]);
   const [localPosts, setLocalPosts] = useState(posts);
+  const [mergeEvents, setMergeEvents] = useState([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userCount, setUserCount] = useState(1);
+  const [isShowPage, setIsShowPage] = useState(false);
 
   // Fonction pour ouvrir le modal
   const openModal = () => {
@@ -86,6 +89,7 @@ const CreatePlanning = ({
   }, [selectedSite, sites]);
 
   console.log(localSiteUsers);
+  console.log(selectedPlanning[0]);
 
   useEffect(() => {
     if (selectedPlanning && selectedPlanning[0]) {
@@ -93,8 +97,20 @@ const CreatePlanning = ({
       setCurrentMonth(selectedPlanning[0].month);
       setSelectedSite(selectedPlanning[0].site_id);
       setIsFormVisible(true);
+      setIsShowPage(true);
+      const result = mergeAllEvents(selectedPlanning[0].events);
+      setMergeEvents(result);
+      console.log(mergeEvents);
     }
   }, [selectedPlanning]);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      const result = mergeAllEvents(events);
+      setMergeEvents(result);
+      console.log(mergeEvents);
+    }
+  }, [events]); // Only run when 'events' changes
 
   const handleCreateClick = (data) => {
     setCurrentMonth(data.month);
@@ -191,7 +207,7 @@ const CreatePlanning = ({
               user_id: user_id,
               userName: getUserName(users, user_id),
               post: addEvent.post,
-              postName: getPostName(posts, addEvent.post),
+              postName: getPostName(localPosts, addEvent.post),
               typePost: addEvent.typePost,
               vacation_start: vacationEvent.vacation_start,
               vacation_end: vacationEvent.vacation_end,
@@ -408,10 +424,17 @@ const CreatePlanning = ({
     );
   };
 
-  //sauvgarde du planning
   const handleSavePlanning = () => {
-    console.log(events);
-    Inertia.post(route("plannings.store"), {
+    // Check if it's for update or save
+    const routeToUse = isShowPage
+      ? route("plannings.update", { planning: selectedPlanning[0].id }) // Use PUT/PATCH method for update
+      : route("plannings.store"); // POST for create
+
+    // If you are updating, ensure you are using the correct HTTP method
+    const method = isShowPage ? "put" : "post";
+
+    // Send the request using Inertia
+    Inertia[method](routeToUse, {
       site: selectedSite,
       month: currentMonth, // Convert to 1-based month
       year: currentYear,
@@ -479,11 +502,11 @@ const CreatePlanning = ({
       work_duration: 0,
       year: currentYear,
     };
-    
 
     const newUser = {
       id: relatedUserId,
-      fullname: `Agent anonyme ${userCount}`, // Set the full name dynamically
+      fullname: `Agent anonyme ${userCount}`,
+      firstname: "", // Set the full name dynamically
     };
 
     // Update the state with the new event and user
@@ -491,12 +514,19 @@ const CreatePlanning = ({
     setLocalSiteUsers((prevUsers) => [...prevUsers, newUser]);
     setUserCount((prevCount) => prevCount + 1); // Increment user count for the next user
   };
+  const handleRemoveLastAnonymousUser = () => {
+    if (userCount > 1) {
+      setEvents((prevEvents) => prevEvents.slice(0, -1));
+      setLocalSiteUsers((prevUsers) => prevUsers.slice(0, -1));
+      setUserCount((prevCount) => prevCount - 1);
+    }
+  };
 
   const handleChangeEvents = (userToReplace, userReplacement) => {
     console.log(userToReplace, userReplacement);
-  
+
     // Filtrer les événements de l'utilisateur à remplacer
-    const updatedEvents = events.map(event => {
+    const updatedEvents = events.map((event) => {
       if (event.user_id === userToReplace.id_user) {
         // Si l'événement concerne l'utilisateur à remplacer, on le met à jour
         return {
@@ -508,21 +538,28 @@ const CreatePlanning = ({
       // Sinon, on retourne l'événement inchangé
       return event;
     });
-  
+
     // Mettre à jour l'état avec les événements modifiés
     setEvents(updatedEvents);
-  
+
     // Optionnel : Afficher les événements mis à jour
     console.log("Événements mis à jour:", updatedEvents);
   };
-  console.log(selectedPlanning)
+  console.log(selectedPlanning);
+
+  const handleUpdateMergeEvents = (updateEvent) => {
+    console.log(updateEvent);
+    setMergeEvents(updateEvent);
+  };
   return (
     <AdminAuthenticatedLayout>
       <Head>
-  <title>{selectedPlanning ? "visualisation planning" : "Creation planning"}</title>
-</Head>
+        <title>
+          {selectedPlanning ? "visualisation planning" : "Creation planning"}
+        </title>
+      </Head>
 
-      <NavBar />
+      <NavBar isShowPage={isShowPage} onSavePlanning={handleSavePlanning} />
       <div className="container mx-auto p-4 space-y-4">
         {/* Alert Message */}
         {(alertMessage || successMessage || errorMessage) && (
@@ -544,6 +581,8 @@ const CreatePlanning = ({
             currentMonth={currentMonth}
             currentYear={currentYear}
             sites={sites}
+            selectedPlanning={selectedPlanning}
+            isShowPage={isShowPage}
           />
         ) : (
           // Section Select
@@ -588,12 +627,28 @@ const CreatePlanning = ({
                 <span className="mr-2">🔍</span> Agent disponible
               </button>
 
-              <button
-                onClick={handleAnonymousUser}
-                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
-              >
-                <span className="mr-2"></span> Agent Anonyme
-              </button>
+              <div className="flex items-center space-x-1 border  bg-blue-600">
+                {/* Bouton Ajouter */}
+                <button
+                  onClick={handleAnonymousUser}
+                  className="py-2 px-3 bg-green-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+                  aria-label="Ajouter un agent anonyme"
+                >
+                  +
+                </button>
+
+                {/* Texte Description */}
+                <p className="text-xs font-bold text-white">Agent Anonyme</p>
+
+                {/* Bouton Supprimer */}
+                <button
+                  onClick={handleRemoveLastAnonymousUser}
+                  className="py-2 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+                  aria-label="Supprimer un agent anonyme"
+                >
+                  -
+                </button>
+              </div>
             </div>
 
             {isModalOpen && (
@@ -612,6 +667,7 @@ const CreatePlanning = ({
                     siteUsers={localSiteUsers}
                     onAddNewUser={setSiteUsers}
                     createEventsForUsers={createEventsForUsers}
+                    events={events}
                   />
 
                   <button
@@ -638,6 +694,8 @@ const CreatePlanning = ({
                 siteUsers={localSiteUsers}
                 posts={localPosts}
                 onChangeEvents={handleChangeEvents}
+                onUpdateMergeEvent={handleUpdateMergeEvents}
+                mergeEvents={mergeEvents}
               />
             </div>
 
@@ -670,7 +728,7 @@ const CreatePlanning = ({
               currentYear={currentYear}
               onAddLocalUser={handleAddLocalUser}
             />
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-2">
               {events.length !== 0 && (
                 <>
                   <button
@@ -680,14 +738,19 @@ const CreatePlanning = ({
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                     } text-sm font-semibold`}
-                    aria-label="Sauvegarder le planning"
+                    aria-label={
+                      isShowPage
+                        ? "Mettre à jour le planning"
+                        : "Sauvegarder le planning"
+                    }
                     disabled={events.length === 0} // Disable the button when no events
                   >
-                    Sauvegarder
+                    {isShowPage ? "Mettre à jour" : "Sauvegarder"}
                   </button>
+
                   <button
                     onClick={handleValidatePlanning}
-                    className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
+                    className={`py-2 px-3 bg-blue-600 text-white rounded-md ${
                       events.length === 0
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -697,17 +760,18 @@ const CreatePlanning = ({
                   >
                     Valider
                   </button>
+                  {mergeEvents?.length > 0 && (
+                    <ExportPlanningsPdf
+                      selectedSite={selectedSite}
+                      currentMonth={currentMonth}
+                      currentYear={currentYear}
+                      holidays={holidays}
+                      events={mergeEvents}
+                      sites={sites}
+                    />
+                  )}
                 </>
               )}
-            </div>
-            <div>
-              <ExportPlanningsPdf  
-              selectedSite={selectedSite}
-              currentMonth={currentMonth}
-              currentYear={currentYear}
-              holidays={holidays}
-              events={events}
-              sites={sites} />
             </div>
           </>
         )}

@@ -10,128 +10,118 @@ const AgentAvailableModal = ({
   onAddLocalUser,
   localSiteUsers,
 }) => {
-  console.log(eventsForSearchGuard);
-  console.log(siteUsers);
-  const [selectedDay, setSelectedDay] = useState(null); // L'état pour stocker le jour sélectionné
-  const [missingEvents, setMissingEvents] = useState([]); // L'état pour stocker les utilisateurs sans événement
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [missingEvents, setMissingEvents] = useState([]);
 
-  // Fonction pour obtenir tous les jours du mois
   const getDaysInMonth = (month, year) => {
-    const date = new Date(year, month, 0); // Le mois est basé sur un indice de 0 (0 = Janvier, 11 = Décembre)
+    const date = new Date(year, month, 0);
     const daysInMonth = date.getDate();
-    return Array.from({ length: daysInMonth }, (_, i) => i + 1); // Crée un tableau de 1 à n (jours du mois)
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1);
   };
 
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
 
-  // Fonction pour formater la date sélectionnée au format 'YYYY-MM-DD'
   const formatDate = (day) => {
-    const month = String(currentMonth).padStart(2, "0"); // Format le mois en 2 chiffres
-    const formattedDay = String(day).padStart(2, "0"); // Format le jour en 2 chiffres
-    return `${currentYear}-${month}-${formattedDay}`; // Retourne la date complète au format 'YYYY-MM-DD'
+    const month = String(currentMonth).padStart(2, "0");
+    const formattedDay = String(day).padStart(2, "0");
+    return `${currentYear}-${month}-${formattedDay}`;
   };
 
-  // Fonction appelée lors de la sélection d'un jour
   const handleDayChange = (event) => {
     const day = event.target.value;
-    const formattedDate = formatDate(day); // Formate le jour sélectionné
-    setSelectedDay(formattedDate); // Met à jour l'état selectedDay
+    setSelectedDay(formatDate(day));
   };
 
-  // Fonction pour vérifier les utilisateurs sans événement pour le jour sélectionné
   const checkMissingEvents = () => {
-    if (!selectedDay) return; // Si aucun jour n'est sélectionné, on ne fait rien
+    if (!selectedDay) return;
 
-    const combinedUsers = [...siteUsers.firstList, ...siteUsers.secondList]; // Combiner les deux listes
+    const combinedUsers = [...siteUsers.firstList, ...siteUsers.secondList];
+    const ids = combinedUsers.map((user) => user.id);
 
-    console.log(combinedUsers);
-    const ids = combinedUsers.map((user) => user.id); // On extrait tous les user_id des utilisateurs
-    const missing = ids.filter((userId) => {
-      // On filtre les user_id qui n'ont pas d'événement pour le jour sélectionné
-      return !eventsForSearchGuard.some((event) => {
-        // Vérifier que la date de l'événement est bien au même format et correspond à selectedDay
-        const eventDate =
-          event.selected_days && event.selected_days.slice(0, 10); // Prendre la partie date de 'YYYY-MM-DD'
-        return event.user_id === userId && eventDate === selectedDay;
-      });
-    });
+    const missing = ids.filter(
+      (userId) =>
+        !eventsForSearchGuard.some((event) => {
+          const eventDate =
+            event.selected_days && event.selected_days.slice(0, 10);
+          return event.user_id === userId && eventDate === selectedDay;
+        })
+    );
 
-    setMissingEvents(missing); // On met à jour l'état avec les utilisateurs manquants
+    setMissingEvents(missing);
   };
 
   useEffect(() => {
-    checkMissingEvents(); // On vérifie les événements manquants chaque fois que selectedDay change
+    checkMissingEvents();
   }, [selectedDay, eventsForSearchGuard, siteUsers]);
 
-  console.log("Événements manquants pour le jour sélectionné:", missingEvents);
+  if (!isOpen) return null;
 
-  if (!isOpen) return null; // Si le modal n'est pas ouvert, on ne l'affiche pas
-
-  // Fonction pour ajouter l'utilisateur sélectionné
   const handleAddUser = (user) => {
-    console.log(user);
-    onAddLocalUser(user); // Appelle la fonction onAddUser avec l'utilisateur sélectionné
+    onAddLocalUser(user);
     onClose();
   };
 
-  // Filtrer les utilisateurs manquants en ne montrant que ceux qui ne sont pas dans localSiteUsers
-  const filteredMissingEvents = missingEvents.filter((userId) => {
-    return !localSiteUsers.some((localUser) => localUser.id === userId);
-  });
+  const filteredMissingEvents = missingEvents.filter(
+    (userId) => !localSiteUsers.some((localUser) => localUser.id === userId)
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="relative bg-white p-6 rounded-lg w-80">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-60 flex justify-center items-center z-50">
+      <div className="relative bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-xl font-bold text-gray-500 hover:text-gray-800"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
         >
-          X
+          <span className="text-2xl font-bold">&times;</span>
         </button>
-        <h2 className="text-xl font-semibold mb-4">Agent Disponible</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          Agents Disponibles
+        </h2>
 
-        {/* Menu de sélection du jour */}
         <div className="mb-4">
           <label
             htmlFor="daySelect"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-600"
           >
             Choisir un jour
           </label>
           <select
             id="daySelect"
-            value={selectedDay ? selectedDay.slice(8) : ""} // Affiche seulement le jour sélectionné dans le menu
+            value={selectedDay ? selectedDay.slice(8) : ""}
             onChange={handleDayChange}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="mt-2 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
           >
             <option value="" disabled>
-              Choisir un jour
+              Sélectionnez un jour
             </option>
             {daysInMonth.map((day) => (
               <option key={day} value={day.toString().padStart(2, "0")}>
                 {day.toString().padStart(2, "0")}/{currentMonth}/{currentYear}
-              </option> // Remplir le menu avec les jours du mois en 2 chiffres
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Affichage du jour sélectionné pour vérification */}
         {selectedDay && (
-          <div className="mt-4">
-            <p>Jour sélectionné : {selectedDay}</p>{" "}
-            {/* Affichage de selectedDay */}
-          </div>
+          <p className="text-gray-700 mb-4">
+            Jour sélectionné :{" "}
+            <span className="font-semibold">
+              {new Date(selectedDay).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+          </p>
         )}
 
-        {/* Affichage des utilisateurs sans événement, mais excluant ceux déjà dans localSiteUsers */}
-        {filteredMissingEvents.length > 0 && (
+        {filteredMissingEvents.length > 0 ? (
           <div className="mt-4">
-            <h3 className="text-lg font-semibold">
-              Agents sans événement ce jour-là:
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Agents sans événement ce jour-là :
             </h3>
-            <ul>
+            <ul className="space-y-3">
               {filteredMissingEvents.map((userId) => {
-                // Trouver l'utilisateur correspondant à l'userId
                 const user = [
                   ...siteUsers.firstList,
                   ...siteUsers.secondList,
@@ -139,24 +129,30 @@ const AgentAvailableModal = ({
                 return user ? (
                   <li
                     key={userId}
-                    className="flex items-center justify-between"
+                    className="flex items-center justify-between text-gray-700"
                   >
                     <span>
-                      {user.fullname} ({user.firstname}) - Agent ID: {user.id}
+                      {user.fullname} {user.firstname}
                     </span>
                     <button
-                      onClick={() => handleAddUser(user)} // Appeler la fonction pour ajouter l'utilisateur
-                      className="ml-2 px-4 py-2 text-white bg-blue-500 hover:bg-blue-700 rounded"
+                      onClick={() => handleAddUser(user)}
+                      className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     >
                       Ajouter
                     </button>
                   </li>
                 ) : (
-                  <li key={userId}>Agent ID: {userId} non trouvé</li>
+                  <li key={userId} className="text-red-500">
+                    Agent ID: {userId} non trouvé
+                  </li>
                 );
               })}
             </ul>
           </div>
+        ) : (
+          <p className="text-gray-600 mt-4">
+            Aucun agent sans événement pour ce jour sélectionné.
+          </p>
         )}
       </div>
     </div>

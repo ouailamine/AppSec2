@@ -1,9 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getUserName } from "./CreatFunction";
 
-const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
+const CalendarComponent = ({
+  holidays,
+  onDaysSelected,
+  month,
+  year,
+  UsersDaysEvents,
+  selectedUsers,
+  users,
+}) => {
+  console.log("holidays", holidays);
+  console.log("UsersDaysEvents", UsersDaysEvents);
+  console.log("selectedUsers", selectedUsers);
+
   const [selectedDays, setSelectedDays] = useState([]);
+  const [daysInMonth, setDaysInMonth] = useState([]);
+  const [isTableOpen, setIsTableOpen] = useState(false);
 
-  // Function to format date as YYYY-MM-DD
+  useEffect(() => {
+    const getDaysInMonth = (year, month) => {
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      return Array.from(
+        { length: daysInMonth },
+        (_, index) => new Date(year, month, index + 1)
+      );
+    };
+    setDaysInMonth(getDaysInMonth(year, month - 1));
+  }, [month, year]);
+
   const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -11,39 +36,6 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
     return `${year}-${month}-${day}`;
   };
 
-  // Normalize API dates to local timezone
-  const normalizeToLocal = (dateStr) => {
-    const date = new Date(dateStr);
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  };
-
-  // Normalized holidays array
-  const holidaysNormalized = holidays.map((holiday) => ({
-    ...holiday,
-    normalizedDate: normalizeToLocal(holiday.date),
-  }));
-
-  // Check if the date is a holiday
-  const isHoliday = (date) => {
-    const formattedDate = formatDate(date);
-    return holidaysNormalized.some(
-      (holiday) => formatDate(holiday.normalizedDate) === formattedDate
-    );
-  };
-
-  // Check if the date is a weekend
-  const isWeekend = (date) => date.getDay() === 6 || date.getDay() === 0;
-
-  // Get all days in the current month
-  const getDaysInMonth = (year, month) => {
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    return Array.from(
-      { length: daysInMonth },
-      (_, index) => new Date(year, month, index + 1)
-    );
-  };
-
-  // Handle day selection change
   const handleDayChange = (date) => {
     const dateStr = formatDate(date);
     setSelectedDays((prevSelected) => {
@@ -51,17 +43,29 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
         ? prevSelected.filter((day) => day !== dateStr)
         : [...prevSelected, dateStr];
 
-      // Notify the parent component of the new selection
       onDaysSelected(updatedSelectedDays);
       return updatedSelectedDays;
     });
   };
 
-  // Deselect all days
   const deselectAllDays = () => {
     setSelectedDays([]);
-    // Notify the parent component of the deselection
     onDaysSelected([]);
+  };
+
+  const isHoliday = (date) => {
+    const formattedDate = formatDate(date);
+    return holidays.includes(formattedDate);
+  };
+
+  const isWeekend = (date) => date.getDay() === 6 || date.getDay() === 0;
+
+  const hasEvent = (userId, date) => {
+    const formattedDate = formatDate(date);
+    return UsersDaysEvents.some(
+      (event) =>
+        event.user_id === userId && event.selected_days === formattedDate
+    );
   };
 
   return (
@@ -73,11 +77,11 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
             <span className="text-xs font-bold text-gray-700">Légende :</span>
           </div>
           <div className="flex items-center">
-            <div className="h-3 w-3 bg-red-300 border border-red-500 rounded-md"></div>
+            <div className="h-3 w-3 bg-blue-300 border border-red-500 rounded-md"></div>
             <span className="text-xs">Weekends (Samedi & Dimanche)</span>
           </div>
           <div className="flex items-center">
-            <div className="h-3 w-3 bg-green-300 border border-green-500 rounded-md"></div>
+            <div className="h-3 w-3 bg-red-300 border border-green-500 rounded-md"></div>
             <span className="text-xs">Jours fériés</span>
           </div>
         </div>
@@ -89,18 +93,17 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
         Sélectionner des jours
       </label>
       <div className="flex flex-col gap-2">
-        {/* Render days dynamically */}
         <div className="flex flex-wrap justify-center">
-          {getDaysInMonth(year, month - 1).map((date) => (
+          {daysInMonth.map((date) => (
             <div
               key={date.getTime()}
               className="flex flex-col items-center w-7"
             >
               <label
                 htmlFor={`day-${date.getTime()}`}
-                className={`text-xs text-gray-700 ${
-                  isWeekend(date) ? "text-red-500" : ""
-                } ${isHoliday(date) ? "text-green-500" : ""}`}
+                className={`text-xs text-black ${
+                  isWeekend(date) ? "text-text-black" : ""
+                } ${isHoliday(date) ? "text-text-black" : ""}`}
               >
                 {String(date.getDate()).padStart(2, "0")}
               </label>
@@ -109,14 +112,151 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
                 id={`day-${date.getTime()}`}
                 checked={selectedDays.includes(formatDate(date))}
                 onChange={() => handleDayChange(date)}
-                className={`h-4 w-4 text-blue-600 border-gray-300 rounded ${
-                  isWeekend(date) ? "bg-red-300" : ""
-                } ${isHoliday(date) ? "bg-green-200" : ""}`}
+                className={`h-4 w-4 text-blue-700 border-gray-300 rounded ${
+                  isWeekend(date) ? "bg-blue-300" : ""
+                } ${isHoliday(date) ? "bg-red-200" : ""}`}
               />
             </div>
           ))}
         </div>
       </div>
+      <button
+        type="button"
+        className="mt-3 w-full bg-blue-800 text-white flex justify-between text-xs items-center px-2 py-1 rounded-md"
+        onClick={() => setIsTableOpen(!isTableOpen)}
+        aria-expanded={isTableOpen}
+      >
+        <span>
+          {isTableOpen ? "Masquer les vacation" : "Afficher les vacation"}
+        </span>
+        <svg
+          className={`w-6 h-6 transition-transform duration-300 ${
+            isTableOpen ? "rotate-180" : ""
+          }`}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 9l6 6 6-6"
+          />
+        </svg>
+      </button>
+
+      {/* Table Layout */}
+      {isTableOpen && (
+        <div className="calendar-container mt-2">
+          {selectedUsers.length === 0 ? (
+            <div className="text-center text-gray-500 mt-2">
+              Sélectionnez un agent pour afficher le tableau.
+            </div>
+          ) : (
+            <table className="table-auto border-collapse border border-gray-400 w-full">
+              <thead>
+                <tr>
+                  <th className="border text-xs border-gray-300 p-1">Agent</th>
+                  {daysInMonth.map((date) => {
+                    const isWeekend = [0, 6].includes(date.getDay()); // Vérifie si c'est un week-end
+
+                    // Format 'YYYY-MM-DD' sans fuseau horaire
+                    const formattedDate = `${date.getFullYear()}-${String(
+                      date.getMonth() + 1
+                    ).padStart(2, "0")}-${String(date.getDate()).padStart(
+                      2,
+                      "0"
+                    )}`;
+
+                    // Vérifie si c'est un jour férié
+                    const isHoliday = holidays.includes(formattedDate);
+
+                    return (
+                      <th
+                        key={formattedDate}
+                        className={`border text-xs border-gray-300 p-1 text-center ${
+                          isWeekend
+                            ? "bg-blue-300"
+                            : isHoliday
+                            ? "bg-red-200"
+                            : ""
+                        }`}
+                      >
+                        {date.getDate()}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {selectedUsers.map((userId) => {
+                  const userEvents = UsersDaysEvents.filter(
+                    (event) => event.user_id === userId
+                  );
+
+                  const userName =
+                    userEvents.length > 0
+                      ? userEvents[0].userName
+                      : getUserName(users, userId);
+
+                  const hasAnyEvent = daysInMonth.some((date) =>
+                    hasEvent(userId, date)
+                  );
+
+                  return (
+                    <tr key={userId}>
+                      <td className="border border-gray-300 text-xs font-bold p-1">
+                        {userName}
+                      </td>
+                      {hasAnyEvent ? (
+                        daysInMonth.map((date) => {
+                          const isWeekend = [0, 6].includes(date.getDay());
+                          const formattedDate = `${date.getFullYear()}-${String(
+                            date.getMonth() + 1
+                          ).padStart(2, "0")}-${String(date.getDate()).padStart(
+                            2,
+                            "0"
+                          )}`;
+
+                          const isHoliday = holidays.includes(formattedDate);
+
+                          return (
+                            <td
+                              key={formattedDate}
+                              className={`border text-xs border-gray-300 p-1 text-center ${
+                                hasEvent(userId, date)
+                                  ? "text-green-700 font-bold"
+                                  : isWeekend
+                                  ? "bg-blue-300"
+                                  : isHoliday
+                                  ? "bg-red-200"
+                                  : ""
+                              }`}
+                            >
+                              {hasEvent(userId, date) ? "✓" : ""}
+                            </td>
+                          );
+                        })
+                      ) : (
+                        <td
+                          colSpan={daysInMonth.length}
+                          className="border border-gray-300 text-xs text-center text-gray-500 italic p-2"
+                        >
+                          Aucun vacation pour cet agent.
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
       <hr className="m-2" />
 
       {/* Display selected days */}
@@ -139,7 +279,7 @@ const CalendarComponent = ({ holidays, onDaysSelected, month, year }) => {
                 return (
                   <div
                     key={index}
-                    className="text-[11px] text-white border bg-blue-500 rounded-md p-1"
+                    className="text-[11px] text-white border bg-blue-400 rounded-md p-1"
                   >
                     {formattedDate}
                   </div>

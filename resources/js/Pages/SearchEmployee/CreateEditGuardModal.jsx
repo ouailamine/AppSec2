@@ -246,39 +246,35 @@ const AddGuardModal = ({
                   onChange={handleChange}
                 />
               </div>
-              <label
-                  htmlFor="dateofbirth"
+              <div>
+                <label
+                  htmlFor="nationality"
                   className="block text-xs font-medium text-gray-700"
                 >
                   Nationalité
                 </label>
-              <Select
-                id="nationality"
-                name="nationality"
-                aria-label="Select nationality"
-                options={nationalities.map((nat) => ({
-                  value: nat.name,
-                  label: nat.name,
-                }))}
-                onChange={handleNationalityChange}
-                value={
-                  nationalities.find((nat) => nat.name === formData.nationality)
-                    ? {
-                        value: formData.nationality,
-                        label: formData.nationality,
-                      }
-                    : null
-                }
-                isClearable
-                classNames={{
-                  control: () => "text-xs border-gray-300 rounded-md shadow-sm",
-                  menu: () =>
-                    "text-xs bg-white border border-gray-200 rounded-md",
-                  singleValue: () => "text-xs text-gray-900",
-                  option: () => "text-xs hover:bg-gray-100 cursor-pointer",
-                }}
-              />
-
+                <Select
+                  id="nationality"
+                  name="nationality"
+                  aria-label="Select nationality"
+                  options={nationalities.map((nat) => ({
+                    value: nat.name, // Use name instead of id
+                    label: nat.name,
+                  }))}
+                  onChange={handleNationalityChange}
+                  value={
+                    nationalities.find(
+                      (nat) => nat.name === formData.nationality
+                    )
+                      ? {
+                          value: formData.nationality,
+                          label: formData.nationality, // Match the label with the name
+                        }
+                      : null
+                  }
+                  isClearable
+                />
+              </div>
               <div>
                 <label
                   htmlFor="role"
@@ -423,20 +419,12 @@ const AddGuardModal = ({
                       ? {
                           value: formData.city,
                           label: formData.city,
+                          // Match the label with the name
                         }
                       : null
                   }
                   placeholder="Sélectionnez une Ville"
                   isClearable
-                  classNames={{
-                    control: () =>
-                      "text-xs border-gray-300 rounded-md shadow-sm",
-                    menu: () =>
-                      "text-xs bg-white border border-gray-200 rounded-md",
-                    singleValue: () => "text-xs text-gray-900",
-                    option: () => "text-xs hover:bg-gray-100 cursor-pointer",
-                    placeholder: () => "text-xs text-gray-500",
-                  }}
                 />
               </div>
             </div>
@@ -505,13 +493,10 @@ const AddGuardModal = ({
                     Diplômes
                   </label>
                   {formData.diplomas.map((diploma, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-wrap items-center gap-1 mb-2"
-                    >
-                      <div className="flex-1 min-w-[100px]">
+                    <div key={index} className="flex items-center gap-2 mb-23">
+                      <div className="flex-1">
                         <select
-                          className="block w-full border-gray-300 rounded-md shadow-xs focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"
+                          className="block w-24 border-gray-300 rounded-md shadow-xs focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"
                           value={diploma.name}
                           onChange={(e) =>
                             handleDiplomaChange(index, "name", e.target.value)
@@ -528,10 +513,10 @@ const AddGuardModal = ({
                           ))}
                         </select>
                       </div>
-                      <div className="flex-1 min-w-[120px]">
+                      <div className="flex-1">
                         <input
                           type="date"
-                          className="block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"
+                          className="block w-24 border-gray-300 text-xs rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-xs"
                           placeholder="Date de Fin"
                           value={diploma.end_date}
                           onChange={(e) =>
@@ -543,10 +528,10 @@ const AddGuardModal = ({
                           }
                         />
                       </div>
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 ml-4">
                         <button
                           type="button"
-                          className="bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500"
+                          className="bg-red-500 text-white text-xs px-2 py-1 rounded-md shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
                           onClick={() => {
                             const newDiplomas = [...formData.diplomas];
                             newDiplomas.splice(index, 1);
@@ -564,7 +549,7 @@ const AddGuardModal = ({
                   <button
                     type="button"
                     onClick={addDiploma}
-                    className="text-indigo-600 text-xs mt-2 block w-full sm:w-auto"
+                    className="text-indigo-600 text-xs"
                   >
                     Ajouter un Diplôme
                   </button>

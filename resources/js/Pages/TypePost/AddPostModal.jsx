@@ -4,10 +4,12 @@ import { Inertia } from "@inertiajs/inertia";
 const ModalForm = ({
   isOpen,
   onClose,
-  post = null,
-  isEditing = false,
-  typePosts = [], // Ensure typePosts is an array
+  post,
+  isEditing,
+  typePosts, // Ensure typePosts is an array
 }) => {
+  console.log(post);
+
   const [form, setForm] = useState({
     name: "",
     abbreviation: "",
@@ -26,8 +28,8 @@ const ModalForm = ({
         name: post.name || "",
         abbreviation: post.abbreviation || "",
         type_post_id: post.type_post?.id || "",
-        duration_of_work_hours: post.duration_of_work_hours || "",
-        duration_of_work_minutes: post.duration_of_work_minutes || "",
+        duration_of_work_hours: post.default_duration_hours ?? "",
+        duration_of_work_minutes: post.default_duration_minutes ?? "",
       });
       setSelectedTypePost(initialTypePost || null);
     } else {
@@ -54,6 +56,7 @@ const ModalForm = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log(form);
     if (isEditing) {
       Inertia.put(`/posts/${post.id}`, form);
     } else {
@@ -167,13 +170,13 @@ const ModalForm = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              className="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
             >
               Annuler
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
               {isEditing ? "Mettre à jour" : "Créer"}
             </button>

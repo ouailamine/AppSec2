@@ -432,6 +432,7 @@ export const minutesToHoursMinutes = (totalMinutes) => {
 };
 
 export const mergeAllEvents = (events) => {
+  console.log(events);
   if (!events || events.length === 0) return []; // Return empty array if no events are provided
 
   // Check if relatedEvent is null or undefined in any of the events
@@ -462,38 +463,45 @@ export const mergeAllEvents = (events) => {
   console.log(groupedByRelatedEvent);
 
   // Process each group
-  Object.values(groupedByRelatedEvent).forEach((group) => {
-    const parentEvent = group.find((event) => !event.isSubEvent); // Find parent event
-    const subEvents = group.filter((event) => event.isSubEvent); // Filter sub-events
-
-    if (parentEvent && subEvents.length > 0) {
-      // Merge parent with each sub-event
-      subEvents.forEach((subEvent) => {
-        const mergedEvent = {
-          id: [parentEvent.id, subEvent.id], // Merge IDs
-          pause_end: parentEvent.pause_end,
-          pause_payment: parentEvent.pause_payment,
-          pause_start: parentEvent.pause_start,
-          post: parentEvent.post,
-          selected_days: parentEvent.selected_days, // Use parent's selected_days
-          typePost: parentEvent.typePost,
-          user_id: parentEvent.user_id,
-          vacation_end: subEvent.vacation_end,
-          vacation_start: parentEvent.vacation_start,
-          work_duration: parentEvent.work_duration + subEvent.work_duration, // Sum work durations
-        };
-
-        mergedEvents.push(mergedEvent);
-      });
-    } else if (parentEvent) {
-      // Add parent event alone if no sub-events exist
-      mergedEvents.push(parentEvent);
+  Object.entries(groupedByRelatedEvent).forEach(([key, group]) => {
+    if (key === "unrelated") {
+      // Directly add all unrelated events to the mergedEvents array
+      mergedEvents.push(...group);
     } else {
-      // Add orphan sub-events if necessary
-      mergedEvents.push(...subEvents);
+      const parentEvent = group.find((event) => !event.isSubEvent); // Find parent event
+      const subEvents = group.filter((event) => event.isSubEvent); // Filter sub-events
+
+      if (parentEvent && subEvents.length > 0) {
+        // Merge parent with each sub-event
+        subEvents.forEach((subEvent) => {
+          const mergedEvent = {
+            id: [parentEvent.id, subEvent.id], // Merge IDs
+            userName: parentEvent.userName,
+            pause_end: parentEvent.pause_end,
+            pause_payment: parentEvent.pause_payment,
+            pause_start: parentEvent.pause_start,
+            post: parentEvent.post,
+            selected_days: parentEvent.selected_days, // Use parent's selected_days
+            typePost: parentEvent.typePost,
+            user_id: parentEvent.user_id,
+            vacation_end: subEvent.vacation_end,
+            vacation_start: parentEvent.vacation_start,
+            work_duration: parentEvent.work_duration + subEvent.work_duration, // Sum work durations
+          };
+
+          mergedEvents.push(mergedEvent);
+        });
+      } else if (parentEvent) {
+        // Add parent event alone if no sub-events exist
+        mergedEvents.push(parentEvent);
+      } else {
+        // Add orphan sub-events if necessary
+        mergedEvents.push(...subEvents);
+      }
     }
   });
 
+  console.log(mergedEvents);
   return mergedEvents;
 };
 

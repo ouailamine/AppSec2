@@ -30,7 +30,9 @@ const TableComponent = ({
   typePosts,
   siteUsers,
   posts,
+  mergeEvents,
 }) => {
+  console.log(mergeEvents);
   const [createEditEventModal, setCreateEditEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);
@@ -48,12 +50,24 @@ const TableComponent = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUserIdForChange, setSelectedUserIdForChange] = useState(null);
-  
 
-  const openModal = (userName,user_id) => {
-    console.log(userName,user_id);
+  const [hoveredEventId, setHoveredEventId] = useState(null);
+  // Définir un état pour la taille de la police
+  const [fontSize, setFontSize] = useState(12);
+
+  // Fonction pour modifier la taille de la police
+  const increaseFontSize = () => {
+    setFontSize((prevFontSize) => prevFontSize + 1);
+  };
+
+  const decreaseFontSize = () => {
+    setFontSize((prevFontSize) => Math.max(prevFontSize - 2, 8)); // Limiter la taille à 8px minimum
+  };
+
+  const openModal = (userName, user_id) => {
+    console.log(userName, user_id);
     setSelectedUserIdForChange(user_id);
-    console.log(selectedUserIdForChange)
+    console.log(selectedUserIdForChange);
     setIsModalOpen(true);
   };
 
@@ -85,6 +99,14 @@ const TableComponent = ({
     const dayTotalDuration = Array.from({ length: daysInMonth }, () => 0);
     let totalMonthlyDuration = 0;
 
+    const handleMouseEnter = (eventId) => {
+      setHoveredEventId(eventId); // Set the hovered event's ID
+    };
+
+    const handleMouseLeave = () => {
+      setHoveredEventId(null); // Clear the hovered event ID immediately
+    };
+
     // Initialisation des données utilisateur
 
     events.forEach((event) => {
@@ -100,6 +122,8 @@ const TableComponent = ({
         vacation_start,
         vacation_end,
         pause_payment,
+        pause_start,
+        pause_end,
         post,
 
         work_duration,
@@ -128,22 +152,64 @@ const TableComponent = ({
         };
 
         const cellContent = (
-          <div className="text-[11px] w-8 text-black font-bold text-center">
-            <div>{post}</div>
-            <div>{formatTime(vacation_start)}</div>
-            <div className={colorClass}>P</div>
-            <div>{formatTime(vacation_end)}</div>
-          </div>
+          <>
+            <div
+              className="text-black font-bold text-center leading-[1.2]"
+              style={{ fontSize: `${fontSize}px` }}
+            >
+              <div>{post}</div>
+              <div>{formatTime(vacation_start)}</div>
+              <div className={colorClass}>P</div>
+              <div>{formatTime(vacation_end)}</div>
+            </div>
+          </>
         );
 
+        // Inside your event rendering logic
         if (userEventsMap[user_id] && userEventsMap[user_id][2]) {
           userEventsMap[user_id][day - 1].push(
             <div key={event.id}>
               <div
-                className="flex flex-col  mb-0 shadow-sm  bg-white"
+                className="flex flex-col mb-0 shadow-sm bg-white"
                 onClick={() => handleEditEvent(event)}
+                onMouseEnter={() => handleMouseEnter(event.id)} // Set hovered event on mouse enter
+                onMouseLeave={handleMouseLeave} // Reset on mouse leave
+                data-tooltip-target="tooltip-default"
               >
                 {cellContent}
+                <div
+                  id="tooltip-default"
+                  role="tooltip"
+                  className={`absolute z-50 inline-block px-1 font-medium text-white transition-opacity duration-300 bg-gray-800 rounded-lg shadow-lg ${
+                    hoveredEventId === event.id
+                      ? "opacity-100 visible"
+                      : "opacity-0 invisible"
+                  } `}
+                  aria-hidden={hoveredEventId !== event.id}
+                >
+                  <p
+                    className="text-[9px] text-center"
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
+                    <strong>Post:</strong> {post}
+                    <br />
+                    <strong>Début de vacation: </strong>
+                    {formatTime(vacation_start)}
+                    <br />
+                    <strong>Fin de vacation: </strong>{" "}
+                    {formatTime(vacation_end)}
+                    <br />
+                    <strong>Pause: </strong> {pause_payment} <br />
+                    <span>
+                      <strong>Début de pause:</strong> {formatTime(pause_start)}
+                    </span>
+                    <br />
+                    <span>
+                      <strong>Fin de pause:</strong> {formatTime(pause_end)}
+                    </span>
+                  </p>
+                  <div className="tooltip-arrow" data-popper-arrow />
+                </div>
 
                 {/* Edit/Delete Button Group */}
                 <div className="flex justify-center space-x-1 mt-0">
@@ -158,7 +224,7 @@ const TableComponent = ({
                         aria-label="Edit Event"
                         className="text-blue-500 hover:text-blue-700 focus:outline-none transition duration-150 ease-in-out"
                       >
-                        <PencilIcon className="w-4 h-4" />
+                        <PencilIcon className="w-3 h-3" />
                       </button>
 
                       <button
@@ -176,7 +242,7 @@ const TableComponent = ({
                         aria-label="Delete Event"
                         className="text-red-500 hover:text-red-700 focus:outline-none transition duration-150 ease-in-out"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <TrashIcon className="w-3 h-3" />
                       </button>
                     </>
                   )}
@@ -194,7 +260,7 @@ const TableComponent = ({
                       onChange={(e) => {
                         toggleSelectEvent(event.id);
                       }}
-                      className="form-checkbox mb-1  h-4 w-4 rounded focus:ring-2 focus:ring-red-300 transition-all duration-150 ease-in-out border-2 border-red-600"
+                      className="form-checkbox mb-1 h-4 w-4 rounded focus:ring-2 focus:ring-red-300 transition-all duration-150 ease-in-out border-2 border-red-600"
                     />
                   )}
                 </div>
@@ -202,13 +268,13 @@ const TableComponent = ({
                 {/* Separator */}
                 <hr className="border-gray-600" />
               </div>
-              <div className="flex flex-col items-center justify-center  mb-0 shadow-sm border border-green-600 rounded-md ">
+              <div className="flex flex-col items-center justify-center mb-0 shadow-sm border border-green-600 rounded-md ">
                 <input
                   type="checkbox"
                   onChange={(e) =>
                     handleCheckboxChange(e, user_id, selected_days)
                   }
-                  className="form-checkbox h-4 w-4 rounded  border-green-600 m-1"
+                  className="form-checkbox h-4 w-4 rounded border-green-600 m-1"
                 />
               </div>
             </div>
@@ -295,7 +361,7 @@ const TableComponent = ({
       table.push([
         <button
           className="text-blue-700 hover:underline text-sm font-bold"
-          onClick={() => openModal(userName,user_id)}
+          onClick={() => openModal(userName, user_id)}
         >
           {userName}
         </button>,
@@ -325,7 +391,10 @@ const TableComponent = ({
             </div>
           );
         }),
-        <p className="text-black text- text-bold"> {minutesToHoursMinutes(userTotalDuration[user_id] || 0)}</p>,
+        <p className="text-black text- text-bold">
+          {" "}
+          {minutesToHoursMinutes(userTotalDuration[user_id] || 0)}
+        </p>,
       ]);
     });
 
@@ -333,7 +402,7 @@ const TableComponent = ({
       <h2 className="text-sm py- text-bold text-black">Total par jour</h2>,
       ...dayTotalDuration.map((duration) => minutesToHoursMinutes(duration)),
     ];
-    
+
     dayTotalsRow.push(minutesToHoursMinutes(totalMonthlyDuration));
 
     table.push(dayTotalsRow);
@@ -537,9 +606,7 @@ const TableComponent = ({
   };
 
   const handleMergeEvents = () => {
-    const result = mergeAllEvents(events);
-
-    setTableEvents(result);
+    setTableEvents(mergeEvents);
   };
 
   const handleToggleEvents = () => {
@@ -551,14 +618,12 @@ const TableComponent = ({
     setIsMerged(!isMerged); // Inverse l'état
   };
 
- const handleChangeUser = (userToReplace, userReplacement, events) => { 
+  const handleChangeUser = (userToReplace, userReplacement, events) => {
     console.log("Utilisateur à remplacer:", userToReplace);
     console.log("Nouvel utilisateur:", userReplacement);
 
-    onChangeEvents(userToReplace,userReplacement)
-};
-
-
+    onChangeEvents(userToReplace, userReplacement);
+  };
 
   return (
     <div className="bg-white border border-gray-600 rounded-md shadow-sm p-1 space-y-1">
@@ -574,32 +639,56 @@ const TableComponent = ({
           >
             {isMerged ? "Défusionner les vacations" : "Fusionner les vacations"}
           </button>
+
+          <div className="flex items-center space-x-1 border  bg-blue-600">
+            {/* Bouton Ajouter */}
+            <button
+              onClick={increaseFontSize}
+              className="py-2 px-3 bg-green-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              aria-label="Ajouter un agent anonyme"
+            >
+              +
+            </button>
+
+            {/* Texte Description */}
+            <p className="text-xs font-bold text-white">caractére</p>
+
+            {/* Bouton Supprimer */}
+            <button
+              onClick={decreaseFontSize}
+              className="py-2 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              aria-label="Supprimer un agent anonyme"
+            >
+              -
+            </button>
+          </div>
         </div>
 
         <table className="min-w-full divide-y divide-gray-600 border-collapse border border-gray-600">
           <thead className="bg-gray-150">
             <tr>
-              {table[0].map((header, index) => (
-                <th
-                  key={index}
-                  className="border-r border-gray-600 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide"
-                >
-                  {header}
-                </th>
-              ))}
+              {table[0] &&
+                table[0].map((header, index) => (
+                  <th
+                    key={index}
+                    className="border-r border-gray-600 text-left text-[10px] font-semibold text-gray-600 uppercase tracking-wide"
+                  >
+                    {header || "-"} {/* Ensure header is not undefined */}
+                  </th>
+                ))}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-600">
             {table.slice(1).map((row, rowIndex) => (
-              <tr key={rowIndex} className={`hover:bg-blue-200`}>
+              <tr key={rowIndex} className="hover:bg-blue-200">
                 {row.map((cell, cellIndex) => {
-                  const day = cellIndex; // Correspond à la date du jour (cellIndex - 1)
+                  const day = cellIndex + 1; // Correct the day number to match the table day (1-indexed)
                   const isWeekend =
                     day > 0 &&
                     day <= table[0].length - 2 &&
                     (new Date(year, zeroIndexedMonth, day).getDay() === 0 ||
                       new Date(year, zeroIndexedMonth, day).getDay() === 6);
-                  const isHoliday = day > 0 && holidaysSet.has(day);
+                  const isHoliday = holidaysSet.has(day);
 
                   return (
                     <td
@@ -610,7 +699,7 @@ const TableComponent = ({
                         isHoliday ? "bg-red-200 text-gray" : "text-gray-900"
                       }`}
                     >
-                      {cell || "-"}
+                      {cell || "-"} {/* Ensure cell is not undefined */}
                     </td>
                   );
                 })}

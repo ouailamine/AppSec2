@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PosteSection from "./import/PosteSection";
 import HorairesSection from "./import/HorairesSection";
 import PauseSection from "./import/PauseSection";
 import UserSelect from "./import/UserSelect";
 import Calendar from "./Calendar";
+import { mergeAllEvents } from "./CreatFunction";
 
 const DaysPostsVacationSelect = ({
   posts = [],
@@ -16,6 +17,7 @@ const DaysPostsVacationSelect = ({
   createEventsForUsers,
   onClose,
   onAddNewUser,
+  events,
 }) => {
   console.log(typePosts, posts);
   const [vacation_start, setVacationStart] = useState("");
@@ -28,9 +30,17 @@ const DaysPostsVacationSelect = ({
   const [selectedDays, setSelectedDays] = useState([]);
   const [selectedUsers, setSelectedusers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState(siteUsers);
-
+  const [usersDaysEvents, setUsersDaysEvents] = useState([]);
   const [resetCalendar, setResetCalendar] = useState(false);
   const [errorMessages, setErrorMessages] = useState({});
+  const [isDefaultHours, setIsDefaultHours] = useState(false);
+
+  useEffect(() => {
+    if (events) {
+      const result = mergeAllEvents(events);
+      setUsersDaysEvents(result);
+    }
+  }, [events]);
 
   const handleAddUsers = (newLocalUsersIds) => {
     const updateLocaleSiteUsers = users.filter((user) =>
@@ -96,6 +106,13 @@ const DaysPostsVacationSelect = ({
     onClose();
   };
 
+  console.log(selectedPost);
+  console.log(selectedTypePost);
+
+  const handleDefaultHours = (a) => {
+    setIsDefaultHours(a);
+  };
+
   return (
     <div>
       <div className="bg-white border border-gray-900 rounded-md shadow-md p-2 space-y-2">
@@ -117,6 +134,9 @@ const DaysPostsVacationSelect = ({
             year={year}
             resetCalendar={resetCalendar}
             siteUsers={siteUsers}
+            UsersDaysEvents={usersDaysEvents}
+            selectedUsers={selectedUsers}
+            users={users}
           />
           {errorMessages.days && (
             <p className="text-red-600 font-bold text-sm">
@@ -125,8 +145,8 @@ const DaysPostsVacationSelect = ({
           )}
         </div>
 
-        <div className="flex space-x-4">
-          <div className="flex-1" style={{ flexBasis: "40%" }}>
+        <div className="flex space-x-2">
+          <div className="flex-1" style={{ flexBasis: "45%" }}>
             <PosteSection
               typePosts={typePosts}
               posts={posts}
@@ -135,6 +155,7 @@ const DaysPostsVacationSelect = ({
               listPosts={posts}
               selectedPost={selectedPost}
               handlePostChange={handlePostChange}
+              onIsDefaultHours={handleDefaultHours}
             />
             {errorMessages.post && (
               <p className="text-red-600 font-bold text-sm">
@@ -148,12 +169,13 @@ const DaysPostsVacationSelect = ({
             )}
           </div>
 
-          <div className="flex-1" style={{ flexBasis: "20%" }}>
+          <div className="flex-1" style={{ flexBasis: "10%" }}>
             <HorairesSection
               vacation_start={vacation_start}
               setVacationStart={setVacationStart}
               vacation_end={vacation_end}
               setVacationEnd={setVacationEnd}
+              isDefaultHours={isDefaultHours}
             />
             {errorMessages.vacation && (
               <p className="text-red-600 font-bold text-sm">
@@ -162,7 +184,7 @@ const DaysPostsVacationSelect = ({
             )}
           </div>
 
-          <div className="flex-1" style={{ flexBasis: "40%" }}>
+          <div className="flex-1" style={{ flexBasis: "45%" }}>
             <PauseSection
               pause_payment={pause_payment}
               setPausePayment={setPausePayment}

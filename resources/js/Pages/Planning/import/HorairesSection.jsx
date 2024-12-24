@@ -6,7 +6,9 @@ const HorairesSection = ({
   vacation_end,
   setVacationEnd,
   errors,
+  isDefaultHours,
 }) => {
+  console.log(isDefaultHours);
   return (
     <div className="flex-1 border p-2">
       {/* Title Label */}
@@ -14,7 +16,7 @@ const HorairesSection = ({
         Horaires
       </label>
 
-      <div className="flex gap-4">
+      <div className="flex gap-1">
         {/* Vacation Start Time */}
         <div className="flex-1">
           <label className="block text-xs font-bold text-black">Début:</label>
