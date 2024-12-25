@@ -13,14 +13,21 @@ class ManagerPlanningMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $planningDetails;
+    public $siteDetails;
+    public $monthNames;
+    public $year;
+    public $isValidatePlanning;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(protected $data)
+    public function __construct($siteDetails, $monthNames, $year, $isValidatePlanning)
     {
-        //
+        // Initialisation des propriétés
+        $this->siteDetails = $siteDetails;
+        $this->monthNames = $monthNames;
+        $this->year = $year;
+        $this->isValidatePlanning = $isValidatePlanning;
     }
 
     /**
@@ -28,12 +35,10 @@ class ManagerPlanningMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        // Retourner l'enveloppe du message
         return new Envelope(
-            subject: 'Manager Planning Mail',
-            from: $this->data['email'],
-            to: config('mail.from.address'),
-            replyTo: $this->data['email'],
-            
+            subject: 'Planning générale de' . ' ' . $this->siteDetails[1]['name'] . ' ' . $this->monthNames[0] . ' ' . $this->year,
+            replyTo: [$this->siteDetails['email'] ?? 'default@example.com'],
         );
     }
 
@@ -42,8 +47,16 @@ class ManagerPlanningMail extends Mailable
      */
     public function content(): Content
     {
+
+        // Retourner le contenu du message
         return new Content(
             view: 'Mail.manager_planning',
+            with: [
+                'siteDetails' => $this->siteDetails,
+                'monthNames' => $this->monthNames,
+                'year' => $this->year,
+                'isValidatePlanning' => $this->isValidatePlanning,
+            ],
         );
     }
 
@@ -54,6 +67,7 @@ class ManagerPlanningMail extends Mailable
      */
     public function attachments(): array
     {
+        // Si vous avez des fichiers à ajouter, vous pouvez les retourner ici
         return [];
     }
 }

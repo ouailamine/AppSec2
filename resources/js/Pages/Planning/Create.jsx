@@ -467,36 +467,39 @@ const CreatePlanning = ({
   };
 
   const handleValidatePlanning = () => {
-    // Demander à l'utilisateur s'il veut valider le planning
-    const isConfirmed = window.confirm(
-      "Voulez-vous valider ce planning et l'envoyer au destinataire ?"
-    );
+    console.log(selectedPlanning);
 
-    if (isConfirmed) {
-      const mailOfManagerSite = sites.find(
-        (site) => site.id == selectedPlanning[0].site_id
-      ).email;
-      const userIds = [...new Set(events.map((event) => event.user_id))];
-      const emailsOfGuards = users
-        .filter((user) => userIds.includes(user.id))
-        .map((user) => user.email);
-      console.log(userIds);
-      console.log(emailsOfGuards);
-      console.log(mailOfManagerSite);
+    // Check if the planning is already validated
+    const isPlanningValidated = selectedPlanning[0].isValidate === 1;
 
-      
+    if (isPlanningValidated) {
+      // Ask if the user wants to send new changes to the recipients
+      const isConfirmed = window.confirm(
+        "Le planning est déjà validé. Voulez-vous renvoyer les nouveaux changements aux destinataires ?"
+      );
 
-      const planningId = selectedPlanning[0].id;
-      console.log(planningId);
-      Inertia.post(route("plannings.validate"), { planningId });
+      if (isConfirmed) {
+        const planningId = selectedPlanning[0].id;
+        console.log(planningId);
+        // Assuming you're using Inertia.js to handle the request
+        Inertia.post(route("plannings.validate"), { planningId });
+      } else {
+        alert("Aucun changement n'a été envoyé.");
+      }
     } else {
-      // Si l'utilisateur annule, rien ne se passe ou on peut ajouter un message
-      alert("Le planning n'a pas été validé.");
-    }
-  };
+      // If the planning is not validated yet, proceed with validation
+      const isConfirmed = window.confirm(
+        "Voulez-vous valider ce planning et l'envoyer aux destinataires ?"
+      );
 
-  const sendPlanningToRecipient = () => {
-    console.log("Planning envoyé au destinataire !");
+      if (isConfirmed) {
+        const planningId = selectedPlanning[0].id;
+        console.log(planningId);
+        Inertia.post(route("plannings.validate"), { planningId });
+      } else {
+        alert("Le planning n'a pas été validé.");
+      }
+    }
   };
 
   console.log("events", events);

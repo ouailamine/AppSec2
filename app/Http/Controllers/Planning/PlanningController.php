@@ -14,6 +14,9 @@ use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Mail\ManagerPlanningMail;
+use App\Mail\GuardPlanningMail;
+use Illuminate\Support\Facades\Mail;
 
 use Carbon\Carbon;
 
@@ -67,53 +70,9 @@ class PlanningController extends Controller
      */
     public function store(Request $request)
     {
-        // Vérifier que les événements sont valides
-        if (empty($request->events) || !is_array($request->events)) {
-            return redirect()->back()->withErrors(['error' => 'No events provided for the planning.']);
-        }
-
-        // Étape 1 : Début de la transaction
-        DB::beginTransaction();
+        DB::beginTransaction(); // Commencer une transaction
 
         try {
-            // Étape 2 : Préparation des événements pour le mois courant
-            $currentMonthEvents = [];
-            foreach ($request->events as $eventData) {
-                $currentMonthEvents[] = [
-                    'id' => $eventData['id'],
-                    'user_id' => $eventData['user_id'],
-                    'userName' => $eventData['userName'],
-                    'site_id' => $request->site,
-                    'month' => $request->month,
-                    'year' => $request->year,
-                    'typePost' => $eventData['typePost'],
-                    'post' => $eventData['post'],
-                    'postName' => $eventData['postName'],
-                    'lunchAllowance' => $eventData['lunchAllowance'],
-                    'vacation_start' => $eventData['vacation_start'],
-                    'vacation_end' => $eventData['vacation_end'],
-                    'pause_payment' => $eventData['pause_payment'],
-                    'pause_start' => $eventData['pause_start'],
-                    'pause_end' => $eventData['pause_end'],
-                    'selected_days' => $eventData['selected_days'],
-                    'work_duration' => $eventData['work_duration'],
-                    'night_hours' => $eventData['night_hours'],
-                    'sunday_hours' => $eventData['sunday_hours'],
-                    'holiday_hours' => $eventData['holiday_hours'],
-                    'isSubEvent' => $eventData['isSubEvent'],
-                    'relatedEvent' => $eventData['relatedEvent'],
-                ];
-            }
-
-            // Étape 3 : Vérification des données des événements préparés
-
-
-            // Valider les données des événements (optionnel, en fonction des besoins)
-            if (empty($currentMonthEvents)) {
-                throw new \Exception('No valid events provided for the current month.');
-            }
-
-            // Étape 4 : Création du planning principal
             $planning = Planning::create([
                 'site_id' => $request->site,
                 'month' => $request->month,
@@ -121,16 +80,42 @@ class PlanningController extends Controller
                 'isValidate' => false,
             ]);
 
-            // Vérification du planning créé
+            // Traitement des événements du mois actuel
+            if (!empty($request->events) && is_array($request->events)) {
+                foreach ($request->events as $eventData) {
+                    try {
+                        $planning->events()->create([
+                            'user_id' => $eventData['user_id'],
+                            'userName' => $eventData['userName'],
+                            'site_id' => $planning->site_id,
+                            'planning_id' => $planning->id,
+                            'month' => $planning->month,
+                            'year' => $planning->year,
+                            'post' => $eventData['post'],
+                            'postName' => $eventData['postName'],
+                            'typePost' => $eventData['typePost'],
+                            'vacation_start' => $eventData['vacation_start'],
+                            'vacation_end' => $eventData['vacation_end'],
+                            'pause_payment' => $eventData['pause_payment'],
+                            'pause_start' => $eventData['pause_start'],
+                            'pause_end' => $eventData['pause_end'],
+                            'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'],
+                            'lunchAllowance' => $eventData['lunchAllowance'],
+                            'work_duration' => $eventData['work_duration'],
+                            'night_hours' => $eventData['night_hours'],
+                            'sunday_hours' => $eventData['sunday_hours'],
+                            'holiday_hours' => $eventData['holiday_hours'],
+                            'isSubEvent' => $eventData['isSubEvent'],
+                            'relatedEvent' => $eventData['relatedEvent'],
+                            'updated_at' => now(),
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Erreur création événement : ' . $e->getMessage());
+                    }
+                }
+            }
 
-
-            // Étape 5 : Ajout des événements au planning
-            $planning->events()->createMany($currentMonthEvents);
-
-            // Vérification des événements associés au planning
-
-
-            // Étape 6 : Gestion des événements pour le mois suivant (si fournis)
+            // Traitement des événements du mois suivant
             if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
                 $nextMonth = $request->month + 1;
                 $nextYear = $request->year;
@@ -140,59 +125,55 @@ class PlanningController extends Controller
                     $nextYear += 1;
                 }
 
-                $nextMonthEvents = [];
+                $nextMonthPlanning = Planning::create([
+                    'site_id' => $request->site,
+                    'month' => $nextMonth,
+                    'year' => $nextYear,
+                    'isValidate' => false,
+                ]);
+
                 foreach ($request->eventsNextMonth as $eventData) {
-                    $nextMonthEvents[] = [
-                        'id' => $eventData['id'],
-                        'user_id' => $eventData['user_id'],
-                        'userName' => $eventData['userName'],
-                        'site_id' => $request->site,
-                        'month' => $nextMonth,
-                        'year' => $nextYear,
-                        'typePost' => $eventData['typePost'],
-                        'post' => $eventData['post'],
-                        'postName' => $eventData['postName'],
-                        'lunchAllowance' => $eventData['lunchAllowance'],
-                        'vacation_start' => $eventData['vacation_start'],
-                        'vacation_end' => $eventData['vacation_end'],
-                        'pause_payment' => $eventData['pause_payment'],
-                        'pause_start' => $eventData['pause_start'],
-                        'pause_end' => $eventData['pause_end'],
-                        'selected_days' => $eventData['selected_days'],
-                        'work_duration' => $eventData['work_duration'],
-                        'night_hours' => $eventData['night_hours'],
-                        'sunday_hours' => $eventData['sunday_hours'],
-                        'holiday_hours' => $eventData['holiday_hours'],
-                        'isSubEvent' => $eventData['isSubEvent'],
-                        'relatedEvent' => $eventData['relatedEvent'],
-                    ];
-                }
-
-                if (!empty($nextMonthEvents)) {
-                    $nextMonthPlanning = Planning::create([
-                        'site_id' => $request->site,
-                        'month' => $nextMonth,
-                        'year' => $nextYear,
-                        'isValidate' => false,
-                    ]);
-
-                    $nextMonthPlanning->events()->createMany($nextMonthEvents);
-
-                    // Vérification des événements du mois suivant
-                    dd('Étape 6: Événements mois suivant', $nextMonthPlanning->events);
+                    try {
+                        $nextMonthPlanning->events()->create([
+                            'user_id' => $eventData['user_id'],
+                            'userName' => $eventData['userName'],
+                            'site_id' => $nextMonthPlanning->site_id,
+                            'planning_id' => $nextMonthPlanning->id,
+                            'month' => $nextMonthPlanning->month,
+                            'year' => $nextMonthPlanning->year,
+                            'post' => $eventData['post'],
+                            'postName' => $eventData['postName'],
+                            'typePost' => $eventData['typePost'],
+                            'vacation_start' => $eventData['vacation_start'],
+                            'vacation_end' => $eventData['vacation_end'],
+                            'pause_payment' => $eventData['pause_payment'],
+                            'pause_start' => $eventData['pause_start'],
+                            'pause_end' => $eventData['pause_end'],
+                            'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'],
+                            'lunchAllowance' => $eventData['lunchAllowance'],
+                            'work_duration' => $eventData['work_duration'],
+                            'night_hours' => $eventData['night_hours'],
+                            'sunday_hours' => $eventData['sunday_hours'],
+                            'holiday_hours' => $eventData['holiday_hours'],
+                            'isSubEvent' => $eventData['isSubEvent'],
+                            'relatedEvent' => $eventData['relatedEvent'],
+                            'updated_at' => now(),
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Erreur création événement (mois suivant) : ' . $e->getMessage());
+                    }
                 }
             }
 
-            // Étape 7 : Confirmation de la transaction
-            DB::commit();
-            return redirect()->route('plannings.index')->with('success', 'Planning created successfully with associated events.');
+            DB::commit(); // Commit de la transaction
+            return redirect()->route('plannings.index')->with('success', 'Planning et événements créés avec succès.');
         } catch (\Exception $e) {
-            // Étape 8 : Gestion des erreurs
-            DB::rollBack();
-            dd('Erreur rencontrée', $e->getMessage());
-            return redirect()->back()->withErrors(['error' => 'An error occurred while creating the planning: ' . $e->getMessage()]);
+            DB::rollBack(); // Rollback en cas d'erreur
+            Log::error('Erreur lors de la transaction : ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()]);
         }
     }
+
 
 
     /**
@@ -251,24 +232,22 @@ class PlanningController extends Controller
     public function update(Request $request, string $id)
     {
         try {
-            // Find the planning record
+            // Démarrer une transaction
+            DB::beginTransaction();
+
+            // Trouver le planning existant
             $planning = Planning::findOrFail($id);
 
-            // Clear the existing events (optional: you may want to update or keep existing ones)
+            // Supprimer les événements existants (optionnel selon votre logique métier)
             $planning->events()->delete();
 
-            // Check if events are provided in the request
-            if ($request->has('events') && is_array($request->events)) {
-
-                // Insert new events
+            // Traitement des événements du mois actuel
+            if (!empty($request->events) && is_array($request->events)) {
                 foreach ($request->events as $eventData) {
-                    // Debug the event data to see what it looks like
-
-                    // Create the event for the planning
                     $planning->events()->create([
                         'user_id' => $eventData['user_id'],
                         'userName' => $eventData['userName'],
-                        'site_id' => $planning->site_id, // Corrected key from 'site' to 'site_id'
+                        'site_id' => $planning->site_id,
                         'planning_id' => $planning->id,
                         'month' => $planning->month,
                         'year' => $planning->year,
@@ -280,7 +259,7 @@ class PlanningController extends Controller
                         'pause_payment' => $eventData['pause_payment'],
                         'pause_start' => $eventData['pause_start'],
                         'pause_end' => $eventData['pause_end'],
-                        'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'], // Ensure correct format
+                        'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'],
                         'lunchAllowance' => $eventData['lunchAllowance'],
                         'work_duration' => $eventData['work_duration'],
                         'night_hours' => $eventData['night_hours'],
@@ -288,29 +267,77 @@ class PlanningController extends Controller
                         'holiday_hours' => $eventData['holiday_hours'],
                         'isSubEvent' => $eventData['isSubEvent'],
                         'relatedEvent' => $eventData['relatedEvent'],
-                        'updated_at' => \Carbon\Carbon::now() // Explicitly set updated_at to the current time using Carbon
+                        'updated_at' => \Carbon\Carbon::now(),
                     ]);
                 }
-                $planning->touch();
-                // Log success
-                Log::info('Events created successfully for planning ID: ' . $id);
-
-                // Return a success response
-                return redirect()->route('plannings.index')->with('success', 'Planning updated successfully with associated events.');
-            } else {
-                // If no events are provided, return an error
-                dd('No events data provided.');
-                return back()->withErrors(['error' => 'No events data provided.']);
             }
-        } catch (\Exception $e) {
-            // Handle any errors that may have occurred
-            dd('Error updating planning: ' . $e->getMessage());
 
+            // Gestion des événements du mois suivant
+            if (!empty($request->eventsNextMonth) && is_array($request->eventsNextMonth)) {
+                $nextMonth = $planning->month + 1;
+                $nextYear = $planning->year;
+
+                if ($nextMonth > 12) {
+                    $nextMonth = 1;
+                    $nextYear += 1;
+                }
+
+                // Vérifiez si un planning pour le mois suivant existe déjà
+                $nextMonthPlanning = Planning::firstOrCreate([
+                    'site_id' => $planning->site_id,
+                    'month' => $nextMonth,
+                    'year' => $nextYear,
+                ], [
+                    'isValidate' => false,
+                ]);
+
+                // Supprimer les événements existants du mois suivant
+                $nextMonthPlanning->events()->delete();
+
+                // Ajouter les nouveaux événements
+                foreach ($request->eventsNextMonth as $eventData) {
+                    $nextMonthPlanning->events()->create([
+                        'user_id' => $eventData['user_id'],
+                        'userName' => $eventData['userName'],
+                        'site_id' => $nextMonthPlanning->site_id,
+                        'planning_id' => $nextMonthPlanning->id,
+                        'month' => $nextMonthPlanning->month,
+                        'year' => $nextMonthPlanning->year,
+                        'post' => $eventData['post'],
+                        'postName' => $eventData['postName'],
+                        'typePost' => $eventData['typePost'],
+                        'vacation_start' => $eventData['vacation_start'],
+                        'vacation_end' => $eventData['vacation_end'],
+                        'pause_payment' => $eventData['pause_payment'],
+                        'pause_start' => $eventData['pause_start'],
+                        'pause_end' => $eventData['pause_end'],
+                        'selected_days' => is_array($eventData['selected_days']) ? json_encode($eventData['selected_days']) : $eventData['selected_days'],
+                        'lunchAllowance' => $eventData['lunchAllowance'],
+                        'work_duration' => $eventData['work_duration'],
+                        'night_hours' => $eventData['night_hours'],
+                        'sunday_hours' => $eventData['sunday_hours'],
+                        'holiday_hours' => $eventData['holiday_hours'],
+                        'isSubEvent' => $eventData['isSubEvent'],
+                        'relatedEvent' => $eventData['relatedEvent'],
+                        'updated_at' => \Carbon\Carbon::now(),
+                    ]);
+                }
+            }
+
+            // Finaliser la transaction
+            DB::commit();
+
+            return redirect()->route('plannings.index')->with('success', 'Planning and associated events updated successfully.');
+        } catch (\Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            DB::rollBack();
             Log::error('Error updating planning: ' . $e->getMessage());
 
             return back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()]);
         }
     }
+
+
 
 
 
@@ -329,56 +356,75 @@ class PlanningController extends Controller
 
     public function validate(Request $request)
     {
-        
-        // Récupérez les IDs des plannings depuis la requête
+        // Fetch planning IDs from the request
         $planningIds = $request->planningId;
-        $selectedPlanning = Planning::with('events')->find($planningIds);
-       
 
-        // Récupérer les événements associés
-$events = $selectedPlanning->events;
+        // Ensure $planningIds is an array for further processing
+        if (!is_array($planningIds)) {
+            $planningIds = [$planningIds];
+        }
 
-// Récupérer des listes uniques pour chaque champ
-$userIds = $events->pluck('user_id')->unique()->toArray();
-$siteIds = $events->pluck('site_id')->unique()->toArray();
-$months = $events->pluck('month')->unique()->toArray();
-$years = $events->pluck('year')->unique()->toArray();
-
-$users = User::whereIn('id', $userIds)->get(['id', 'email']);
-$userEmails = $users->pluck('email', 'id')->toArray(); // Associe ID et email
-
-// Récupérer les informations des sites
-$sites = Site::whereIn('id', $siteIds)->get(['id', 'email', 'manager_name']);
-$siteDetails = $sites->mapWithKeys(function ($site) {
-    return [
-        $site->id => [
-            'mail' => $site->mail,
-            'managerName' => $site->managerName,
-        ],
-    ];
-})->toArray();
-
-// Récupérer les noms des mois
-$monthNames = array_map(function ($month) {
-    return Carbon::create()->month($month)->translatedFormat('F');
-}, $months);
-
-// Résultat final
-$result = [
-    'user_emails' => $userEmails,
-    'site_details' => $siteDetails,
-    'month_names' => $monthNames,
-];
-
-// Afficher ou utiliser le résultat
-dd($result);
+        // Fetch the selected planning with associated events
+        $selectedPlanning = Planning::with('events')->whereIn('id', $planningIds)->get();
+        $isValidatePlanning = $selectedPlanning[0]->isValidate;
 
 
-        // Trouvez les plannings par leurs IDs et mettez à jour le champ isValidated
-        //$validatePlanning = Planning::where('id', $planningIds)->update(['isValidate' => true]);
-        dd($selectedPlanning);
+        // Validate if any planning was found
+        if ($selectedPlanning->isEmpty()) {
+            return back()->withErrors(['error' => 'Invalid planning ID(s)']);
+        }
 
-        // Utilisez redirect()->back() pour revenir à la page précédente avec un message de succès
-        //return back()->with('success', 'Plannings validés avec succès');
+        // Collect all events from the selected plannings
+        $events = $selectedPlanning->flatMap->events;
+
+        // Validate if events were found
+        if ($events->isEmpty()) {
+            return back()->withErrors(['error' => 'No events found for the selected planning.']);
+        }
+
+        // Extract unique user IDs, site IDs, and months
+        $userIds = $events->pluck('user_id')->unique()->toArray();
+        $siteIds = $events->pluck('site_id')->unique()->toArray();
+        $months = $events->pluck('month')->unique()->map(fn($month) => (int) $month)->toArray();
+        $year = $events->pluck('year')->unique()->first(); // Assume the year is consistent
+
+        // Fetch user emails
+        $users = User::whereIn('id', $userIds)->get(['id', 'email']);
+        $userEmails = $users->pluck('email')->toArray(); // List of user emails
+
+        // Fetch site details
+        $sites = Site::whereIn('id', $siteIds)->get(['id', 'name', 'email', 'manager_name']);
+        $siteDetails = $sites->mapWithKeys(function ($site) {
+            return [
+                $site->id => [
+                    'email' => $site->email,
+                    'manager_name' => $site->manager_name,
+                    'name' => $site->name,
+                ],
+            ];
+        })->toArray();
+
+
+
+        // Translate month numbers to month names in French
+        Carbon::setLocale('fr'); // Set locale to French
+        $monthNames = array_map(function ($month) {
+            return Carbon::create()->month($month)->translatedFormat('F');
+        }, $months);
+
+
+
+        // Update the `isValidate` field for the selected plannings
+        Planning::whereIn('id', $planningIds)->update(['isValidate' => true]);
+
+
+        try {
+            Mail::to('ouailamin84@gmail.com')->send(new ManagerPlanningMail($siteDetails, $monthNames, $year, $isValidatePlanning));
+            Mail::to('ouailamin84@gmail.com')->send(new GuardPlanningMail($userEmails, $monthNames, $year, $isValidatePlanning));
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to send emails: ' . $e->getMessage()]);
+        }
+        // Return a success response with the result
+        return back()->with('success', 'Plannings validés avec succès');
     }
 }

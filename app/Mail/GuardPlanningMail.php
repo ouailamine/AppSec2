@@ -9,16 +9,25 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class GuardPlanningMail extends Mailable
+class GuardPlanningMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
+
+    public $userEmails;
+    public $monthNames;
+    public $year;
+    public $isValidedPlanning;
+    public $isValidatePlanning;
 
     /**
      * Create a new message instance.
      */
-    public function __construct()
+    public function __construct($userEmails, $monthNames, $year, $isValidatePlanning)
     {
-        //
+        $this->userEmails = $userEmails;
+        $this->monthNames = $monthNames;
+        $this->year = $year;
+        $this->isValidatePlanning = $isValidatePlanning;
     }
 
     /**
@@ -27,7 +36,7 @@ class GuardPlanningMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Guard Planning Mail',
+            subject: 'Planning' . ' ' . $this->monthNames[0] . ' ' . $this->year,
         );
     }
 
@@ -38,13 +47,19 @@ class GuardPlanningMail extends Mailable
     {
         return new Content(
             view: 'Mail.guard_planning',
+            with: [
+                'userEmails' => $this->userEmails,
+                'monthNames' => $this->monthNames,
+                'year' => $this->year,
+                'isValidatePlanning' => $this->isValidatePlanning
+
+
+            ],
         );
     }
 
     /**
      * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {
