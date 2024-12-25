@@ -25,6 +25,7 @@ const ExportPdf = ({
   currentYear,
   holidays,
 }) => {
+  console.log(events)
   const [logoBase64, setLogoBase64] = useState(null);
 
   // Fetch the site info and logo once
@@ -257,6 +258,38 @@ const ExportPdf = ({
         doc.setLineWidth(0.2);
         doc.line(10, footerY - 6, pageWidth - 10, footerY - 6); // Footer separator
       },
+    });
+
+    const uniquePosts = Array.from(
+      new Set(events.map((event) => `${event.post}-${event.postName}`))
+    );
+    // Move the legend to the bottom of the page, after the table
+    const legendYPosition = doc.lastAutoTable.finalY + 10;
+    const legendTitle = "Légende des postes :"; // Title for the legend
+    const fontSize = 10; // Font size for legend text
+    const textColor = [0, 0, 0]; // RGB color for text
+  
+    doc.setFontSize(fontSize);
+    doc.setTextColor(...textColor);
+    doc.text(legendTitle, 10, legendYPosition); // Title for the legend
+  
+    let legendYPositionNext = legendYPosition + 5; // Initial position for the first post in the legend
+  
+    // Loop through unique posts and their names
+    uniquePosts.forEach((postKey) => {
+      const [post, postName] = postKey.split('-'); // Split back the post and postName
+  
+      // Set font to bold for the post name
+      doc.setFont("helvetica", "bold");
+  
+      // Display post in bold and postName in regular font
+      doc.text(post + ":", 25, legendYPositionNext);
+  
+      // Set font back to regular for postName
+      doc.setFont("helvetica", "normal");
+      doc.text(postName, 35, legendYPositionNext);
+  
+      legendYPositionNext += 5; // Increment Y position for the next post
     });
 
     // Save the PDF file

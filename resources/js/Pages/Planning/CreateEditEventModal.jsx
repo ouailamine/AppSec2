@@ -16,14 +16,14 @@ const Modal = ({
   onAdd,
   localPosts,
   typePosts,
+  onDelete,
   createMode,
   isMultiEditMode,
   modalData,
   eventsToEdit,
   selectedCheckboxes,
-  posts
+  posts,
 }) => {
-
   const [formData, setFormData] = useState({
     id: null,
     pause_end: "",
@@ -91,11 +91,10 @@ const Modal = ({
 
         onSave(updatedFormData);
       } else {
-        
         formData.selectedUsersDays = selectedCheckboxes;
 
         onAdd(formData);
-        
+
         setFormData({
           pause_end: "",
           pause_payment: "noBreak",
@@ -134,8 +133,6 @@ const Modal = ({
     return true; // Si toutes les validations passent
   };
 
-
-
   // Trouver le type de poste sélectionné
   const selectedTypePost = typePosts.find(
     (type) => type.id === Number(formData.typePost)
@@ -148,6 +145,10 @@ const Modal = ({
       )
     : [];
 
+  const handleDelete = (e) => {
+    onDelete(event);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -294,16 +295,23 @@ const Modal = ({
           <div className="flex justify-end gap-4 mt-3">
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+              className="bg-blue-500 text-white px-2 py-1 text-xs rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
-              {!createMode ? "Save Changes" : "Create Event"}
+              {!createMode ? "Sauvegarder" : "Créer"}
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="bg-red-300 text-red-700 text-xs px-2 py-1 rounded-lg hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+            >
+              Supprimer
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+              className="bg-gray-300 text-gray-800 text-xs px-2 py-1 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
             >
-              Cancel
+              Annuler
             </button>
           </div>
         </form>

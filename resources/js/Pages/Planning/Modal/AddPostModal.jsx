@@ -228,13 +228,13 @@ const PostTypeModal = ({ open, onClose, onAddPost, typePosts }) => {
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3">
           <button
-            className="bg-gray-300 text-gray-700 px-5 py-2 rounded-lg font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 transition duration-200"
+            className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg font-medium hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 transition duration-200"
             onClick={handleClose}
           >
             Annuler
           </button>
           <button
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200"
+            className="bg-blue-600 text-white px-2 py-1 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200"
             onClick={handleAdd}
           >
             Ajouter

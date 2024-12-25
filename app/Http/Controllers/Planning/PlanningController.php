@@ -15,6 +15,8 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use Carbon\Carbon;
+
 class PlanningController extends Controller
 {
     public function index()
@@ -327,15 +329,56 @@ class PlanningController extends Controller
 
     public function validate(Request $request)
     {
+        
         // Récupérez les IDs des plannings depuis la requête
         $planningIds = $request->planningId;
+        $selectedPlanning = Planning::with('events')->find($planningIds);
+       
+
+        // Récupérer les événements associés
+$events = $selectedPlanning->events;
+
+// Récupérer des listes uniques pour chaque champ
+$userIds = $events->pluck('user_id')->unique()->toArray();
+$siteIds = $events->pluck('site_id')->unique()->toArray();
+$months = $events->pluck('month')->unique()->toArray();
+$years = $events->pluck('year')->unique()->toArray();
+
+$users = User::whereIn('id', $userIds)->get(['id', 'email']);
+$userEmails = $users->pluck('email', 'id')->toArray(); // Associe ID et email
+
+// Récupérer les informations des sites
+$sites = Site::whereIn('id', $siteIds)->get(['id', 'email', 'manager_name']);
+$siteDetails = $sites->mapWithKeys(function ($site) {
+    return [
+        $site->id => [
+            'mail' => $site->mail,
+            'managerName' => $site->managerName,
+        ],
+    ];
+})->toArray();
+
+// Récupérer les noms des mois
+$monthNames = array_map(function ($month) {
+    return Carbon::create()->month($month)->translatedFormat('F');
+}, $months);
+
+// Résultat final
+$result = [
+    'user_emails' => $userEmails,
+    'site_details' => $siteDetails,
+    'month_names' => $monthNames,
+];
+
+// Afficher ou utiliser le résultat
+dd($result);
 
 
         // Trouvez les plannings par leurs IDs et mettez à jour le champ isValidated
-        $validatePlanning = Planning::where('id', $planningIds)->update(['isValidate' => true]);
-
+        //$validatePlanning = Planning::where('id', $planningIds)->update(['isValidate' => true]);
+        dd($selectedPlanning);
 
         // Utilisez redirect()->back() pour revenir à la page précédente avec un message de succès
-        return back()->with('success', 'Plannings validés avec succès');
+        //return back()->with('success', 'Plannings validés avec succès');
     }
 }

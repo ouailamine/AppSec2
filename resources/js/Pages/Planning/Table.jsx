@@ -91,6 +91,11 @@ const TableComponent = ({
     year
   );
 
+  const getPostName = (postAb) => {
+    const postName = posts.find((post) => post.abbreviation == postAb);
+    return postName ? postName.name : "Site Inconnu";
+  };
+
   const createTable = (tableEvents, month, year, holidays) => {
     const daysInMonth = getDaysInMonth(month, year);
     const userEventsMap = {};
@@ -118,6 +123,7 @@ const TableComponent = ({
     tableEvents.forEach((event) => {
       const {
         user_id,
+        userName,
         selected_days,
         vacation_start,
         vacation_end,
@@ -170,52 +176,80 @@ const TableComponent = ({
           userEventsMap[user_id][day - 1].push(
             <div key={event.id}>
               <div
-                className="flex flex-col mb-0 shadow-sm bg-white"
+                className="relative flex flex-col mb-0 shadow-sm bg-white"
                 onClick={() => handleEditEvent(event)}
-                onMouseEnter={() => handleMouseEnter(event.id)} // Set hovered event on mouse enter
-                onMouseLeave={handleMouseLeave} // Reset on mouse leave
+                onMouseEnter={() => handleMouseEnter(event.id)} // Déclenche le hover
+                onMouseLeave={handleMouseLeave} // Réinitialise le hover
                 data-tooltip-target="tooltip-default"
               >
                 {cellContent}
+
+                {/* Tooltip */}
                 <div
                   id="tooltip-default"
                   role="tooltip"
-                  className={`absolute z-50 inline-block px-1 font-medium text-white transition-opacity duration-300 bg-gray-800 rounded-lg shadow-lg ${
+                  className={`absolute z-50 px-2 py-1 text-white bg-gray-800 rounded-lg shadow-lg transition-all duration-300 ${
                     hoveredEventId === event.id
                       ? "opacity-100 visible"
                       : "opacity-0 invisible"
-                  } `}
+                  }`}
+                  style={{
+                    width: "220px", // Largeur fixe du tooltip
+                    bottom: "70%", // Position au-dessus de l'élément
+                    left: "50%", // Centré horizontalement
+                    transform: "translateX(-50%)", // Ajuste le centrage horizontal
+                    marginBottom: "8px", // Espace entre l'élément et le tooltip
+                  }}
                   aria-hidden={hoveredEventId !== event.id}
                 >
-                  <p
-                    className="text-[9px] text-center"
-                    style={{ fontSize: `${fontSize}px` }}
-                  >
-                    <strong>Post:</strong> {post}
-                    <br />
-                    <strong>Début de vacation: </strong>
-                    {formatTime(vacation_start)}
-                    <br />
-                    <strong>Fin de vacation: </strong>{" "}
-                    {formatTime(vacation_end)}
-                    <br />
-                    <strong>Pause: </strong> {pause_payment} <br />
-                    <span>
-                      <strong>Début de pause:</strong> {formatTime(pause_start)}
-                    </span>
-                    <br />
-                    <span>
-                      <strong>Fin de pause:</strong> {formatTime(pause_end)}
-                    </span>
-                  </p>
-                  <div className="tooltip-arrow" data-popper-arrow />
+                  <div className="text-[10px] text-center leading-tight">
+                    {userName}<br /> {new Date(selected_days).toLocaleDateString("fr-CA").split('-').reverse().join('-')}
+                    <p>{getPostName(post)}</p>
+                    <p>
+                      <strong>Début:</strong> {formatTime(vacation_start)}{" "}
+                      <strong>Fin:</strong> {formatTime(vacation_end)}
+                    </p>
+                    <p>
+                      <strong>Pause payé:</strong>{" "}
+                      {pause_payment === "noBreak"
+                        ? "Pas de pause"
+                        : pause_payment}
+                    </p>
+                    {pause_payment !== "noBreak" && (
+                      <>
+                        <p>
+                          <strong>Début:</strong> {formatTime(pause_start)} -{" "}
+                          <strong>Fin:</strong> {formatTime(pause_end)}
+                        </p>
+                        <p></p>
+                      </>
+                    )}
+                    <p className="text-red-400 font-bold  cursor-pointer">
+                      Cliquer pour modifier ou supprimer
+                    </p>
+                  </div>
+
+                  {/* Flèche */}
+                  <div
+                    className="absolute"
+                    style={{
+                      top: "100%", // Place la flèche en bas du tooltip
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "0",
+                      height: "0",
+                      borderStyle: "solid",
+                      borderWidth: "5px",
+                      borderColor: "gray transparent transparent transparent",
+                    }}
+                  />
                 </div>
 
-                {/* Edit/Delete Button Group */}
+                {/* Groupe de boutons Modifier/Supprimer */}
                 <div className="flex justify-center space-x-1 mt-0">
                   {!isMultiSelect && (
                     <>
-                      <button
+                      {/*}<button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditEvent(event);
@@ -225,9 +259,10 @@ const TableComponent = ({
                         className="text-blue-500 hover:text-blue-700 focus:outline-none transition duration-150 ease-in-out"
                       >
                         <PencilIcon className="w-3 h-3" />
-                      </button>
+                      </button>{*/}
 
-                      <button
+{/*
+}<button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (
@@ -243,12 +278,12 @@ const TableComponent = ({
                         className="text-red-500 hover:text-red-700 focus:outline-none transition duration-150 ease-in-out"
                       >
                         <TrashIcon className="w-3 h-3" />
-                      </button>
+                      </button>{*/}
                     </>
                   )}
                 </div>
 
-                {/* Select Checkbox */}
+                {/* Case à cocher pour sélection multiple */}
                 <div
                   className="flex items-center justify-center mt-2"
                   onClick={(e) => e.stopPropagation()}
@@ -265,10 +300,12 @@ const TableComponent = ({
                   )}
                 </div>
 
-                {/* Separator */}
+                {/* Séparateur */}
                 <hr className="border-gray-600" />
               </div>
-              <div className="flex flex-col items-center justify-center mb-0 shadow-sm border border-green-600 rounded-md ">
+
+              {/* Checkbox externe */}
+              <div className="flex flex-col items-center justify-center mb-0 shadow-sm border border-green-600 rounded-md">
                 <input
                   type="checkbox"
                   onChange={(e) =>
@@ -308,6 +345,7 @@ const TableComponent = ({
       const date = new Date(year, month, i + 1);
       const dayOfMonth = i + 1;
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      
       const isHoliday = holidaysSet.has(dayOfMonth);
 
       const headerClass = isHoliday
@@ -452,6 +490,7 @@ const TableComponent = ({
 
   // Handle supprimer  une vacation par souris
   const handleDeleteEvent = (event) => {
+    console.log(event)
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
       onDeleteEvent(event);
     }
@@ -640,23 +679,23 @@ const TableComponent = ({
             {isMerged ? "Défusionner les vacations" : "Fusionner les vacations"}
           </button>
 
-          <div className="flex items-center space-x-1 border  bg-blue-600">
+          <div className="flex items-center space-x-1 border ">
             {/* Bouton Ajouter */}
             <button
               onClick={increaseFontSize}
-              className="py-2 px-3 bg-green-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              className="py-2 px-3 text-black border rounded-md hover:bg-green-700  focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
               aria-label="Ajouter un agent anonyme"
             >
               +
             </button>
 
             {/* Texte Description */}
-            <p className="text-xs font-bold text-white">caractére</p>
+            <p className="text-xs font-bold text-black ">caractére</p>
 
             {/* Bouton Supprimer */}
             <button
               onClick={decreaseFontSize}
-              className="py-2 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              className="py-2 px-3 text-black border rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
               aria-label="Supprimer un agent anonyme"
             >
               -
@@ -682,14 +721,14 @@ const TableComponent = ({
             {table.slice(1).map((row, rowIndex) => (
               <tr key={rowIndex} className="hover:bg-blue-200">
                 {row.map((cell, cellIndex) => {
-                  const day = cellIndex + 1; // Correct the day number to match the table day (1-indexed)
+                  const day = cellIndex; // Correct the day number to match the table day (1-indexed)
                   const isWeekend =
                     day > 0 &&
                     day <= table[0].length - 2 &&
                     (new Date(year, zeroIndexedMonth, day).getDay() === 0 ||
                       new Date(year, zeroIndexedMonth, day).getDay() === 6);
-                  const isHoliday = holidaysSet.has(day);
-
+                        const isHoliday = holidaysSet.has(day);
+                        
                   return (
                     <td
                       key={`cell-${rowIndex}-${cellIndex}`}
@@ -815,6 +854,7 @@ const TableComponent = ({
         modalData={modalData}
         eventsToEditId={eventsToEditId}
         selectedCheckboxes={selectedCheckboxes}
+        onDelete={handleDeleteEvent}
       />
       {isModalOpen && selectedUserIdForChange && (
         <ChangeUserEvents

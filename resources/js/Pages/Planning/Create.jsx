@@ -33,6 +33,7 @@ const CreatePlanning = ({
   isShow,
   eventsForSearchGuard,
 }) => {
+  console.log(sites);
   const [selectedSite, setSelectedSite] = useState("");
   const [currentMonth, setCurrentMonth] = useState();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -465,7 +466,38 @@ const CreatePlanning = ({
     console.log(localSiteUsers);
   };
 
-  const handleValidatePlanning = () => {};
+  const handleValidatePlanning = () => {
+    // Demander à l'utilisateur s'il veut valider le planning
+    const isConfirmed = window.confirm(
+      "Voulez-vous valider ce planning et l'envoyer au destinataire ?"
+    );
+
+    if (isConfirmed) {
+      const mailOfManagerSite = sites.find(
+        (site) => site.id == selectedPlanning[0].site_id
+      ).email;
+      const userIds = [...new Set(events.map((event) => event.user_id))];
+      const emailsOfGuards = users
+        .filter((user) => userIds.includes(user.id))
+        .map((user) => user.email);
+      console.log(userIds);
+      console.log(emailsOfGuards);
+      console.log(mailOfManagerSite);
+
+      
+
+      const planningId = selectedPlanning[0].id;
+      console.log(planningId);
+      Inertia.post(route("plannings.validate"), { planningId });
+    } else {
+      // Si l'utilisateur annule, rien ne se passe ou on peut ajouter un message
+      alert("Le planning n'a pas été validé.");
+    }
+  };
+
+  const sendPlanningToRecipient = () => {
+    console.log("Planning envoyé au destinataire !");
+  };
 
   console.log("events", events);
 
@@ -596,7 +628,7 @@ const CreatePlanning = ({
             <div className="flex justify-center space-x-4 mt-4">
               <button
                 onClick={openModal}
-                className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors text-xs font-semibold flex items-center"
+                className="px-4 py-2 bg-green-700 border text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors text-xs font-semibold flex items-center"
               >
                 <span className="mr-2 white-icon">➕</span> Ajouter une / des
                 vacation(s)
@@ -605,13 +637,13 @@ const CreatePlanning = ({
             <div className="flex items-center justify-center space-x-4">
               <button
                 onClick={() => setShowAddPostModal(true)}
-                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="py-2 px-4  text-black border rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <span className="mr-2">✍️</span> Gestion des Posts
               </button>
               <button
                 onClick={() => setShowAddUserModal(true)}
-                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                className="py-2 px-4  text-black border rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
                 aria-label="Ajouter des agents"
               >
                 <span className="mr-2">👥</span> Gestion des agents
@@ -622,28 +654,28 @@ const CreatePlanning = ({
                   console.log("Button clicked, modal opening...");
                   setSearchAvailableGuard(true);
                 }}
-                className="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+                className="py-2 px-4  text-black border rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
               >
                 <span className="mr-2">🔍</span> Agent disponible
               </button>
 
-              <div className="flex items-center space-x-1 border  bg-blue-600">
+              <div className="flex items-center space-x-1 border">
                 {/* Bouton Ajouter */}
                 <button
                   onClick={handleAnonymousUser}
-                  className="py-2 px-3 bg-green-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+                  className="py-2 px-3 border text-black rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
                   aria-label="Ajouter un agent anonyme"
                 >
                   +
                 </button>
 
                 {/* Texte Description */}
-                <p className="text-xs font-bold text-white">Agent Anonyme</p>
+                <p className="text-xs font-bold text-black">Agent Anonyme</p>
 
                 {/* Bouton Supprimer */}
                 <button
                   onClick={handleRemoveLastAnonymousUser}
-                  className="py-2 px-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+                  className="py-2 px-3 border text-black rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
                   aria-label="Supprimer un agent anonyme"
                 >
                   -
