@@ -174,17 +174,12 @@ class PlanningController extends Controller
         }
     }
 
-
-
     /**
      * Display the specified resource.
      */
     public function show(Request $request)
     {
-
         $currentDate = now(); // Récupère la date actuelle
-
-
 
         // Récupérer le mois actuel
         $currentMonth = $currentDate->month;
@@ -196,8 +191,6 @@ class PlanningController extends Controller
         if ($currentMonth === 12) {
             $nextMonth = 1; // Le mois suivant décembre est janvier
         }
-
-
 
         // Récupérer les plannings dont la date se trouve entre le début du mois actuel et la fin du mois suivant
         $plannings = Planning::whereBetween('month', [
@@ -231,6 +224,7 @@ class PlanningController extends Controller
 
     public function update(Request $request, string $id)
     {
+        
         try {
             // Démarrer une transaction
             DB::beginTransaction();
@@ -394,6 +388,7 @@ class PlanningController extends Controller
 
         // Fetch site details
         $sites = Site::whereIn('id', $siteIds)->get(['id', 'name', 'email', 'manager_name']);
+        
         $siteDetails = $sites->mapWithKeys(function ($site) {
             return [
                 $site->id => [

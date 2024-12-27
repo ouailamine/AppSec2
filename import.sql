@@ -1,5 +1,6 @@
 INSERT INTO genres (`name`) VALUES ('Male'), ('Female');
 
+
 INSERT INTO
     type_Ads (name)
 VALUES ('Magasin'),

@@ -23,6 +23,8 @@ use App\Http\Controllers\{
     User\UserController
 };
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Customer\CustomerController;
+use App\Http\Controllers\Customer\CustomerPageController;
 use App\Http\Controllers\HourlyReport\HourlyReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +39,11 @@ Route::get('/', function () {
     ]);
 });
 
+Route::middleware(['auth:customer'])->group(function () {
+    Route::get('/accueil-Client', [CustomerPageController::class, 'index'])->name('dashboardCustomer');
+});
+
+Route::get('/accueil-Employé', [EmployeeController::class, 'index'])->name('dashboard');
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
 
@@ -47,12 +54,12 @@ Route::middleware(['auth'])->group(function () {
     // Define the route for validating a planning
     Route::post('/plannings/validate', [PlanningController::class, 'validate'])->name('plannings.validate');
 
-
+    
 
     // Dashboard Routes
     Route::middleware(['auth', 'verified'])->group(function () {
 
-        Route::get('/accueil-Employé', [EmployeeController::class, 'index'])->name('dashboard');
+        
 
         Route::get('/dashboard-Admin', function () {
             // Calculer filteredUsersCount pour les admins
@@ -111,6 +118,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Site Routes
+    Route::put('/client/{cunstomer}/sites', [CustomerController::class, 'updateSites'])->name('customers.updateSites');
+
+    // Site Routes
     Route::put('/sites/{site}/users', [SiteController::class, 'updateUsers'])->name('sites.updateUsers');
 
     // Guard Routes
@@ -138,7 +148,8 @@ Route::middleware(['auth'])->group(function () {
         'typeAgent' => HolidayController::class,
         'posts' => PostController::class,
         'HourlyReports' => HourlyReportController::class,
-        'catchEvents' => CatchEventController::class
+        'catchEvents' => CatchEventController::class,
+        'customers'=> CustomerController::class
     ]);
 });
 

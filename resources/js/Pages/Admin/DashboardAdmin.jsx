@@ -30,6 +30,11 @@ export default function DashboardAdmin({
       route: "guards.index",
     },*/
     {
+      title: "Gestion des Clients",
+      imgSrc: "assets/img/customer.png",
+      route: "customers.index",
+    },
+    {
       title: "Gestion des Sites",
       imgSrc: "assets/img/site.png",
       route: "sites.index",

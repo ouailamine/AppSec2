@@ -36,6 +36,26 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        if ($request->actor === 'customer') {
+            // Récupérer les informations d'identification (email et mot de passe)
+            $credentials = $request->only('email', 'password');
+    
+            // Tenter l'authentification avec le guard 'customer'
+            if (Auth::guard('customer')->attempt($credentials)) {
+                // Si l'authentification est réussie, régénérer la session
+                $request->session()->regenerate();
+    
+                // Récupérer le customer authentifié
+                $customer = Auth::guard('customer')->user();
+                // Rediriger vers le tableau de bord du customer
+                return redirect()->route('dashboardCustomer');
+            }
+    
+            // Si l'authentification échoue, retourner un message d'erreur
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ]);}
+
         $request->authenticate();
         $request->session()->regenerate();
 
@@ -45,9 +65,6 @@ class AuthenticatedSessionController extends Controller
         $filteredUsersCount = $this->getFilteredUsersCount();
         $filteredVacationsCount = $this->getFilteredVacationsCount(); // Appel de la méthode pour les vacances
 
-        // Log des comptes pour le débogage
-        Log::info('Filtered Users Count:', ['count' => $filteredUsersCount]);
-        Log::info('Filtered Vacations Count:', ['count' => $filteredVacationsCount]);
 
         // Rediriger selon le rôle
         return $this->redirigerSelonRole($user, $filteredUsersCount, $filteredVacationsCount);

@@ -12,9 +12,11 @@ class Site extends Model
     protected $fillable = [
         'name',
         'manager_name',
+        'customer_id',
         'address',
         'email',
         'phone',
+
     ];
 
     public function events()
@@ -28,5 +30,10 @@ class Site extends Model
                 ->withPivot('isFirstList'); 
                
 }
+
+public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 
 }

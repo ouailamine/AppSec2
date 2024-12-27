@@ -15,6 +15,13 @@ class CreateSitesTable extends Migration
             $table->string('address');
             $table->string('email');
             $table->string('phone');
+
+            // Assuming 'customer_id' is related to the 'customers' table
+            $table->unsignedBigInteger('customer_id');
+            
+            // Foreign key constraint
+            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

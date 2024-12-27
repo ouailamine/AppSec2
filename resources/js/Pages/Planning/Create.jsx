@@ -12,8 +12,10 @@ import SiteMonthYeaySelect from "./SiteMonthYeaySelect";
 import AddUserToSiteModal from "./Modal/AddUserToSiteModal";
 import SearchAvaibleGuardModal from "./Modal/SearchAvaibleGuardModal";
 import ExportPlanningsPdf from "./ExportPdfPlanning";
+import ExportGuardsPlanningsPdf from "./ExportGuardsPdf";
 import PostTypeModal from "./Modal/AddPostModal";
 import { checkVacationsAndWeeklyHours } from "./CheckEventsFunction";
+import CreateAutoEvents from "./CreatEventAuto";
 import {
   createVacationEvents,
   getUserName,
@@ -46,6 +48,8 @@ const CreatePlanning = ({
   const [eventsNextMonth, setEventsNextMonth] = useState([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showAddPostModal, setShowAddPostModal] = useState(false);
+  const [showCreateAutoEventsModal, setShowCreateAutoEventsModal] =
+    useState(false);
   const [searchAvailableGuard, setSearchAvailableGuard] = useState(false);
   const [siteUsers, setSiteUsers] = useState([]);
   const [localSiteUsers, setLocalSiteUsers] = useState([]);
@@ -636,6 +640,15 @@ const CreatePlanning = ({
                 <span className="mr-2 white-icon">➕</span> Ajouter une / des
                 vacation(s)
               </button>
+              <button
+                onClick={() => {
+                  console.log("Button clicked, modal opening...");
+                  setShowCreateAutoEventsModal(true);
+                }}
+                className="py-2 px-4  bg-green-700 text-white border rounded-md hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors text-xs font-semibold"
+              >
+                <span className="mr-2">🔍</span> auto planning
+              </button>
             </div>
             <div className="flex items-center justify-center space-x-4">
               <button
@@ -763,49 +776,81 @@ const CreatePlanning = ({
               currentYear={currentYear}
               onAddLocalUser={handleAddLocalUser}
             />
+
+            {showCreateAutoEventsModal && (
+              <CreateAutoEvents
+                open={showCreateAutoEventsModal}
+                onClose={() => setShowCreateAutoEventsModal(false)}
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+                typePosts={typePosts}
+                posts={posts}
+                holidays={holidays}
+                siteUsers={localSiteUsers}
+                onAddAutoEvent={createEventsForUsers}
+              />
+            )}
+
             <div className="flex justify-center gap-2">
               {events.length !== 0 && (
-                <>
-                  <button
-                    onClick={handleSavePlanning}
-                    className={`ml-6 py-2 px-3 bg-blue-600 text-white rounded-md ${
-                      events.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    } text-sm font-semibold`}
-                    aria-label={
-                      isShowPage
-                        ? "Mettre à jour le planning"
-                        : "Sauvegarder le planning"
-                    }
-                    disabled={events.length === 0} // Disable the button when no events
-                  >
-                    {isShowPage ? "Mettre à jour" : "Sauvegarder"}
-                  </button>
+                <div className="space-y-1">
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleSavePlanning}
+                      className={`ml-6 py-1 px-3  bg-blue-600 text-white rounded-md ${
+                        events.length === 0
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                      } text-sm font-semibold`}
+                      aria-label={
+                        isShowPage
+                          ? "Mettre à jour le planning"
+                          : "Sauvegarder le planning"
+                      }
+                      disabled={events.length === 0} // Disable the button when no events
+                    >
+                      {isShowPage ? "Mettre à jour" : "Sauvegarder"}
+                    </button>
 
-                  <button
-                    onClick={handleValidatePlanning}
-                    className={`py-2 px-3 bg-blue-600 text-white rounded-md ${
-                      events.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    } text-sm font-semibold`}
-                    aria-label="Sauvegarder le planning"
-                    disabled={events.length === 0} // Disable the button when no events
-                  >
-                    Valider
-                  </button>
+                    <button
+                      onClick={handleValidatePlanning}
+                      className={`py-2 px-3 bg-blue-600 text-sm text-white rounded-md ${
+                        events.length === 0
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                      } text-sm font-semibold`}
+                      aria-label="Sauvegarder le planning"
+                      disabled={events.length === 0} // Disable the button when no events
+                    >
+                      Valider
+                    </button>
+                  </div>
                   {mergeEvents?.length > 0 && (
-                    <ExportPlanningsPdf
-                      selectedSite={selectedSite}
-                      currentMonth={currentMonth}
-                      currentYear={currentYear}
-                      holidays={holidays}
-                      events={mergeEvents}
-                      sites={sites}
-                    />
+                    <div className="space-y-1">
+                      <div className="flex gap-4">
+                        <ExportPlanningsPdf
+                          selectedSite={selectedSite}
+                          currentMonth={currentMonth}
+                          currentYear={currentYear}
+                          holidays={holidays}
+                          events={mergeEvents}
+                          sites={sites}
+                        />
+                      </div>
+                      <div className="flex gap-4">
+                        <ExportGuardsPlanningsPdf
+                          selectedSite={selectedSite}
+                          events={mergeEvents || []}
+                          users={users || []}
+                          sites={sites || []}
+                          currentMonth={currentMonth}
+                          currentYear={currentYear}
+                          posts={posts}
+                        />
+                      </div>
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           </>

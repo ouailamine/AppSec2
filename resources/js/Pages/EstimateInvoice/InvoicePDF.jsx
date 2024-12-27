@@ -38,18 +38,14 @@ const styles = StyleSheet.create({
     width: "50%",
     textAlign: "left",
     fontSize: 10,
-    flexDirection: 'row',  // Les éléments seront alignés horizontalement
- 
+    flexDirection: "row", // Les éléments seront alignés horizontalement
   },
 
-  
   logo: {
-    width: 60,  // Définir une largeur fixe pour l'image (ajustez selon la taille du logo)
+    width: 60, // Définir une largeur fixe pour l'image (ajustez selon la taille du logo)
     height: 60, // Définir une hauteur fixe pour l'image
     marginRight: 5, // Ajoute un espace entre le logo et les informations
   },
-  
-
 
   invoiceTitle: {
     textAlign: "center",
@@ -145,17 +141,19 @@ const InvoicePDF = ({ invoiceDetails }) => {
       <Page style={styles.page}>
         {/* En-tête avec logo et informations de l'entreprise et du client sur la même ligne */}
         <View style={styles.header}>
-
-        <View style={styles.SocieteInfoContainer}>
-  <Image src="/assets/img/logo-atalix.png" style={styles.logo} />
-  <View style={styles.clientInfoContainer}>
-    <Text style={styles.clientInfo}>Atalix Sécurite</Text>
-    <Text style={styles.clientInfo}>Adresse de l'entreprise</Text>
-    <Text style={styles.clientInfo}>Téléphone: +33 1 23 45 67 89</Text>
-    <Text style={styles.clientInfo}>Email: contact@entreprise.com</Text>
-  </View>
-</View>
-
+          <View style={styles.SocieteInfoContainer}>
+            <Image src="/assets/img/logo-atalix.png" style={styles.logo} />
+            <View style={styles.clientInfoContainer}>
+              <Text style={styles.clientInfo}>Atalix Sécurite</Text>
+              <Text style={styles.clientInfo}>Adresse de l'entreprise</Text>
+              <Text style={styles.clientInfo}>
+                Téléphone: +33 1 23 45 67 89
+              </Text>
+              <Text style={styles.clientInfo}>
+                Email: contact@entreprise.com
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.clientInfoContainer}>
             <Text style={styles.clientInfo}>

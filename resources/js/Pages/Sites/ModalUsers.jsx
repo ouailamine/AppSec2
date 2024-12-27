@@ -67,13 +67,6 @@ const ModalUser = ({ isOpen, onClose, onSave, sites, users }) => {
     if (selectedSite) {
       const primaryUserIds = selectedPrimaryUsers.map((user) => user.value);
       const secondaryUserIds = selectedSecondaryUsers.map((user) => user.value);
-
-      console.log("Envoi des données:", {
-        siteId: selectedSite.value,
-        primaryUsers: primaryUserIds,
-        secondaryUsers: secondaryUserIds,
-      });
-
       Inertia.put(
         `/sites/${selectedSite.value}/users`,
         { primaryUsers: primaryUserIds, secondaryUsers: secondaryUserIds },

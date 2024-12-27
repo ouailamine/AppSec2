@@ -315,7 +315,7 @@ const ExportPdf = ({
           d="M12 16v-8m0 8l4-4m-4 4l-4-4m12 2v6H4v-6"
         />
       </svg>
-      Exporter en PDF
+      Exporter le planning Générale
     </button>
   );
 };

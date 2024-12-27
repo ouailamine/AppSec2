@@ -30,13 +30,16 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $roles = $user ? $user->roles->pluck('name') : [];
+
+        // Si le customer n'a pas de rôle, il n'est pas nécessaire de tenter de charger les rôles.
+        // On peut définir simplement un tableau vide ou d'autres informations liées à l'utilisateur.
+        $roles = [];
 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? $user->toArray() : null,
-                'roles' => $roles,
+                'roles' => $roles,  // Aucun rôle ici, ou remplacez par autre information pertinente
             ],
         ];
     }

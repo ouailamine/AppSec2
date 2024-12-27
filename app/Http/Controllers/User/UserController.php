@@ -258,9 +258,7 @@ class UserController extends Controller
      * Remove the specified resource from storage.
      */
     public function createUser(User $user)
-    {
-
-       
+    {       
         try {
 
             // Créer l'utilisateur

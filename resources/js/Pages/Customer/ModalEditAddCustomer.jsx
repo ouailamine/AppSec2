@@ -1,110 +1,80 @@
 import React, { useState, useEffect } from "react";
 import { Inertia } from "@inertiajs/inertia";
 
-const ModalSite = ({ isOpen, onClose, initialData, customers }) => {
-  console.log(customers);
-  const [formData, setFormData] = useState({
-    id: null,
-    name: "",
-    address: "",
-    manager_name: "",
-    email: "",
-    phone: "",
-    customer_id: "", // Add this for the customer selection
-  });
-
-  useEffect(() => {
-    if (initialData && initialData.data) {
-      console.log("Initializing formData with:", initialData.data);
-      setFormData({
-        id: initialData.data.id || null,
-        name: initialData.data.name || "",
-        address: initialData.data.address || "",
-        manager_name: initialData.data.manager_name || "",
-        email: initialData.data.email || "",
-        phone: initialData.data.phone || "",
-        customer_id: initialData.data.customer_id || "", // Set customer_id if it exists in initialData
-      });
-    } else {
-      // Gestion de cas pour le type 'add'
-      setFormData({
+const ModalCustomer = ({ isOpen, onClose, initialData }) => {
+    const [formData, setFormData] = useState({
         id: null,
         name: "",
         address: "",
         manager_name: "",
         email: "",
         phone: "",
-        customer_id: "", // Initialize customer_id as empty
       });
-    }
-  }, [initialData]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+      useEffect(() => {
+        if (initialData && initialData.data) {
+          console.log("Initializing formData with:", initialData.data);
+          setFormData({
+            id: initialData.data.id || null,
+            name: initialData.data.name || "",
+            address: initialData.data.address || "",
+            manager_name: initialData.data.manager_name || "",
+            email: initialData.data.email || "",
+            phone: initialData.data.phone || "",
+          });
+        } else {
+          // Gestion de cas pour le type 'add'
+          setFormData({
+            id: null,
+            name: "",
+            address: "",
+            manager_name: "",
+            email: "",
+            phone: "",
+          });
+        }
+      }, [initialData]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Submitting form data:", formData);
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      };
 
-    if (formData.id) {
-      // Mise à jour
-      Inertia.put(`/sites/${formData.id}`, formData, {
-        onSuccess: () => {
-          onClose(); // Fermer le modal après une réussite
-        },
-        onError: (errors) => {
-          console.error("Error saving data:", errors);
-        },
-      });
-    } else {
-      // Création
-      Inertia.post("/sites", formData, {
-        onSuccess: () => {
-          onClose(); // Fermer le modal après une réussite
-        },
-        onError: (errors) => {
-          console.error("Error saving data:", errors);
-        },
-      });
-    }
-  };
-
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        console.log("Submitting form data:", formData);
+    
+        if (formData.id) {
+          // Mise à jour
+          Inertia.put(`/customers/${formData.id}`, formData, {
+            onSuccess: () => {
+              onClose(); // Fermer le modal après une réussite
+            },
+            onError: (errors) => {
+              console.error("Error saving data:", errors);
+            },
+          });
+        } else {
+          // Création
+          Inertia.post("/customers", formData, {
+            onSuccess: () => {
+              onClose(); // Fermer le modal après une réussite
+            },
+            onError: (errors) => {
+              console.error("Error saving data:", errors);
+            },
+          });
+        }
+      };
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-      <div className="bg-white p-6 rounded-md shadow-md w-full max-w-lg">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded shadow-lg w-1/3">
         <h2 className="text-xl font-bold mb-4">
-          {formData.id ? "Modifier un site" : "Ajouter un site"}
+          {initialData ? "Editer un client" : "Ajouter un client"}
         </h2>
         <form onSubmit={handleSubmit}>
-          {/* Client Select Dropdown */}
-          <div className="mb-4">
-            <label
-              className="block text-sm font-medium text-gray-700"
-              htmlFor="customer_id"
-            >
-              Client
-            </label>
-            <select
-              id="customer_id"
-              name="customer_id"
-              value={formData.customer_id || ""}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              required
-            >
-              <option value="">Sélectionner un client</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Nom */}
           <div className="mb-4">
             <label
@@ -216,9 +186,10 @@ const ModalSite = ({ isOpen, onClose, initialData, customers }) => {
             </button>
           </div>
         </form>
+        
       </div>
     </div>
   );
 };
 
-export default ModalSite;
+export default ModalCustomer;

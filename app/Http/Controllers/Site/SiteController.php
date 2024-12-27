@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
-
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use App\Models\Site;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Hash;
 
 class SiteController extends Controller
 {
@@ -16,13 +17,14 @@ class SiteController extends Controller
      */
     public function index()
     {
-   
         $sites = Site::with(['users'])->get();
         $users = User::all();
+        $customers =Customer::all();
 
         return inertia('Sites/Index', [
             'sites' => $sites,
             'users' => $users,
+            'customers'=>$customers,
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error'),
@@ -38,13 +40,14 @@ class SiteController extends Controller
      */
     public function editUsers($siteId, $request)
     {
-
         $site = Site::with('users')->findOrFail($siteId);
         $users = User::all();
+        $custumers = Customer::all();
 
         return Inertia::render('Sites/EditUsers', [
             'site' => $site,
-            'users' => $users
+            'users' => $users,
+            'custumers' =>$custumers
         ]);
     }
 
@@ -93,21 +96,41 @@ class SiteController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'manager_name' => 'required|string',
-            'address' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'required|string',
+{
 
-        ]);
+   
+    $request->validate([
+        
+        'name' => 'required|string|max:255',
+        'manager_name' => 'required|string|max:255',
+        'address' => 'required|string|max:500',
+        'email' => 'required|email|unique:sites,email',
+        'phone' => 'required|string|max:20',
+        // No need to validate the password as it's being set automatically.
+    ]);
 
-        $site = Site::create($request->only('name', 'manager_name', 'address', 'email', 'phone'));
-        $site->users()->sync($request->selectedUsers); // Attach Users to site
+    // Hash the default password.
+    $defaultPassword = Hash::make('atalixsecurite');
 
-        return redirect()->route('sites.index')->with('success', 'Site created successfully.');
+    // Create the site with the validated data and default password.
+    $site = Site::create([
+        'customer_id'=>$request->customer_id,
+        'name' => $request->name,
+        'manager_name' => $request->manager_name,
+        'address' => $request->address,
+        'email' => $request->email,
+        'phone' => $request->phone,
+        'password' => $defaultPassword,
+    ]);
+
+    // Sync users if selectedUsers exists in the request.
+    if ($request->has('selectedUsers') && is_array($request->selectedUsers)) {
+        $site->users()->sync($request->selectedUsers);
     }
+
+    return redirect()->route('sites.index')->with('success', 'Site created successfully.');
+}
+
 
     public function edit(Site $site)
     {
@@ -126,6 +149,7 @@ class SiteController extends Controller
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
+          
         ]);
 
         $site->update($request->all());
@@ -144,3 +168,4 @@ class SiteController extends Controller
         return redirect()->route('sites.index')->with('success', 'Site supprimé avec succès.');
     }
 }
+

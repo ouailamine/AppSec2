@@ -32,7 +32,7 @@ const TableComponent = ({
   posts,
   mergeEvents,
 }) => {
-  console.log(mergeEvents);
+  console.log(events);
   const [createEditEventModal, setCreateEditEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedEvents, setSelectedEvents] = useState([]);

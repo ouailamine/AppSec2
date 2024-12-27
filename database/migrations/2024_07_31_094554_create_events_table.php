@@ -34,8 +34,6 @@ return new class extends Migration
             $table->integer('sunday_hours')->nullable();    // Nullable field to store Sunday hours in minutes
             $table->integer('holiday_hours')->nullable();
             $table->boolean('isSubEvent')->default(false);
-            $table->foreignId('relatedEvent')->nullable()->constrained('events')->onDelete('set null');
-
             $table->timestamps();
         });
     }

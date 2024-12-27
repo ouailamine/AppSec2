@@ -14,8 +14,8 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 
-const Index = ({ sites, users, flash = {} }) => {
-
+const Index = ({ sites, users, flash = {},customers }) => {
+  console.log(customers)
 
   console.log(sites)
   const [search, setSearch] = useState("");
@@ -204,6 +204,7 @@ const Index = ({ sites, users, flash = {} }) => {
           onClose={() => toggleModal("site")}
           onSave={handleSaveSite}
           initialData={modalData.initialData}
+          customers={customers}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Checkbox from "@/Components/Checkbox";
 import GuestLayout from "@/Layouts/GuestLayout";
 import InputError from "@/Components/InputError";
@@ -12,7 +12,10 @@ export default function Login({ status, canResetPassword }) {
     email: "",
     password: "",
     remember: false,
+    actor: "", // Valeur par défaut pour le menu déroulant
   });
+
+  const [clientErrors, setClientErrors] = useState({});
 
   useEffect(() => {
     return () => {
@@ -20,8 +23,22 @@ export default function Login({ status, canResetPassword }) {
     };
   }, []);
 
+  const validateFields = () => {
+    const fieldErrors = {};
+    if (!data.actor) fieldErrors.actor = "Veuillez sélectionner une option.";
+    if (!data.email) fieldErrors.email = "L'email est obligatoire.";
+    if (!data.password) fieldErrors.password = "Le mot de passe est obligatoire.";
+    return fieldErrors;
+  };
+
   const submit = (e) => {
     e.preventDefault();
+
+    const fieldErrors = validateFields();
+    if (Object.keys(fieldErrors).length > 0) {
+      setClientErrors(fieldErrors);
+      return;
+    }
 
     post(route("login"));
   };
@@ -43,6 +60,27 @@ export default function Login({ status, canResetPassword }) {
           <img src="logo.png" className="w-32 h-32 rounded-full object-cover" />
         </div>
 
+        {/* Nouveau menu déroulant */}
+        <div className="mb-2 w-40 mx-auto">
+          <InputLabel htmlFor="actor" value="Vous êtes :" />
+          <select
+            id="actor"
+            name="actor"
+            value={data.actor}
+            onChange={(e) => {
+              setData("actor", e.target.value);
+              setClientErrors((prev) => ({ ...prev, actor: null }));
+            }}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            required
+          >
+            <option value="">-- Choisir --</option>
+            <option value="customer">Client</option>
+            <option value="employee">Employé</option>
+          </select>
+          {clientErrors.actor && <InputError message={clientErrors.actor} className="mt-2" />}
+        </div>
+
         <div>
           <InputLabel htmlFor="email" value="Email" />
 
@@ -54,14 +92,17 @@ export default function Login({ status, canResetPassword }) {
             className="mt-1 block w-full"
             autoComplete="username"
             isFocused={true}
-            onChange={(e) => setData("email", e.target.value)}
+            onChange={(e) => {
+              setData("email", e.target.value);
+              setClientErrors((prev) => ({ ...prev, email: null }));
+            }}
           />
 
-          <InputError message={errors.email} className="mt-2" />
+          {clientErrors.email && <InputError message={clientErrors.email} className="mt-2" />}
         </div>
 
-        <div className="mt-4">
-          <InputLabel htmlFor="password" value="Password" />
+        <div className="mt-2">
+          <InputLabel htmlFor="password" value="Mot de passe" />
 
           <TextInput
             id="password"
@@ -70,10 +111,13 @@ export default function Login({ status, canResetPassword }) {
             value={data.password}
             className="mt-1 block w-full"
             autoComplete="current-password"
-            onChange={(e) => setData("password", e.target.value)}
+            onChange={(e) => {
+              setData("password", e.target.value);
+              setClientErrors((prev) => ({ ...prev, password: null }));
+            }}
           />
 
-          <InputError message={errors.password} className="mt-2" />
+          {clientErrors.password && <InputError message={clientErrors.password} className="mt-2" />}
         </div>
 
         <div className="block mt-4">
@@ -95,7 +139,7 @@ export default function Login({ status, canResetPassword }) {
               href={route("password.request")}
               className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Mot de passe oublié?
+              Mot de passe oublié ?
             </Link>
           }
 
