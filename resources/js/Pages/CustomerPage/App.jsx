@@ -1,15 +1,21 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  Navigate,
+} from "react-router-dom";
 import Plannings from "./Plannings";
 import Profil from "./Profile";
 import Dashboard from "./Dashboard";
 import SiteGuardsList from "./GuardsSite";
 import AuthenticatedCustomerLayout from "../../Layouts/AuthenticatedCustomerLayout";
 
-const App = ({ plannings, customerSites, users }) => {
+const App = ({ plannings, customerSites, users, sites, holidays }) => {
   console.log("Plannings: ", plannings);
   console.log("Customer Sites: ", customerSites);
-  console.log("Users: ", users);
+  console.log("sites: ", sites);
 
   return (
     <AuthenticatedCustomerLayout>
@@ -67,9 +73,29 @@ const App = ({ plannings, customerSites, users }) => {
         <div className="max-w-7xl mx-auto p-6">
           <Routes>
             {/* Route par défaut pour rediriger vers Dashboard */}
-            <Route path="/" element={<Dashboard plannings={plannings} />} />
-            <Route path="/plannings" element={<Plannings plannings={plannings} />} />
-            <Route path="/profile" element={<Profil customer={customerSites} />} />
+            <Route
+              path="/"
+              element={
+                <Dashboard
+                  plannings={plannings}
+                  customerSites={customerSites}
+                />
+              }
+            />
+            <Route
+              path="/plannings"
+              element={
+                <Plannings
+                  plannings={plannings}
+                  sites={sites}
+                  holidays={holidays}
+                />
+              }
+            />
+            <Route
+              path="/profile"
+              element={<Profil customer={customerSites} />}
+            />
             <Route path="/site-guards" element={<SiteGuardsList />} />
             {/* Redirection pour les routes non trouvées */}
             <Route path="*" element={<Navigate to="/" />} />

@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Models\Planning;
 use App\Models\Site;
 use App\Models\Customer;
+use App\Models\Holiday;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -29,7 +30,7 @@ class CustomerPageController extends Controller
         $customer_id = $customer->id;
         $customerSites = Customer::with('sites')->find($customer_id);
         $site_ids = $customerSites->sites->pluck('id');
-        
+
         //
         //$sites = $customer->sites;
 
@@ -59,27 +60,29 @@ class CustomerPageController extends Controller
                 $query->where('month', $currentMonth)
                     ->where('year', $currentYear);
             })
-            ->orWhere(function ($query) use ($previousMonth, $previousYear) {
-                $query->where('month', $previousMonth)
-                    ->where('year', $previousYear);
-            })
-            ->orWhere(function ($query) use ($nextMonth, $nextYear) {
-                $query->where('month', $nextMonth)
-                    ->where('year', $nextYear);
-            });
+                ->orWhere(function ($query) use ($previousMonth, $previousYear) {
+                    $query->where('month', $previousMonth)
+                        ->where('year', $previousYear);
+                })
+                ->orWhere(function ($query) use ($nextMonth, $nextYear) {
+                    $query->where('month', $nextMonth)
+                        ->where('year', $nextYear);
+                });
         })
-        ->whereIn('site_id', $site_ids)
-        ->with('events') // Eager load related events
-        ->get();
-        
-      
-        
+            ->whereIn('site_id', $site_ids)
+            ->with('events') // Eager load related events
+            ->get();
+
+
+
 
         return Inertia::render('CustomerPage/App', [
             'plannings' => $plannings,
             'customerSites' => $customerSites,
-            'users'=>User::all(),
-           
+            'users' => User::all(),
+            'sites' => Site::all(),
+            'holidays' => Holiday::all(),
+
         ]);
     }
 
