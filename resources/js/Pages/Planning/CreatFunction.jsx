@@ -481,6 +481,8 @@ export const mergeAllEvents = (events) => {
             pause_payment: parentEvent.pause_payment,
             pause_start: parentEvent.pause_start,
             post: parentEvent.post,
+            postName: parentEvent.postName,
+            site_id: parentEvent.site_id,
             selected_days: parentEvent.selected_days, // Use parent's selected_days
             typePost: parentEvent.typePost,
             user_id: parentEvent.user_id,

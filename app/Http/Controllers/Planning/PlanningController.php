@@ -70,6 +70,7 @@ class PlanningController extends Controller
      */
     public function store(Request $request)
     {
+       
         DB::beginTransaction(); // Commencer une transaction
 
         try {
@@ -111,6 +112,7 @@ class PlanningController extends Controller
                         ]);
                     } catch (\Exception $e) {
                         Log::error('Erreur création événement : ' . $e->getMessage());
+                        dd('Erreur création événement', $e->getMessage(), $eventData);
                     }
                 }
             }
@@ -161,6 +163,7 @@ class PlanningController extends Controller
                         ]);
                     } catch (\Exception $e) {
                         Log::error('Erreur création événement (mois suivant) : ' . $e->getMessage());
+                        dd('Erreur création événement (mois suivant)', $e->getMessage(), $eventData);
                     }
                 }
             }
@@ -170,9 +173,11 @@ class PlanningController extends Controller
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback en cas d'erreur
             Log::error('Erreur lors de la transaction : ' . $e->getMessage());
+            dd('Erreur lors de la transaction', $e->getMessage(), $request->all());
             return redirect()->back()->withErrors(['error' => 'Une erreur est survenue : ' . $e->getMessage()]);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -224,7 +229,7 @@ class PlanningController extends Controller
 
     public function update(Request $request, string $id)
     {
-        
+
         try {
             // Démarrer une transaction
             DB::beginTransaction();
@@ -331,10 +336,6 @@ class PlanningController extends Controller
         }
     }
 
-
-
-
-
     /**
      * Remove the specified resource from storage.
      */
@@ -388,7 +389,7 @@ class PlanningController extends Controller
 
         // Fetch site details
         $sites = Site::whereIn('id', $siteIds)->get(['id', 'name', 'email', 'manager_name']);
-        
+
         $siteDetails = $sites->mapWithKeys(function ($site) {
             return [
                 $site->id => [

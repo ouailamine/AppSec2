@@ -29,6 +29,7 @@ use App\Http\Controllers\HourlyReport\HourlyReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 // Public Routes
 Route::get('/', function () {
@@ -39,55 +40,52 @@ Route::get('/', function () {
     ]);
 });
 
+// Customer Routes (Authenticated)
 Route::middleware(['auth:customer'])->group(function () {
     Route::get('/accueil-Client', [CustomerPageController::class, 'index'])->name('dashboardCustomer');
 });
 
+// Employee Dashboard
 Route::get('/accueil-Employé', [EmployeeController::class, 'index'])->name('dashboard');
+
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
 
-
+    // Employee Dashboard and Search Routes
+    Route::get('/accueil-Employé', [EmployeeController::class, 'index'])->name('dashboard');
+    Route::post('/recherche-Agent', [UserController::class, 'searchUser'])->name('searchUser');
     Route::get('/planning agent', [EmployeeController::class, 'planningGuard'])->name('planningGuard');
 
-
-    // Define the route for validating a planning
+    // Planning Validation Route
     Route::post('/plannings/validate', [PlanningController::class, 'validate'])->name('plannings.validate');
 
-    
-
-    // Dashboard Routes
+    // Admin and Leader Dashboards
     Route::middleware(['auth', 'verified'])->group(function () {
 
-        
-
+        // Admin Dashboard
         Route::get('/dashboard-Admin', function () {
-            // Calculer filteredUsersCount pour les admins
-            $authController = new AuthenticatedSessionController(); // Instanciez le contrôleur
-
+            $authController = new AuthenticatedSessionController();
             $filteredUsersCount = $authController->getFilteredUsersCount();
-            $filteredVacationsCount = $authController->getFilteredVacationsCount(); // Obtenir le nombre de vacances
+            $filteredVacationsCount = $authController->getFilteredVacationsCount();
 
             return Inertia::render('Admin/DashboardAdmin', [
                 'filteredUsersCount' => $filteredUsersCount,
-                'filteredVacationsCount' => $filteredVacationsCount // Passer le nombre de vacances à la vue
+                'filteredVacationsCount' => $filteredVacationsCount,
             ]);
-        })->middleware('role:Admin')->name('dashboardAdmin');
+        })->name('dashboardAdmin');
 
+        // Leader Dashboard
         Route::get('/dashboard-Leader', function () {
-            // Calculer filteredUsersCount pour les leaders
-            $authController = new AuthenticatedSessionController(); // Instanciez le contrôleur
-
+            $authController = new AuthenticatedSessionController();
             $filteredUsersCount = $authController->getFilteredUsersCount();
-            $filteredVacationsCount = $authController->getFilteredVacationsCount(); // Obtenir le nombre de vacances
+            $filteredVacationsCount = $authController->getFilteredVacationsCount();
 
             return Inertia::render('LeaderManager/DashboardLeader', [
                 'filteredUsersCount' => $filteredUsersCount,
-                'filteredVacationsCount' => $filteredVacationsCount // Passer le nombre de vacances à la vue
+                'filteredVacationsCount' => $filteredVacationsCount,
             ]);
         })->middleware('role:Admin|Leader|Manager')->name('dashboardLeader');
     });
-
 
     // Profile Routes
     Route::prefix('profile')->group(function () {
@@ -119,20 +117,16 @@ Route::middleware(['auth'])->group(function () {
 
     // Site Routes
     Route::put('/client/{cunstomer}/sites', [CustomerController::class, 'updateSites'])->name('customers.updateSites');
-
-    // Site Routes
     Route::put('/sites/{site}/users', [SiteController::class, 'updateUsers'])->name('sites.updateUsers');
 
-    // Guard Routes
-    Route::post('/userss/{user}/create-user', [UserController::class, 'createUser'])->name('CreateUser');
-
     // User Routes
+    Route::post('/userss/{user}/create-user', [UserController::class, 'createUser'])->name('CreateUser');
     Route::resource('users', UserController::class);
 
     // Guard Routes
     Route::resource('guards', GuardController::class);
 
-    // Resource Routes
+    // Resource Routes for various entities
     Route::resources([
         'diplomas' => DiplomaController::class,
         'sites' => SiteController::class,
@@ -149,7 +143,7 @@ Route::middleware(['auth'])->group(function () {
         'posts' => PostController::class,
         'HourlyReports' => HourlyReportController::class,
         'catchEvents' => CatchEventController::class,
-        'customers'=> CustomerController::class
+        'customers' => CustomerController::class
     ]);
 });
 

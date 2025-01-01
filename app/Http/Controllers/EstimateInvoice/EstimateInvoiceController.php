@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\EstimateInvoice;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Holiday;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,12 +28,13 @@ class EstimateInvoiceController extends Controller
 
 
     // Pass the data to the Inertia view
-    return Inertia::render('EstimateInvoice/Index2', [
+    return Inertia::render('EstimateInvoice/App', [
         'plannings' => $plannings,
         'sites' => $sites,
         'typePosts'=> $typesPosts,
         'Posts'=> $Posts,
         'holidays' => Holiday::all(),
+        'customers'=> Customer::all()
 
     ]);
 }

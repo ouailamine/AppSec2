@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import {
+  mergeAllEvents,
+} from "../Planning/CreatFunction";
 
 // Helper function to get the week dates
 const getWeekDates = (date) => {
@@ -18,7 +21,10 @@ const formatTime = (timeString) => {
   return `${hours}:${minutes}`;
 };
 
-const Dashboard = ({ plannings = [] }) => {
+const Dashboard = ({ plannings = [] ,sites}) => {
+
+  
+  console.log('plannings',plannings)
   const today = new Date();
   const currentWeekDates = getWeekDates(today);
 
@@ -29,6 +35,17 @@ const Dashboard = ({ plannings = [] }) => {
 
   const [isNextWeek, setIsNextWeek] = useState(false);
   const [eventsWeek, setEventsWeek] = useState([]);
+/*
+  const allEvents = mergeAllEvents(plannings.flatMap(planning => planning.events));
+
+console.log(allEvents);
+console.log(currentWeekDates,nextWeekDates)
+const eventsCurrentWeek = allEvents.filter(event => currentWeekDates.includes(event.selected_days));
+const eventsNextWeek = allEvents.filter(event => nextWeekDates.includes(event.selected_days));
+
+console.log("Events in current week:", eventsCurrentWeek);
+console.log("Events in next week:", eventsNextWeek);*/
+
 
   // Helper function to filter events by selected days
   const filterEventsByWeek = (plannings, weekDates) => {
@@ -37,10 +54,12 @@ const Dashboard = ({ plannings = [] }) => {
         const filteredEvents = planning.events.filter((event) =>
           weekDates.some((date) => event.selected_days.includes(date))
         );
+
+        console.log(filteredEvents)
         if (filteredEvents.length > 0) {
           return {
             planning,
-            events: filteredEvents,
+            events: mergeAllEvents(filteredEvents),
           };
         }
         return null;
@@ -59,7 +78,8 @@ const Dashboard = ({ plannings = [] }) => {
   const dayAbbreviations = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const displayedWeekDates = isNextWeek ? nextWeekDates : currentWeekDates;
 
-  console.log(eventsWeek); // Debugging the filtered events
+  console.log(eventsWeek); 
+  
 
   // Group events by site_id
   const groupedBySiteId = eventsWeek.reduce((acc, { planning, events }) => {
@@ -67,14 +87,15 @@ const Dashboard = ({ plannings = [] }) => {
     if (!acc[site_id]) {
       acc[site_id] = [];
     }
-    acc[site_id].push({ planning, events });
+    acc[site_id].push({ planning, events });console.log(acc)
     return acc;
+    
   }, {});
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <h1 className="text-4xl font-bold mb-6 text-center text-gray-800">
-        Planning des Agents
+        Planning hebdomadaire 
       </h1>
 
       <div className="flex justify-center mb-6 space-x-4">
@@ -103,10 +124,11 @@ const Dashboard = ({ plannings = [] }) => {
       {/* Render a table for each site_id */}
       {Object.keys(groupedBySiteId).map((siteId) => {
         const siteEvents = groupedBySiteId[siteId];
+        const siteName = sites.find((site)=>site.id == siteId).name;
 
         return (
-          <div key={siteId} className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Site ID: {siteId}</h2>
+          <div key={siteId} className="mb-8 border">
+            <h2 className="text-2xl font-bold mb-4 mt-2 text-center">{siteName}</h2>
             <div className="overflow-x-auto rounded-lg shadow-lg">
               <table className="w-full table-auto border-collapse bg-white">
                 <thead>
@@ -132,62 +154,66 @@ const Dashboard = ({ plannings = [] }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {siteEvents.map(({ planning, events }) => {
-                    // Extract unique agents for this site
-                    const agents = [
-                      ...new Set(events.map((event) => event.userName)),
-                    ];
+  {siteEvents.map(({ planning, events }) => {
+    // Regrouper les événements par utilisateur pour éviter les doublons
+    const eventsByAgent = events.reduce((acc, event) => {
+      if (!acc[event.userName]) {
+        acc[event.userName] = [];
+      }
+      acc[event.userName].push(event);
+      return acc;
+    }, {});
 
-                    return agents.map((agent, agentIndex) => {
-                      const agentEvents = events.filter(
-                        (event) => event.userName === agent
-                      );
+    // Afficher chaque utilisateur avec ses événements
+    return Object.entries(eventsByAgent).map(([agent, agentEvents], agentIndex) => (
+      <tr
+        key={agentIndex}
+        className={`hover:bg-gray-100 ${
+          agentIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
+        }`}
+      >
+        <td className="border border-gray-300 px-4 py-2 text-gray-700 font-medium">
+          {agent}
+        </td>
+        {displayedWeekDates.map((date, dateIndex) => {
+          // Filtre les événements pour la date actuelle
+          const eventsForDate = agentEvents.filter((event) =>
+            event.selected_days.includes(date)
+          );
 
-                      return (
-                        <tr
-                          key={agentIndex}
-                          className={`hover:bg-gray-100 ${
-                            agentIndex % 2 === 0 ? "bg-gray-50" : "bg-white"
-                          }`}
-                        >
-                          <td className="border border-gray-300 px-4 py-2 text-gray-700 font-medium">
-                            {agent}
-                          </td>
-                          {displayedWeekDates.map((date, dateIndex) => {
-                            const eventForDate = agentEvents.find((event) =>
-                              event.selected_days.includes(date)
-                            );
+          return (
+            <td
+              key={dateIndex}
+              className={`border border-gray-300 px-4 py-2 text-center text-gray-600 ${
+                dateIndex >= 5 ? "bg-blue-100 text-blue-700" : ""
+              }`}
+            >
+              {eventsForDate.length > 0 ? (
+                <div className="space-y-2">
+                  {eventsForDate.map((event, eventIndex) => (
+                    <div
+                      key={eventIndex}
+                      className="block text-xs font-medium text-gray-800"
+                    >
+                      <span>{event.post}</span>
+                      <br />
+                      <span>{formatTime(event.vacation_start)}</span>
+                      <br />
+                      <span>{formatTime(event.vacation_end)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <span className="block text-xs text-gray-400">Aucune vacation</span>
+              )}
+            </td>
+          );
+        })}
+      </tr>
+    ));
+  })}
+</tbody>
 
-                            return (
-                              <td
-                                key={dateIndex}
-                                className={`border border-gray-300 px-4 py-2 text-center text-gray-600 ${
-                                  dateIndex >= 5
-                                    ? "bg-blue-100 text-blue-700"
-                                    : ""
-                                }`}
-                              >
-                                {eventForDate ? (
-                                  <span className="block text-xs font-medium text-gray-800">
-                                    {eventForDate.post}
-                                    {"\n"}
-                                    {formatTime(eventForDate.vacation_start)}
-                                    {"\n"}
-                                    {formatTime(eventForDate.vacation_end)}
-                                  </span>
-                                ) : (
-                                  <span className="block text-xs text-gray-400">
-                                    Aucune vacation
-                                  </span>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    });
-                  })}
-                </tbody>
               </table>
             </div>
           </div>

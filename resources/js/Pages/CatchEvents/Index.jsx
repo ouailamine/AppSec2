@@ -56,6 +56,7 @@ const CatchEvent = ({ users, sites, catchEvents, posts }) => {
     value: user.id,
     label: `${user.fullname} ${user.firstname}`,
   }));
+  
 
   return (
     <AdminAuthenticatedLayout>
@@ -106,6 +107,7 @@ const CatchEvent = ({ users, sites, catchEvents, posts }) => {
           filteredEvents.reduce((acc, event) => {
             const userId = event.user_id;
             acc[userId] = acc[userId] ? [...acc[userId], event] : [event];
+            console.log(acc)
             return acc;
           }, {})
         ).map(([userId, events]) => {
@@ -122,6 +124,9 @@ const CatchEvent = ({ users, sites, catchEvents, posts }) => {
                 <table className="min-w-full bg-white border border-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
+                    <th className="py-1 px-2 border-b text-left text-gray-600">
+                        Date
+                      </th>
                       <th className="py-1 px-2 border-b text-left text-gray-600">
                         Poste
                       </th>
@@ -158,6 +163,9 @@ const CatchEvent = ({ users, sites, catchEvents, posts }) => {
                         key={event.id}
                         className="hover:bg-gray-50 transition duration-200"
                       >
+                        <td className="py-1 px-2 border-b">
+                          {event.date_vacation}
+                        </td>
                         <td className="py-1 px-2 border-b">
                           {getPostName(event.post)}
                         </td>
