@@ -23,6 +23,8 @@ class ManagerPlanningMail extends Mailable
      */
     public function __construct($siteDetails, $monthNames, $year, $isValidatePlanning)
     {
+
+
         // Initialisation des propriétés
         $this->siteDetails = $siteDetails;
         $this->monthNames = $monthNames;
@@ -37,7 +39,9 @@ class ManagerPlanningMail extends Mailable
     {
         // Retourner l'enveloppe du message
         return new Envelope(
-            subject: 'Planning générale de' . ' ' . $this->siteDetails[1]['name'] . ' ' . $this->monthNames[0] . ' ' . $this->year,
+
+
+            subject: 'Planning générale de' . ' ' . ($this->siteDetails[3]['name'] ?? 'Default Name') . ' ' . $this->monthNames[0] . ' ' . $this->year,
             replyTo: [$this->siteDetails['email'] ?? 'default@example.com'],
         );
     }

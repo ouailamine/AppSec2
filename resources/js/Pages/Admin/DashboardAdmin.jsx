@@ -145,7 +145,7 @@ export default function DashboardAdmin({
           {loading ? (
             <div className="flex justify-center items-center flex-col space-y-4 mt-40 animate-bounce">
               <img
-                src="assets/img/logo2.png"
+                src="assets/img/AppSec.png"
                 alt="Logo"
                 className="w-32 h-32 object-contain animate-pulse transition-transform transform hover:scale-110 shadow-lg rounded-full"
               />

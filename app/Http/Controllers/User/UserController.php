@@ -42,7 +42,7 @@ class UserController extends Controller
             'nationalities' => Nationality::all(),
             'typeAds' => TypeAds::all(),
             'cities' => City::all(),
-            'guards'=> Guard::all()
+            'guards' => Guard::all()
         ]);
     }
 
@@ -67,7 +67,10 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request, $id)
+
     {
+
+        dd($request);
         $part = explode("-", $request->professional_card_number);
         $StringADSendDate = $part[1] . "-" . $part[2] . "-" . $part[3];
         $ADSendDate = DateTime::createFromFormat('Y-m-d', $StringADSendDate);
@@ -249,7 +252,7 @@ class UserController extends Controller
 
         event(new Registered($guard));
 
-        
+
         return redirect()->back();
     }
 
@@ -258,7 +261,7 @@ class UserController extends Controller
      * Remove the specified resource from storage.
      */
     public function createUser(User $user)
-    {       
+    {
         try {
 
             // Créer l'utilisateur
@@ -302,8 +305,5 @@ class UserController extends Controller
     /**
      * 
      */
-    public function searchUser (User $user){
-
-        
-    }
+    public function searchUser(User $user) {}
 }

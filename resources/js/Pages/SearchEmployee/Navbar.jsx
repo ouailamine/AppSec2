@@ -13,7 +13,7 @@ export default function NavBar() {
                 active={route().current("dashboardAdmin")}
                 className="text-gray-800 hover:text-gray-600"
               >
-                Tableau de bord
+                Cree un agent
               </NavLink>
             </div>
           </div>

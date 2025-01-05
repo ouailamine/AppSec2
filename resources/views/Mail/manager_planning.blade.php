@@ -100,19 +100,26 @@
 <body>
     <div class="container">
 
-        @foreach ($siteDetails as $siteId => $details)
-            <h1>Bonjour Mr/Mme {{ $details['manager_name'] }},</h1>
+        @if (isset($siteDetails) && is_array($siteDetails) && count($siteDetails) > 0)
+            @foreach ($siteDetails as $siteId => $details)
+                <h1>Bonjour Mr/Mme {{ $details['manager_name'] ?? 'inconnu' }},</h1>
 
-            @if ($isValidatePlanning == 1)
-                <p>Il y a eu des changements dans le planning pour le mois de <span
-                        class="highlight">{{ $monthNames[0] }} {{ $year }}</span>. Il est désormais disponible
-                    dans votre espace personnel.</p>
-            @else
-                <p>Nous avons le plaisir de vous informer que le planning pour le mois de <span
-                        class="highlight">{{ $monthNames[0] }} {{ $year }}</span> est désormais disponible dans
-                    votre espace personnel.</p>
-            @endif
-        @endforeach
+                @if (isset($isValidatePlanning) && $isValidatePlanning == 1)
+                    <p>Il y a eu des changements dans le planning pour le mois de <span
+                            class="highlight">{{ $monthNames[0] ?? 'Mois inconnu' }}
+                            {{ $year ?? 'Année inconnue' }}</span>. Il est désormais disponible
+                        dans votre espace personnel.</p>
+                @else
+                    <p>Nous avons le plaisir de vous informer que le planning pour le mois de <span
+                            class="highlight">{{ $monthNames[0] ?? 'Mois inconnu' }}
+                            {{ $year ?? 'Année inconnue' }}</span> est désormais disponible dans
+                        votre espace personnel.</p>
+                @endif
+            @endforeach
+        @else
+            <p>Aucune donnée de planning disponible actuellement. Veuillez vérifier vos paramètres ou contacter
+                l'administrateur.</p>
+        @endif
 
         <p>Nous vous invitons à consulter votre espace afin de prendre connaissance des détails du planning et de vous
             organiser en conséquence.</p>

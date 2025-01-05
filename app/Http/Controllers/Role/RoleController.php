@@ -3,15 +3,54 @@
 namespace App\Http\Controllers\Role;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Inertia\Inertia;
 
+
 class RoleController extends Controller
 {
     public function index()
+    {
+        $rolesWithPermissions = DB::table('roles')
+            ->join('role_has_permissions', 'roles.id', '=', 'role_has_permissions.role_id')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->select('roles.id as role_id', 'roles.name as role_name', 'permissions.id as permission_id', 'permissions.name as permission_name')
+            ->get();
+
+        // Structurer les données par rôle
+        $roles = [];
+        foreach ($rolesWithPermissions as $item) {
+            $roles[$item->role_id]['id'] = $item->role_id;
+            $roles[$item->role_id]['name'] = $item->role_name;
+            $roles[$item->role_id]['permissions'][] = [
+                'id' => $item->permission_id,
+                'name' => $item->permission_name
+            ];
+        }
+
+        $users = User::all(); // Récupère tous les utilisateurs
+
+        // Parcourir chaque utilisateur et ajouter ses rôles à l'objet
+        $users->each(function ($user) {
+            $user->roles = $user->getRoleNames(); // Ajoute les rôles sous forme de collection
+        });
+
+
+
+
+        return Inertia::render('Role/Index', [
+            'roles' => $roles,
+            'permissions' => Permission::all(),
+            'users' => $users,
+            'flash' => session()->all() // Passer toutes les données de session, y compris les messages flash
+        ]);
+    }
+
+    public function create()
     {
         $rolesWithPermissions = DB::table('roles')
             ->join('role_has_permissions', 'roles.id', '=', 'role_has_permissions.role_id')
@@ -36,8 +75,6 @@ class RoleController extends Controller
             'flash' => session()->all() // Passer toutes les données de session, y compris les messages flash
         ]);
     }
-
-    public function create() {}
 
     public function store(Request $request)
     {

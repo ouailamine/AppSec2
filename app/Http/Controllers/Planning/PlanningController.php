@@ -70,7 +70,7 @@ class PlanningController extends Controller
      */
     public function store(Request $request)
     {
-       
+
         DB::beginTransaction(); // Commencer une transaction
 
         try {
@@ -411,16 +411,23 @@ class PlanningController extends Controller
 
 
         // Update the `isValidate` field for the selected plannings
-        Planning::whereIn('id', $planningIds)->update(['isValidate' => true]);
+        Planning::whereIn('id', $planningIds)
+            ->update([
+                'isValidate' => true,
+                'updated_at' => Carbon::now(), // This will set updated_at to the current date and time
+            ]);
 
 
         try {
-            Mail::to('ouailamin84@gmail.com')->send(new ManagerPlanningMail($siteDetails, $monthNames, $year, $isValidatePlanning));
+            Mail::to('ouailamin84@gmail.com')
+                ->send(new ManagerPlanningMail($siteDetails, $monthNames, $year, $isValidatePlanning));
             Mail::to('ouailamin84@gmail.com')->send(new GuardPlanningMail($userEmails, $monthNames, $year, $isValidatePlanning));
         } catch (\Exception $e) {
+
+
             return back()->withErrors(['error' => 'Failed to send emails: ' . $e->getMessage()]);
         }
-        // Return a success response with the result
-        return back()->with('success', 'Plannings validés avec succès');
+        // Redirect back to the 'plannings.index' route with a flash success message
+        return redirect()->route('plannings.index')->with('success', 'Plannings validés avec succès');
     }
 }

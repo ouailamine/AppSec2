@@ -27,8 +27,8 @@ const ExportGuardPdf = ({
   currentYear,
   selectedSite,
 }) => {
-    const [isTableOpen, setIsTableOpen] = useState(false);
-  
+  const [isTableOpen, setIsTableOpen] = useState(false);
+
   const [selectedMonth, setSelectedMonth] = useState(
     currentMonth || new Date().getMonth() + 1
   );
@@ -129,15 +129,10 @@ const ExportGuardPdf = ({
 
       const monthDates = generateMonthDates(selectedYear, selectedMonth);
 
-
-
       const abbreviationToName = posts.reduce((acc, post) => {
-     
         acc[post.abbreviation] = post.name; // Associe l'abréviation au nom
         return acc;
       }, {});
-
-     
 
       const userEvents = events.filter((e) => e.userName === userFullName);
       const tableData = monthDates.map((date) => {
@@ -185,12 +180,34 @@ const ExportGuardPdf = ({
         styles: {
           fontSize: 8,
           cellPadding: 1.5,
+          textColor: [0, 0, 0], // Texte en noir
+          halign: "center", // Alignement horizontal centré
+          valign: "middle", // Alignement vertical centré
         },
         headStyles: {
-          fillColor: [173, 216, 230],
+          fillColor: [211, 211, 211], // Bleu clair foncé pour l'en-tête
+          textColor: [0, 0, 0], // Texte en noir
+          halign: "center", // Texte centré horizontalement
+          valign: "middle", // Texte centré verticalement
         },
+
         alternateRowStyles: {
           fillColor: [240, 240, 240],
+        },
+        willDrawCell: (data) => {
+          if (data.section === "body") {
+            const rowIndex = data.row.index;
+            const dateText = tableData[rowIndex][0]; // Colonne "Date"
+            const dayAbbreviation = dateText.slice(0, 2); // Extraction de "Di" ou "Sa"
+
+            if (dayAbbreviation === "Sa" || dayAbbreviation === "Di") {
+              doc.setFillColor(173, 216, 230); // Couleur bleu clair pour les week-ends
+              data.cell.styles.fillColor = [173, 216, 230];
+            }
+
+            // Assurez-vous que le texte reste en noir pour toutes les cellules
+            data.cell.styles.textColor = [0, 0, 0];
+          }
         },
       });
 
@@ -202,51 +219,49 @@ const ExportGuardPdf = ({
 
   return (
     <div className="flex flex-col" title="Exporter planning par agent">
-    <button
+      <button
         type="button"
-       className="px-2 w-full py-1 bg-blue-700 text-white rounded hover:bg-blue-600 flex items-center"
+        className="px-2 w-full py-1 bg-blue-700 text-white rounded hover:bg-blue-600 flex items-center"
         onClick={() => setIsTableOpen(!isTableOpen)}
         aria-expanded={isTableOpen}
       >
         <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={2}
-        stroke="currentColor"
-        className="w-5 h-5 mr-2"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 16v-8m0 8l4-4m-4 4l-4-4m12 2v6H4v-6"
-        />
-      </svg>
-      Exporter planning par agent
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+          stroke="currentColor"
+          className="w-5 h-5 mr-2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 16v-8m0 8l4-4m-4 4l-4-4m12 2v6H4v-6"
+          />
+        </svg>
+        Exporter planning par agent
       </button>
 
-  
       {isTableOpen && (
-    <div className="flex flex-wrap gap-4 mt-3">
-      {uniqueUsers.length ? (
-        uniqueUsers.map((userName, index) => (
-          <button
-            key={index}
-            className="bg-blue-700 text-white text-xs font-bold px-2 py-1 rounded-md hover:bg-blue-600 transition-colors duration-200"
-            onClick={() => handleExportPDF(userName)}
-          >
-            {userName}
-          </button>
-        ))
-      ) : (
-        <p className="text-gray-600">Aucun utilisateur trouvé dans les événements.</p>
+        <div className="flex flex-wrap gap-4 mt-3">
+          {uniqueUsers.length ? (
+            uniqueUsers.map((userName, index) => (
+              <button
+                key={index}
+                className="bg-blue-700 text-white text-xs font-bold px-2 py-1 rounded-md hover:bg-blue-600 transition-colors duration-200"
+                onClick={() => handleExportPDF(userName)}
+              >
+                {userName}
+              </button>
+            ))
+          ) : (
+            <p className="text-gray-600">
+              Aucun utilisateur trouvé dans les événements.
+            </p>
+          )}
+        </div>
       )}
-    </div>)}
-  </div>
-  
-
-
-
+    </div>
   );
 };
 

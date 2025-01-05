@@ -19,12 +19,12 @@ class SiteController extends Controller
     {
         $sites = Site::with(['users'])->get();
         $users = User::all();
-        $customers =Customer::all();
+        $customers = Customer::all();
 
         return inertia('Sites/Index', [
             'sites' => $sites,
             'users' => $users,
-            'customers'=>$customers,
+            'customers' => $customers,
             'flash' => [
                 'success' => session('success'),
                 'error' => session('error'),
@@ -47,7 +47,7 @@ class SiteController extends Controller
         return Inertia::render('Sites/EditUsers', [
             'site' => $site,
             'users' => $users,
-            'custumers' =>$custumers
+            'custumers' => $custumers
         ]);
     }
 
@@ -62,27 +62,27 @@ class SiteController extends Controller
     {
         // Trouver le site par son ID
         $site = Site::findOrFail($siteId);
-    
+
         // Récupérer les utilisateurs principaux et secondaires depuis la requête
         $primaryUsers = $request->input('primaryUsers', []); // Utilisateurs principaux
         $secondaryUsers = $request->input('secondaryUsers', []); // Utilisateurs secondaires
-    
+
         // Fusionner les utilisateurs principaux et secondaires
         $allUsers = collect($primaryUsers)->merge($secondaryUsers)->unique();
-    
+
         // Préparer les données pour la synchronisation avec attribut `isFirstList`
         $syncData = [];
         foreach ($allUsers as $userId) {
             $syncData[$userId] = ['isFirstList' => in_array($userId, $primaryUsers)];
         }
-    
+
         // Synchroniser les utilisateurs avec la table pivot
         $site->users()->sync($syncData);
-    
+
         // Retourner avec un message de succès
         return redirect()->back()->with('success', 'Liste d\'agents modifiée.');
     }
-    
+
     /**
      * Show the form for creating a new resource.
      */
@@ -96,41 +96,41 @@ class SiteController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-{
+    {
 
- 
-   
-    $request->validate([
-        
-        'name' => 'required|string|max:255',
-        'manager_name' => 'required|string|max:255',
-        'address' => 'required|string|max:500',
-        'email' => 'required|email',
-        'phone' => 'required|string|max:20',
-        // No need to validate the password as it's being set automatically.
-    ]);
 
-    // Hash the default password.
-    $defaultPassword = Hash::make('atalixsecurite');
 
-    // Create the site with the validated data and default password.
-    $site = Site::create([
-        'customer_id'=>$request->customer_id,
-        'name' => $request->name,
-        'manager_name' => $request->manager_name,
-        'address' => $request->address,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'password' => $defaultPassword,
-    ]);
+        $request->validate([
 
-    // Sync users if selectedUsers exists in the request.
-    if ($request->has('selectedUsers') && is_array($request->selectedUsers)) {
-        $site->users()->sync($request->selectedUsers);
+            'name' => 'required|string|max:255',
+            'manager_name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
+            'email' => 'required|email',
+            'phone' => 'required|string|max:20',
+            // No need to validate the password as it's being set automatically.
+        ]);
+
+        // Hash the default password.
+        $defaultPassword = Hash::make('atalixsecurite');
+
+        // Create the site with the validated data and default password.
+        $site = Site::create([
+            'customer_id' => $request->customer_id,
+            'name' => $request->name,
+            'manager_name' => $request->manager_name,
+            'address' => $request->address,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => $defaultPassword,
+        ]);
+
+        // Sync users if selectedUsers exists in the request.
+        if ($request->has('selectedUsers') && is_array($request->selectedUsers)) {
+            $site->users()->sync($request->selectedUsers);
+        }
+
+        return redirect()->route('sites.index')->with('success', 'Site created successfully.');
     }
-
-    return redirect()->route('sites.index')->with('success', 'Site created successfully.');
-}
 
 
     public function edit(Site $site)
@@ -138,7 +138,7 @@ class SiteController extends Controller
         return Inertia::render('Sites/Edit', ['site' => $site]);
     }
 
-   
+
     /**
      * Update the specified resource in storage.
      */
@@ -150,7 +150,7 @@ class SiteController extends Controller
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-          
+
         ]);
 
         $site->update($request->all());
@@ -169,4 +169,3 @@ class SiteController extends Controller
         return redirect()->route('sites.index')->with('success', 'Site supprimé avec succès.');
     }
 }
-

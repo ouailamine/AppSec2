@@ -100,6 +100,7 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'The provided credentials do not matccccch our records.',
             ]);
         } elseif ($request->actor == 'Admin') {
+            sleep(5);
             $request->authenticate();
             $request->session()->regenerate();
 

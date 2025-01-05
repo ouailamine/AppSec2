@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminAuthenticatedLayout from "@/Layouts/AdminAuthenticatedLayout";
 import { Head } from "@inertiajs/react";
 import { Inertia } from "@inertiajs/inertia";
@@ -19,12 +19,18 @@ const months = [
   { value: "12", label: "Décembre" },
 ];
 
-const PlanningList = ({ plannings, sites, auth }) => {
+const PlanningList = ({ plannings, sites, auth, flash }) => {
+  console.log(flash);
+
+  const successMessage = flash?.success;
+  const errorMessage = flash?.error;
+
   const role = auth.roles;
 
   console.log(role);
   const [search, setSearch] = useState({ site: "", year: "", month: "" });
   const [openSites, setOpenSites] = useState({}); // Nouveau état pour gérer l'ouverture de chaque site
+  const [showAlert, setShowAlert] = useState(false);
 
   const getMonthName = (monthValue) => {
     const monthObject = months.find((month) => month.value == monthValue);
@@ -42,7 +48,9 @@ const PlanningList = ({ plannings, sites, auth }) => {
 
   const filterPlanningsBySearch = () => {
     return plannings.filter((planning) => {
-      const matchesSite = search.site === "" || planning.site.id == search.site;
+      const matchesSite =
+        search.site === "" ||
+        (planning.site && planning.site.id == search.site);
       const matchesYear = search.year === "" || planning.year == search.year;
       const matchesMonth =
         search.month === "" || planning.month == search.month;
@@ -108,6 +116,23 @@ const PlanningList = ({ plannings, sites, auth }) => {
     <AdminAuthenticatedLayout>
       <Head title="Liste des Plannings" />
 
+      {successMessage && (
+        <div
+          className="p-2 mb-4 m-2 text-sm font-bold text-center text-green-700 bg-green-100 rounded-lg border border-green-300"
+          role="alert"
+        >
+          {successMessage}
+        </div>
+      )}
+      {errorMessage && (
+        <div
+          className="p-2 mb-4 m-2 text-sm font-bold text-center text-red-700 bg-green-100 rounded-lg border border-green-300"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      )}
+
       <div className="m-4 bg-gray-50 min-h-screen">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Liste des Plannings
@@ -122,17 +147,17 @@ const PlanningList = ({ plannings, sites, auth }) => {
           </a>
         </div>
 
-        <form className="mb-6 bg-white p-2 rounded-lg shadow-lg">
-          <h2 className="text-sm text-black font-bold text-center mb-3 bg-gray-300">
+        <form className="mb-6 bg-white p-6 rounded-lg shadow-lg space-y-6">
+          <h2 className="text-xl text-black font-semibold text-center mb-4 bg-gray-100 p-3 rounded-lg shadow-sm">
             Recherche d'un Planning
           </h2>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-3 justify-center items-center">
-            <div className="relative mt-1">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="relative">
               <select
                 name="site"
                 value={search.site}
                 onChange={handleSearchChange}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 bg-gray-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 p-2 sm:text-sm shadow-sm"
               >
                 <option value="">Tous les sites</option>
                 {sites.map((site) => (
@@ -143,12 +168,12 @@ const PlanningList = ({ plannings, sites, auth }) => {
               </select>
             </div>
 
-            <div className="relative mt-1">
+            <div className="relative">
               <select
                 name="month"
                 value={search.month}
                 onChange={handleSearchChange}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 bg-gray-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 p-2 sm:text-sm shadow-sm"
               >
                 <option value="">Tous les mois</option>
                 {months.map(({ value, label }) => (
@@ -159,15 +184,14 @@ const PlanningList = ({ plannings, sites, auth }) => {
               </select>
             </div>
 
-            <div className="relative mt-1">
+            <div className="relative">
               <select
                 name="year"
                 value={search.year}
                 onChange={handleSearchChange}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-md border-gray-300 bg-gray-50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 p-2 sm:text-sm shadow-sm"
               >
                 <option value="">Toutes les années</option>
-
                 {years.map((year) => (
                   <option key={year} value={year}>
                     {year}
@@ -202,17 +226,17 @@ const PlanningList = ({ plannings, sites, auth }) => {
               return (
                 <div
                   key={site.id}
-                  className="border border-gray-200 rounded-lg shadow-lg bg-white p-1 mb-6"
+                  className="border border-gray-200 rounded-lg shadow-lg bg-white p-2 mb-6"
                 >
                   <button
                     type="button"
-                    className="w-full  text-black text-xl  flex justify-between items-center px-2 py-1 rounded-md"
+                    className="w-full text-black text-xl font-medium flex justify-between items-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onClick={() => handleToggleSite(site.id)}
                     aria-expanded={openSites[site.id]}
                   >
-                    <p className="text-black font-blod">{site.name}</p>
+                    <p className="text-black font-bold">{site.name}</p>
                     <svg
-                      className={`w-8 h-8 transition-transform duration-300 ${
+                      className={`w-6 h-6 transition-transform duration-300 ${
                         openSites[site.id] ? "rotate-180" : ""
                       }`}
                       xmlns="http://www.w3.org/2000/svg"
@@ -231,7 +255,7 @@ const PlanningList = ({ plannings, sites, auth }) => {
                   </button>
 
                   {openSites[site.id] && (
-                    <div className="mt-2 space-y-2">
+                    <div className="mt-4 space-y-4">
                       {sitePlannings.length === 0 ? (
                         <p className="text-sm text-gray-600">
                           Aucun planning disponible pour ce site.
@@ -240,15 +264,15 @@ const PlanningList = ({ plannings, sites, auth }) => {
                         sitePlannings.map((planning) => (
                           <div
                             key={planning.id}
-                            className="rounded-lg bg-gray-100 p-2 mb-1"
+                            className="rounded-lg bg-gray-50 p-2 mb-4 shadow-sm"
                           >
-                            <div className="border rounded-lg p-2 flex justify-between items-center bg-white shadow-sm">
+                            <div className="border rounded-lg p-2 flex justify-between items-center bg-white shadow-md">
                               <div className="flex items-center space-x-4">
                                 <h3 className="text-lg font-semibold text-gray-800">
                                   {getMonthName(planning.month)} {planning.year}
                                 </h3>
                                 <span
-                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                     planning.isValidate
                                       ? "bg-green-100 text-green-800"
                                       : "bg-red-100 text-red-800"
@@ -258,12 +282,15 @@ const PlanningList = ({ plannings, sites, auth }) => {
                                     ? "Validé: Oui"
                                     : "Validé: Non"}
                                 </span>
-                                <span className="text-xs font-bold">
+                                <span className="text-xs font-medium text-gray-500">
                                   Crée le {formatDate(planning.created_at)}
+                                </span>
+                                <span className="text-xs font-medium text-gray-500">
+                                  Valider le {formatDate(planning.updated_at)}
                                 </span>
                               </div>
 
-                              <div className="flex space-x-3">
+                              <div className="flex space-x-4">
                                 <button
                                   onClick={() =>
                                     handleShowPlanning(
@@ -278,7 +305,7 @@ const PlanningList = ({ plannings, sites, auth }) => {
                                 </button>
 
                                 {(role.includes("Admin") ||
-                                  role.includes("Leader")||
+                                  role.includes("Leader") ||
                                   role.includes("Manager")) &&
                                   !planning.isValidate && (
                                     <button
@@ -291,15 +318,15 @@ const PlanningList = ({ plannings, sites, auth }) => {
                                     </button>
                                   )}
 
-                                {role.includes("Admin") ||
-                                role.includes("Leader") ? (
+                                {(role.includes("Admin") ||
+                                  role.includes("Leader")) && (
                                   <button
                                     onClick={() => handleDelete(planning.id)}
                                     className="px-4 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                   >
                                     Supprimer
                                   </button>
-                                ) : null}
+                                )}
                               </div>
                             </div>
                           </div>

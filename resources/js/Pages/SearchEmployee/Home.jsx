@@ -31,8 +31,7 @@ const Home = ({
   console.log(usersOrGuards);
 
   const handleSearch = (data) => {
-
-    setIsResultSearch(true)
+    setIsResultSearch(true);
     console.log(data);
     if (data.searchType === "simple") {
       const filteredUsers = usersOrGuards.filter((user) => {
@@ -160,19 +159,20 @@ const Home = ({
 
   const handleAtalixGuard = () => {
     setusersOrGuards(users);
+    setCampanyGuard("Atalix");
     console.log(usersOrGuards);
   };
 
   const handleOtherGuard = () => {
     setusersOrGuards(guards);
-    setCampanyGuard("Non Atalix")
+    setCampanyGuard("Extérieur");
     console.log(usersOrGuards);
   };
 
   const handleInitUsers = () => {
     setusersOrGuards(users);
     setIsResultSearch(false);
-    setCampanyGuard("Atalix")
+    setCampanyGuard("Atalix");
   };
   return (
     <AdminAuthenticatedLayout user={auth.user}>

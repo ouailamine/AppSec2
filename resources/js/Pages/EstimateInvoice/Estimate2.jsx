@@ -6,7 +6,7 @@ import {
   checkVacationsAndWeeklyHours,
   validateSelections,
   compareEvents,
-} from "../Planning/CreatFunction2";
+} from "../Planning/CreatFunction";
 
 const Estimate = ({ typePosts, posts, holidays }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 1-based month
@@ -14,7 +14,7 @@ const Estimate = ({ typePosts, posts, holidays }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [eventsNextMonth, setEventsNextMonth] = useState([]);
-   // State to manage modal visibility
+  // State to manage modal visibility
 
   const years = Array.from({ length: 10 }, (_, index) => currentYear + index);
 
@@ -27,8 +27,18 @@ const Estimate = ({ typePosts, posts, holidays }) => {
   };
 
   const months = [
-    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+    "Janvier",
+    "Février",
+    "Mars",
+    "Avril",
+    "Mai",
+    "Juin",
+    "Juillet",
+    "Août",
+    "Septembre",
+    "Octobre",
+    "Novembre",
+    "Décembre",
   ];
 
   const openModal = () => {
@@ -39,10 +49,8 @@ const Estimate = ({ typePosts, posts, holidays }) => {
     setIsModalOpen(false);
   };
 
-
   const createEventsFromAddEvent = (addEvent) => {
-
-    console.log(addEvent)
+    console.log(addEvent);
     // Dernier ID utilisé
     const maxExistingId =
       events.length > 0 ? Math.max(...events.map((event) => event.id)) : 0;
@@ -56,8 +64,6 @@ const Estimate = ({ typePosts, posts, holidays }) => {
       (date) => date.toISOString().split("T")[0]
     );
 
-   
-
     const newEvents = (addEvent.selectedUsersDays || []).flatMap((date) => {
       // Generate vacation events for the given date
       const vacationAllEvents = createVacationEvents(
@@ -68,17 +74,20 @@ const Estimate = ({ typePosts, posts, holidays }) => {
         addEvent.pause_end,
         addEvent.pause_payment
       );
-    
+
       // Destructure the returned vacation events
-      const { events: vacationEvents, eventsNextMonth: vacationEventsNextMonth } = vacationAllEvents;
-    
+      const {
+        events: vacationEvents,
+        eventsNextMonth: vacationEventsNextMonth,
+      } = vacationAllEvents;
+
       // Log to ensure we have the expected vacation events
       console.log(vacationEvents);
-    
+
       // Check if the date is a holiday or Sunday
       const isHoliday = holidayDates.has(date);
       const isSunday = sundays.includes(date);
-    
+
       // Map over vacation events (assuming vacationEvents is an array)
       return vacationEvents.map((event) => ({
         id: currentId, // Assuming currentId is defined elsewhere
@@ -100,34 +109,29 @@ const Estimate = ({ typePosts, posts, holidays }) => {
         relatedEvent: event.relatedEvent,
       }));
     });
-    
+
     // Assuming `setEvents` is a function that accepts the new event array
     setEvents(newEvents);
-    
-  
- 
-       
-  
-        // Afficher un message de succès
-        let msg = "Vacation(s) créé(s) avec succès !";
-     console.log(msg)
-      
-    };
 
-    console.log('events',events)
+    // Afficher un message de succès
+    let msg = "Vacation(s) créé(s) avec succès !";
+    console.log(msg);
+  };
 
-  const handleCreateEvent = (newEvent)=>{
+  console.log("events", events);
 
-    
-
-    console.log(newEvent)
-  }
+  const handleCreateEvent = (newEvent) => {
+    console.log(newEvent);
+  };
 
   return (
     <div className="bg-white border border-gray-300 rounded-md shadow-md p-1 space-y-2">
       <div className="flex justify-between space-x-4 mb-4">
         <div className="flex-1">
-          <label htmlFor="monthSelect" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="monthSelect"
+            className="block text-sm font-medium text-gray-700"
+          >
             Mois
           </label>
           <select
@@ -145,7 +149,10 @@ const Estimate = ({ typePosts, posts, holidays }) => {
         </div>
 
         <div className="flex-1">
-          <label htmlFor="yearSelect" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="yearSelect"
+            className="block text-sm font-medium text-gray-700"
+          >
             Année
           </label>
           <select
@@ -173,20 +180,19 @@ const Estimate = ({ typePosts, posts, holidays }) => {
       </div>
 
       {/* Conditionally render the AddEvent modal */}
-      {isModalOpen && 
-        <AddEvent 
-          onClose={closeModal} 
-          typePosts={typePosts} 
-          posts={posts} 
-          holidays={holidays} 
+      {isModalOpen && (
+        <AddEvent
+          onClose={closeModal}
+          typePosts={typePosts}
+          posts={posts}
+          holidays={holidays}
           currentMonth={currentMonth}
           currentYear={currentYear}
           add={createEventsFromAddEvent}
         />
-      }
+      )}
     </div>
   );
 };
-
 
 export default Estimate;
