@@ -79,9 +79,12 @@ const TableComponent = ({
 
   useEffect(() => {
     if (events) {
+    
       setTableEvents(events);
     }
   }, [events]);
+
+console.log(tableEvents);
 
   const zeroIndexedMonth = month - 1;
 
@@ -98,6 +101,7 @@ const TableComponent = ({
 
   const createTable = (tableEvents, month, year, holidays) => {
     const daysInMonth = getDaysInMonth(month, year);
+    console.log(month,year)
     const userEventsMap = {};
     const daysOfWeek = ["Di", "Lu", "Ma", "Me", "Je", "Ve", "Sa"];
     const userTotalDuration = {};
@@ -118,6 +122,7 @@ const TableComponent = ({
       const user_id = event.user_id;
       userEventsMap[user_id] = Array.from({ length: daysInMonth }, () => []);
       userTotalDuration[user_id] = 0;
+  
     });
 
     tableEvents.forEach((event) => {
@@ -131,21 +136,23 @@ const TableComponent = ({
         pause_start,
         pause_end,
         post,
-
         work_duration,
       } = event;
+
 
       const eventDate = new Date(selected_days);
       const eventMonth = eventDate.getMonth();
       const eventYear = eventDate.getFullYear();
       const day = eventDate.getDate();
 
-      if (
+      //console.log(month,eventMonth,year,eventYear)
+
+      /*if (
         eventMonth === month &&
         eventYear === year &&
         day >= 1 &&
         day <= daysInMonth
-      ) {
+      ) {*/
         const colorClass =
           pause_payment === "yes" || pause_payment === "noBreak"
             ? "text-blue-500"
@@ -163,6 +170,7 @@ const TableComponent = ({
               className="text-black font-bold text-center leading-[1.2]"
               style={{ fontSize: `${fontSize}px` }}
             >
+              
               <div>{post}</div>
               <div>{formatTime(vacation_start)}</div>
               <div className={colorClass}>P</div>
@@ -170,6 +178,7 @@ const TableComponent = ({
             </div>
           </>
         );
+        console.log(cellContent)
 
         // Inside your event rendering logic
         if (userEventsMap[user_id] && userEventsMap[user_id][2]) {
@@ -322,7 +331,7 @@ const TableComponent = ({
         userTotalDuration[user_id] += durationInMinutes;
         dayTotalDuration[day - 1] += durationInMinutes;
         totalMonthlyDuration += durationInMinutes;
-      }
+      //}
     });
 
     // Correcting the holiday set
@@ -728,6 +737,8 @@ const TableComponent = ({
                     (new Date(year, zeroIndexedMonth, day).getDay() === 0 ||
                       new Date(year, zeroIndexedMonth, day).getDay() === 6);
                         const isHoliday = holidaysSet.has(day);
+
+                    
                         
                   return (
                     <td

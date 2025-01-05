@@ -98,13 +98,14 @@ class SiteController extends Controller
     public function store(Request $request)
 {
 
+ 
    
     $request->validate([
         
         'name' => 'required|string|max:255',
         'manager_name' => 'required|string|max:255',
         'address' => 'required|string|max:500',
-        'email' => 'required|email|unique:sites,email',
+        'email' => 'required|email',
         'phone' => 'required|string|max:20',
         // No need to validate the password as it's being set automatically.
     ]);

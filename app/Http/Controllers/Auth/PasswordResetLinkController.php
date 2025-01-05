@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use App\Mail\PasswordResetMail;
 
 
 class PasswordResetLinkController extends Controller
@@ -34,41 +35,73 @@ class PasswordResetLinkController extends Controller
      */
     public function store(Request $request): Response
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
 
         $email = $request->input('email');
+        $actor = $request->input('actor'); // Determine if it's a 'customer' or 'user'
 
-        // Vérifiez si l'utilisateur existe
-        $user = DB::table('users')->where('email', $email)->first();
+        // Handle logic for customer or user based on 'actor'
+        if ($actor == 'customer') {
+            // Check if the customer exists
+            $customer = DB::table('customers')->where('email', $email)->first();
+            if (!$customer) {
+                throw ValidationException::withMessages([
+                    'email' => [trans('Aucun client trouvé avec cette adresse e-mail.')],
+                ]);
+            }
+        } else {
+            // Check if the user exists
+            $user = DB::table('users')->where('email', $email)->first();
+            if (!$user) {
+                throw ValidationException::withMessages([
+                    'email' => [trans('Aucun utilisateur trouvé avec cette adresse e-mail.')],
+                ]);
+            }
+        }
 
-        if (!$user) {
-            throw ValidationException::withMessages([
-                'email' => [trans('validation.user_not_found')],
+        // Generate a temporary password
+        $temporaryPassword = Str::random(10);
+
+        // Hash the temporary password
+        $hashedPassword = Hash::make($temporaryPassword);
+
+        // Update the password for the correct table
+        if ($actor === 'customer') {
+
+            $person = DB::table('customers')->where('email', $email)->get();
+            $person = $person->first();
+
+         
+            // Update the customer’s password
+         DB::table('customers')->where('email', $email)->update([
+                'password' => $hashedPassword,
+            ]);
+        } else {
+
+            $person  = DB::table('customers')->where('email', $email)->get();
+            $person = $person->first();
+
+            dd($person->email);
+            // Update the user's password
+            DB::table('users')->where('email', $email)->update([
+                'password' => $hashedPassword,
             ]);
         }
 
-        // Générer un mot de passe temporaire
-        $temporaryPassword = Str::random(10);
+    
+       
+        try {
 
-        // Hasher le mot de passe
-        $hashedPassword = Hash::make($temporaryPassword);
+            $personEmail = $person->email;
+            Mail::to('ouailamin84@gmail.com')->send(new PasswordResetMail($temporaryPassword,$person));
+            return Inertia::render('Auth/Login', [
+                'message' => 'Un mot de passe temporaire a été envoyé à votre adresse e-mail.',
+                'personEmail' => $personEmail,  // Adding the email to the Inertia response
+            ]);
+        } catch (\Exception $e) {
+            
+            return back()->withErrors(['message' => 'Failed to send emails: ' . $e->getMessage()]);
+        }
 
-        // Mettre à jour le mot de passe de l'utilisateur dans la base de données
-        DB::table('users')->where('email', $email)->update([
-            'password' => $hashedPassword,
-        ]);
-
-        // Envoyer un e-mail avec le mot de passe temporaire
-        Mail::send('emails.password-reset', ['password' => $temporaryPassword], function ($message) use ($email) {
-            $message->to($email);
-            $message->subject('Votre mot de passe temporaire');
-        });
-
-        // Répondre avec un message de succès et rediriger vers la page de connexion
-        return Inertia::render('Auth/Login', [
-            'status' => __('Un mot de passe temporaire a été envoyé à votre adresse e-mail. Veuillez l’utiliser pour vous connecter et changer votre mot de passe.'),
-        ]);
+        
     }
 }

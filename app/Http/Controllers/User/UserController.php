@@ -298,4 +298,12 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Erreur lors de la création du compte');
         }
     }
+
+    /**
+     * 
+     */
+    public function searchUser (User $user){
+
+        
+    }
 }

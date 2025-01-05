@@ -19,7 +19,10 @@ const months = [
   { value: "12", label: "Décembre" },
 ];
 
-const PlanningList = ({ plannings, sites }) => {
+const PlanningList = ({ plannings, sites, auth }) => {
+  const role = auth.roles;
+
+  console.log(role);
   const [search, setSearch] = useState({ site: "", year: "", month: "" });
   const [openSites, setOpenSites] = useState({}); // Nouveau état pour gérer l'ouverture de chaque site
 
@@ -274,21 +277,29 @@ const PlanningList = ({ plannings, sites }) => {
                                   Voir
                                 </button>
 
-                                {!planning.isValidate && (
-                                  <button
-                                    onClick={() => handleValidate(planning.id)}
-                                    className="px-4 py-2 text-sm font-medium rounded-md text-green-600 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                  >
-                                    Valider
-                                  </button>
-                                )}
+                                {(role.includes("Admin") ||
+                                  role.includes("Leader")||
+                                  role.includes("Manager")) &&
+                                  !planning.isValidate && (
+                                    <button
+                                      onClick={() =>
+                                        handleValidate(planning.id)
+                                      }
+                                      className="px-4 py-2 text-sm font-medium rounded-md text-green-600 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                    >
+                                      Valider
+                                    </button>
+                                  )}
 
-                                <button
-                                  onClick={() => handleDelete(planning.id)}
-                                  className="px-4 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                >
-                                  Supprimer
-                                </button>
+                                {role.includes("Admin") ||
+                                role.includes("Leader") ? (
+                                  <button
+                                    onClick={() => handleDelete(planning.id)}
+                                    className="px-4 py-2 text-sm font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                  >
+                                    Supprimer
+                                  </button>
+                                ) : null}
                               </div>
                             </div>
                           </div>

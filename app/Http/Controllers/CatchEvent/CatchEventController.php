@@ -30,11 +30,13 @@ class CatchEventController extends Controller
     // Store a newly created catch event in storage
     public function store(Request $request)
     {
+
         $catchEventData = [
             'user_id' => $request->input('user_id'),
             'site_id' => $request->input('site_id'),
             'post' => $request->input('post'),
             'date_vacation' => $request->input('vacationDate'),
+            'lunchAllowance' => $request->input('lunchAllowance'),
             'hours' => $request->input('hours'),
             'night_hours' => $request->input('nightHours', 0),
             'sunday_hours' => $request->input('sundayHours', 0),

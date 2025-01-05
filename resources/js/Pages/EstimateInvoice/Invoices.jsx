@@ -4,10 +4,13 @@ import { PDFDownloadLink } from "@react-pdf/renderer";
 import InvoicePDF from "./InvoicePDF";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import SelectMonth from "../Planning/import/SelectMonth"
+import SelectYear from "../Planning/import/SelectYear"
+import SiteMonthYeaySelect from "../Planning/SiteMonthYeaySelect"
 
 
-
-const Invoices = ({ plannings, selectedSite, allTypePosts, allPosts }) => {
+const Invoices = ({ plannings, sites, allTypePosts, allPosts,customers }) => {
+  const selectedSite = 5;
   console.log(selectedSite);
   console.log(plannings);
 
@@ -27,7 +30,7 @@ const Invoices = ({ plannings, selectedSite, allTypePosts, allPosts }) => {
   ];
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
-  const years = Array.from({ length: 20 }, (_, i) => currentYear + i);
+
 
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -489,50 +492,10 @@ const Invoices = ({ plannings, selectedSite, allTypePosts, allPosts }) => {
       <h1 className="text-2xl font-semibold mb-4">
         Sélectionnez le mois et l'année
       </h1>
+      <SelectMonth/>
+      <SelectYear />
 
-      <div className="flex space-x-6 mb-6 relative">
-        <div className="w-1/2">
-          <label
-            htmlFor="month"
-            className="block text-lg font-medium text-gray-700 mb-2"
-          >
-            Mois
-          </label>
-          <select
-            id="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {months.map((month) => (
-              <option key={month.value} value={month.value}>
-                {month.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="w-1/2">
-          <label
-            htmlFor="year"
-            className="block text-lg font-medium text-gray-700 mb-2"
-          >
-            Année
-          </label>
-          <select
-            id="year"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      
 
       <div className="mt-4">
         <p className="text-lg font-medium">

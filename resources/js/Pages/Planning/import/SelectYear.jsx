@@ -11,8 +11,8 @@ const SelectYear = ({ currentYear, handleYearChange }) => {
     <div className="w-full sm:max-w-xs">
       <select
         id="year"
-        value={currentYear || ""}
-        onChange={(e) => handleYearChange(Number(e.target.value))}
+        value={currentYear}
+        onChange={(e) => handleYearChange(e.target.value)}
         className="w-52 mt-1 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
       >
         <option value="" disabled>

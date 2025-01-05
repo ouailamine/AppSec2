@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Illuminate\Support\Facades\Auth;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -30,16 +31,28 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-
-        // Si le customer n'a pas de rôle, il n'est pas nécessaire de tenter de charger les rôles.
-        // On peut définir simplement un tableau vide ou d'autres informations liées à l'utilisateur.
         $roles = [];
+        $permissions = [];
+
+        // Vérification si l'utilisateur est authentifié
+        if ($user) {
+            // Vérifiez si l'utilisateur a la méthode `getRoleNames()`, ce qui signifie qu'il a des rôles
+            if (method_exists($user, 'getRoleNames')) {
+                $roles = $user->getRoleNames(); // Récupérer les rôles
+            }
+
+            // Vérifiez si l'utilisateur a la méthode `getAllPermissions()`, ce qui signifie qu'il a des permissions
+            if (method_exists($user, 'getAllPermissions')) {
+                $permissions = $user->getAllPermissions()->pluck('name'); // Récupérer les permissions
+            }
+        }
 
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? $user->toArray() : null,
-                'roles' => $roles,  // Aucun rôle ici, ou remplacez par autre information pertinente
+                'roles' => $roles, 
+                'permissions' => $permissions,
             ],
         ];
     }

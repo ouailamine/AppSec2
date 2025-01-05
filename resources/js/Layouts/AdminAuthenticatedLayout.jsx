@@ -2,12 +2,14 @@ import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
 import { usePage } from "@inertiajs/react";
 
-export default function AdminAuthenticated({ header, children, user, roles }) {
+const AdminAuthenticated =({ header, children, }) =>{
+
   const { auth } = usePage().props;
   if (!auth || !auth.user) {
     return <div>Loading...</div>;
   }
 
+  console.log(auth)
   const getInitials = (fullname, firstname) => {
     const fullInitial = fullname ? fullname.charAt(0).toUpperCase() : "";
     const firstInitial = firstname ? firstname.charAt(0).toUpperCase() : "";
@@ -113,3 +115,5 @@ export default function AdminAuthenticated({ header, children, user, roles }) {
     </div>
   );
 }
+
+export default AdminAuthenticated;

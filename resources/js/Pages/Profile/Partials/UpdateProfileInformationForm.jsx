@@ -30,9 +30,7 @@ export default function UpdateProfileInformation({
       className={`${className} max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg`}
     >
       <header className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Informations du Profil
-        </h2>
+        
         <p className="mt-1 text-sm text-gray-600">
           Mettez à jour les informations de votre compte et votre adresse
           e-mail.
@@ -41,7 +39,7 @@ export default function UpdateProfileInformation({
 
       <form onSubmit={submit} className="space-y-6">
         <div>
-          <InputLabel htmlFor="fullname" value="Nom complet" />
+          <InputLabel htmlFor="fullname" value="Nom" />
 
           <TextInput
             id="fullname"

@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import Plannings from "./Plannings";
 import Profil from "./Profile";
-import Dashboard from "./Dashboard";
+import Dashboard from "./Dashboard2";
 import SiteGuardsList from "./GuardsSite";
 import AuthenticatedCustomerLayout from "../../Layouts/AuthenticatedCustomerLayout";
 
@@ -79,6 +79,7 @@ const App = ({ plannings, customerSites, users, sites, holidays }) => {
                 <Dashboard
                   plannings={plannings}
                   customerSites={customerSites}
+                  sites={sites}
                 />
               }
             />
